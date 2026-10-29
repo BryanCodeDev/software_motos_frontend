@@ -1,0 +1,16 @@
+# Identificación de Emergencia — MasterCode Company
+# Frontend: Netlify (Vite build)
+# Backend/API: Railway
+# Base de datos: MySQL en Railway
+# Correos: Resend
+# Pagos: Mercado Pago
+
+User-agent: *
+Disallow: /app/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /e/
+
+Allow: /
+
+Sitemap: {{APP_URL}}/sitemap.xml
