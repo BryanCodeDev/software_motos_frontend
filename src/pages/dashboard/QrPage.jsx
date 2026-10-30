@@ -155,7 +155,7 @@ export const QrPage = () => {
             objectUrl = window.URL.createObjectURL(qr.data);
             setQrImage(objectUrl);
           } catch {
-            if (mounted) toastRef.current.error('No se pudo cargar la imagen del QR');
+            if (mounted) setQrImage('');
           }
           setState(deriveState(data, null));
           setLoading(false);
