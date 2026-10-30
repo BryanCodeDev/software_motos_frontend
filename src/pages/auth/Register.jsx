@@ -1,25 +1,26 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '../../utils/routes';
-import { Button, Input, Label } from '../../components/ui';
-import { UserPlus } from 'lucide-react';
+import { Button, Input, Label, Card } from '../../components/ui';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
-import api from '../../api/client';
 import { showApiError } from '../../utils/errors';
 import Seo from '../../components/Seo';
-import { AuthLayout, PasswordField, StrengthMeter } from '../../components/AuthShell';
 
 export const Register = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const { register } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/auth/register', { ...form, role: 'user' });
+      await register({ ...form, role: 'user' });
       toast.success('Cuenta creada correctamente');
       navigate(routes.dashboard);
     } catch (error) {
@@ -34,75 +35,79 @@ export const Register = () => {
   };
 
   return (
-    <>
+    <main className="min-h-screen flex items-center justify-center py-20 px-4">
       <Seo title="Crear cuenta" noindex />
-      <AuthLayout
-        icon={UserPlus}
-        title="Crea tu cuenta gratuita"
-        subtitle="Tu perfil de emergencia empieza aquí"
-        footer={
-          <>
-            <p>
-              ¿Ya tienes cuenta?{' '}
-              <Link to={routes.login} className="text-brand-accent hover:text-brand-accentHover font-medium">
-                Inicia sesión
-              </Link>
-            </p>
-            <p className="text-xs">
-              Conoce cómo protegemos tu información en nuestra{' '}
-              <Link to={routes.privacy} className="underline hover:text-brand-text">
-                política de privacidad
-              </Link>
-              .
-            </p>
-          </>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <Card className="w-full max-w-md p-8 md:p-12">
+        <div className="text-center mb-8">
+          <div className="w-10 h-10 rounded-lg bg-brand-accent flex items-center justify-center mx-auto mb-3 text-brand-dark font-bold">
+            <UserPlus size={20} />
+          </div>
+          <h2 className="text-2xl font-bold text-brand-text">Crear cuenta gratuita</h2>
+          <p className="text-brand-textMuted text-sm mt-2">
+            Tu perfil de emergencia empieza aquí
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre completo</Label>
+            <Label>Nombre completo</Label>
             <Input
-              id="name"
               required
-              autoComplete="name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Juan Pérez"
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label>Correo electrónico</Label>
             <Input
-              id="email"
               type="email"
               required
-              autoComplete="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="juan@ejemplo.com"
+              placeholder="juan@example.com"
             />
           </div>
-
-          <PasswordField
-            id="password"
-            label="Contraseña"
-            autoComplete="new-password"
-            minLength={8}
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            hint="Mínimo 8 caracteres."
-          >
-            <StrengthMeter password={form.password} />
-          </PasswordField>
-
+          <div className="space-y-2">
+            <Label>Contraseña</Label>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••••"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-textMuted hover:text-brand-text"
+                aria-label="Mostrar contraseña"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <p className="text-[11px] text-brand-textMuted mt-1">
+              Mínimo 8 caracteres.
+            </p>
+          </div>
           <Button type="submit" variant="primary" disabled={loading} className="w-full">
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </Button>
         </form>
-      </AuthLayout>
-    </>
+
+        <p className="mt-6 text-center text-sm text-brand-textMuted">
+          ¿Ya tienes cuenta?{' '}
+          <Link to={routes.login} className="text-brand-accent hover:underline font-medium">
+            Inicia sesión
+          </Link>
+        </p>
+      </Card>
+    </main>
   );
 };
 
 export default Register;
+
+
