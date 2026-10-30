@@ -6,7 +6,7 @@ import { Button, Input, Label } from '../../components/ui';
 import Modal from '../../components/Modal';
 import { PageTitle, PageLoader, EmptyState, CheckField } from '../../components/DashPage';
 import {
-  Trash2, Save, Pencil, Users, Phone as PhoneIcon, Mail as MailIcon, Eye, EyeOff, User, Heart, ListOrdered,
+  Trash2, Save, Pencil, Users, Phone as PhoneIcon, Mail as MailIcon, Eye, EyeOff, User, Heart,
 } from 'lucide-react';
 
 const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
@@ -21,7 +21,6 @@ const emptyForm = {
   is_public: false,
   display_phone: false,
   display_email: false,
-  priority_order: 0,
 };
 
 export const ContactsPage = () => {
@@ -73,7 +72,7 @@ export const ContactsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const payload = { ...form, priority_order: Number(form.priority_order) || 0 };
+    const payload = { ...form };
     try {
       if (editingId) {
         await api.patch(`/contacts/${editingId}`, payload);
@@ -103,7 +102,6 @@ export const ContactsPage = () => {
       is_public: !!c.is_public,
       display_phone: !!c.display_phone,
       display_email: !!c.display_email,
-      priority_order: c.priority_order ?? 0,
     });
     setEditingId(c.id);
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -127,7 +125,7 @@ export const ContactsPage = () => {
 
   if (loading) return <PageLoader />;
 
-  const sorted = contacts.slice().sort((a, b) => (a.priority_order || 0) - (b.priority_order || 0));
+  const sorted = contacts.slice();
 
   return (
     <div className="space-y-6">
@@ -181,13 +179,19 @@ export const ContactsPage = () => {
                 <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
               </div>
             </div>
-            <div className="md:max-w-[50%]">
-              <Label htmlFor="c_prio">Prioridad</Label>
+            <div>
+              <Label htmlFor="c_phone">Teléfono</Label>
               <div className="relative">
-                <ListOrdered size={18} className={iconCls} aria-hidden="true" />
-                <Input id="c_prio" type="number" min="0" value={form.priority_order} onChange={(e) => setForm({ ...form, priority_order: e.target.value })} className={inputCls} />
+                <PhoneIcon size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_phone" type="tel" autoComplete="off" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+57 300 000 0000" className={inputCls} />
               </div>
-              <p className="mt-1.5 text-xs text-brand-textMuted">Un número menor se muestra primero.</p>
+            </div>
+            <div>
+              <Label htmlFor="c_email">Correo</Label>
+              <div className="relative">
+                <MailIcon size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
+              </div>
             </div>
           </div>
 
@@ -261,9 +265,9 @@ export const ContactsPage = () => {
                   <div className="flex items-start gap-3">
                     <span
                       className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent/10 text-sm font-bold text-brand-accent ring-1 ring-brand-accent/15"
-                      title="Prioridad"
+                      title="Contacto"
                     >
-                      {c.priority_order ?? 0}
+                      {c.name?.charAt(0)?.toUpperCase() || '?'}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
