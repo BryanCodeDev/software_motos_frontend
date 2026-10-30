@@ -85,7 +85,7 @@ export const Navbar = () => {
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-accent to-brand-deep flex items-center justify-center text-brand-dark shadow-soft">
             <ShieldCheck size={18} strokeWidth={2.4} />
           </span>
-          <span className="hidden sm:inline">Identificación de Emergencia</span>
+          <span className="hidden sm:inline">Tu QR te Cuida</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 text-sm font-medium" aria-label="Principal">

@@ -41,7 +41,7 @@ export const Footer = () => (
             <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-accent to-brand-deep flex items-center justify-center text-brand-dark">
               <ShieldCheck size={18} strokeWidth={2.4} />
             </span>
-            Identificación de Emergencia
+            Tu QR te Cuida
           </Link>
           <p className="text-sm text-brand-textMuted leading-relaxed max-w-sm">
             Perfil digital de emergencia con código QR. Si tú no puedes hablar, tu información importante
@@ -68,7 +68,7 @@ export const Footer = () => (
       </div>
 
       <div className="border-t border-brand-border pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-brand-textMuted">
-        <p>© {new Date().getFullYear()} MasterCode Company. Todos los derechos reservados.</p>
+        <p>© {new Date().getFullYear()} <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent transition-colors">MasterCode Company</a>. Todos los derechos reservados.</p>
         <p className="md:max-w-md md:text-right leading-relaxed">
           Versión preliminar. Esta plataforma es una herramienta de apoyo y no sustituye a los servicios
           oficiales de emergencia.

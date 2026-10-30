@@ -189,7 +189,7 @@ export const Home = () => {
       <section className="section section-alt">
         <div className="container-page">
           <SectionHeading
-            eyebrow="Por qué Identificación de Emergencia"
+            eyebrow="Por qué Tu QR te Cuida"
             title="Información clave, disponible cuando más importa"
             subtitle="En un accidente, cada minuto cuenta. Quienes auxilian pueden saber a quién llamar y qué necesitas, solo con la información que decidiste compartir."
           />

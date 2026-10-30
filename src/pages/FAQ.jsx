@@ -15,7 +15,7 @@ export const FAQ = () => (
     <PageHeader
       eyebrow="Preguntas frecuentes"
       title="Todo lo que necesitas saber"
-      subtitle="Respuestas claras sobre el funcionamiento, la privacidad y los productos de Identificación de Emergencia."
+      subtitle="Respuestas claras sobre el funcionamiento, la privacidad y los productos de Tu QR te Cuida."
     />
     <section className="pb-20">
       <div className="container-page">

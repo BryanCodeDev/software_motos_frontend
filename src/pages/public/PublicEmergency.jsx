@@ -13,7 +13,7 @@ const Shell = ({ children, title = 'Perfil de emergencia' }) => (
     <Seo title={title} description="Información de contacto de emergencia" noindex />
     <div className="max-w-xl mx-auto animate-slide-up">{children}</div>
     <p className="max-w-xl mx-auto mt-8 text-center text-[11px] text-brand-textMuted">
-      Identificación de Emergencia · MasterCode Company
+      Tu QR te Cuida · <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent transition-colors">MasterCode Company</a>
     </p>
   </main>
 );

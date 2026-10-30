@@ -79,7 +79,7 @@ export const Contact = () => {
     <main className="min-h-screen">
       <Seo
         title="Contacto"
-        description="Formulario de contacto y canales de soporte de Identificación de Emergencia."
+        description="Formulario de contacto y canales de soporte de Tu QR te Cuida."
       />
       <PageHeader
         eyebrow="Contacto"

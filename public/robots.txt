@@ -1,4 +1,4 @@
-# Identificación de Emergencia — MasterCode Company
+# Tu QR te Cuida — MasterCode Company
 # Frontend: Netlify (Vite build)
 # Backend/API: Railway
 # Base de datos: MySQL en Railway

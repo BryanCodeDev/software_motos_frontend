@@ -192,9 +192,9 @@ const Help = () => {
       {/* Encabezado */}
       <header className="space-y-3">
         <span className="eyebrow">Documentación</span>
-        <h2 className="text-3xl lg:text-4xl font-bold text-brand-text">Identificación de Emergencia</h2>
+        <h2 className="text-3xl lg:text-4xl font-bold text-brand-text">Tu QR te Cuida</h2>
         <p className="prose-doc max-w-3xl">
-          Plataforma de <strong className="text-brand-text">MasterCode Company</strong> pensada para
+          Plataforma de <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="text-brand-text hover:text-brand-accent transition-colors">MasterCode Company</a> pensada para
           motociclistas en Colombia. Conecta un QR físico (calcomanía en la moto, el casco u otro lugar
           visible) con una página web de emergencia que muestra únicamente la información que el propietario
           autorizó compartir.
