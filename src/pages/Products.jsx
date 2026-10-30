@@ -10,21 +10,21 @@ import { Reveal, PageHeader } from '../components/Section';
 
 const plans = [
   {
-    name: 'QR digital básico',
+    name: 'QR digital básico + sticker físico',
     price: '$30.000 COP',
-    desc: 'Activación única de tu perfil de emergencia digital con código QR. Pago único, sin suscripción mensual ni anual.',
-    features: ['Perfil y contactos de emergencia', 'Control de visibilidad por campo', 'Descarga del código QR', 'Página pública autorizada'],
+    desc: 'Activación única de tu perfil de emergencia digital con código QR. Incluye sticker físico personalizado con envío gratis a domicilio. Pago único, sin suscripción mensual ni anual.',
+    features: ['Perfil y contactos de emergencia', 'Control de visibilidad por campo', 'Descarga del código QR', 'Página pública autorizada', 'Sticker físico personalizado', 'Envío gratis a domicilio'],
     action: 'Crear cuenta y activar',
     href: routes.register,
     free: false,
   },
   {
     name: 'Sticker QR personalizado',
-    price: 'Consultar precio',
-    desc: 'Sticker físico personalizado con tu código QR, con opciones de diseño y envío a domicilio.',
-    features: ['Diseño personalizado', 'Envío a domicilio', 'Reposición desde tu cuenta'],
-    action: 'Solicitar sticker',
-    href: routes.products, // TODO: cambiar por la ruta real de pedidos
+    price: '$30.000 COP (con QR)',
+    desc: 'Al activar el QR digital por $30.000 COP recibes también el sticker físico con envío gratis. No es necesario comprarlo por separado.',
+    features: ['Diseño personalizado', 'Envío gratis a domicilio', 'Reposición desde tu cuenta'],
+    action: 'Activar con QR',
+    href: routes.register,
     free: false,
   },
   {
@@ -39,12 +39,15 @@ const plans = [
 ];
 
 const infoItems = [
-  'La activación del QR digital tiene un pago único de $30.000 COP. No hay suscripciones ni cobros automáticos de renovación.',
-  'El sticker físico es un producto adicional con costo y envío separados.',
+  'También puedes completar tu pago por WhatsApp escribiendo al +57 321 220 9943.',
+  'La activación del QR digital + sticker físico tiene un pago único de $30.000 COP con envío gratis a domicilio. No hay suscripciones ni cobros automáticos de renovación.',
+  'Al activar el QR por $30.000 COP se te envía el sticker físico personalizado sin costo adicional.',
   'Los precios los configura el administrador y se confirman antes del pago.',
   'El QR contiene solo el enlace con tu identificador, nunca datos personales ni médicos.',
   'QR + NFC no está disponible para compra hasta que el prototipo físico sea validado.',
 ];
+
+
 
 export const Products = () => {
   const [products, setProducts] = useState([]);

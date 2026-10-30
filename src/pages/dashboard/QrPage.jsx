@@ -354,10 +354,18 @@ export const QrPage = () => {
             </p>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={createOrderAndPay} disabled={acting} variant="primary" className="w-full sm:w-auto sm:px-8">
               <CreditCard size={16} /> {acting ? 'Creando pedido...' : `Activar mi QR por ${price}`}
             </Button>
+            <a
+              href="https://wa.me/573212209943?text=Hola%2C%20quiero%20activar%20mi%20QR%20de%20emergencia%20por%20WhatsApp."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:w-auto"
+            >
+              Pagar por WhatsApp
+            </a>
           </div>
         </section>
       )}
@@ -369,9 +377,19 @@ export const QrPage = () => {
           tone="amber"
           title={state === 'under_review' ? 'Pago en revisión' : 'Pago pendiente'}
           actions={
-            <Button onClick={retryPayment} disabled={acting} variant="primary">
-              {acting ? 'Procesando...' : 'Ir al pago'}
-            </Button>
+            <>
+              <Button onClick={retryPayment} disabled={acting} variant="primary">
+                {acting ? 'Procesando...' : 'Ir al pago'}
+              </Button>
+              <a
+                href="https://wa.me/573212209943?text=Hola%2C%20quiero%20pagar%20mi%20pedido%20de%20activaci%C3%B3n%20de%20QR%20por%20WhatsApp."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+              >
+                Pagar por WhatsApp
+              </a>
+            </>
           }
         >
           <p>
