@@ -1,67 +1,263 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search, AlertTriangle, Loader2, PackageOpen } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
+import { useToast } from '../../components/useToast';
 
-const STATUS_OPTIONS = ['pending_confirmation','pending_payment','paid','preparing','shipped','delivered','cancelled'];
+const STATUS_OPTIONS = [
+  'pending_confirmation', 'pending_payment', 'paid', 'preparing', 'shipped',
+  'delivered', 'cancelled', 'refund_requested', 'refunded',
+];
+
+const TONES = {
+  slate: 'bg-slate-100 text-slate-700 ring-slate-500/20',
+  amber: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  sky: 'bg-sky-50 text-sky-700 ring-sky-600/20',
+  rose: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+};
+
+const COMMERCIAL = {
+  draft: ['Borrador', 'slate'],
+  pending_confirmation: ['Por confirmar', 'amber'],
+  pending_payment: ['Pago pendiente', 'amber'],
+  paid: ['Pagado', 'emerald'],
+  preparing: ['Preparando', 'sky'],
+  shipped: ['Enviado', 'sky'],
+  delivered: ['Entregado', 'emerald'],
+  cancelled: ['Cancelado', 'rose'],
+  refund_requested: ['Reembolso solicitado', 'amber'],
+  refunded: ['Reembolsado', 'slate'],
+};
+
+const PAYMENT = {
+  unpaid: ['Sin pagar', 'slate'],
+  pending: ['Pendiente', 'amber'],
+  approved: ['Aprobado', 'emerald'],
+  rejected: ['Rechazado', 'rose'],
+  cancelled: ['Cancelado', 'rose'],
+  refunded: ['Reembolsado', 'slate'],
+};
+
+const Badge = ({ map, value }) => {
+  const [label, tone] = map[value] || [value || '—', 'slate'];
+  return (
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONES[tone]}`}>
+      {label}
+    </span>
+  );
+};
+
+const money = (amount, currency = 'COP') => {
+  try {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(amount) || 0);
+  } catch {
+    return `${amount} ${currency}`;
+  }
+};
 
 export const AdminOrders = () => {
+  const toast = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [busyId, setBusyId] = useState(null);
 
-  const load = async () => {
-    setLoading(true); setError(null);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const { data } = await api.get('/admin/orders');
       setOrders(data.orders || []);
     } catch (e) {
       setError(e?.response?.data?.error || 'Error al cargar pedidos');
-    } finally { setLoading(false); }
-  };
-
-  useEffect(() => {
-    setTimeout(() => load(), 0);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateStatus = async (id, commercial_status) => {
-    if (!confirm(`¿Cambiar estado a ${commercial_status}?`)) return;
+  useEffect(() => {
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  const updateStatus = async (o, commercial_status) => {
+    if (!commercial_status) return;
+    const label = COMMERCIAL[commercial_status]?.[0] || commercial_status;
+    if (!window.confirm(`¿Cambiar el pedido ${o.order_number} a "${label}"?`)) return;
+    setBusyId(o.id);
     try {
-      await api.patch(`/admin/orders/${id}`, { commercial_status });
+      await api.patch(`/admin/orders/${o.id}`, { commercial_status });
+      toast.success('Estado actualizado');
       load();
     } catch (e) {
-      alert(e?.response?.data?.error || 'Error');
+      toast.error(e?.response?.data?.error || 'No se pudo actualizar el pedido');
+    } finally {
+      setBusyId(null);
     }
   };
 
+  const counts = useMemo(() => {
+    const c = { all: orders.length };
+    orders.forEach((o) => { c[o.commercial_status] = (c[o.commercial_status] || 0) + 1; });
+    return c;
+  }, [orders]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return orders.filter((o) => {
+      if (filter !== 'all' && o.commercial_status !== filter) return false;
+      if (!q) return true;
+      return [o.order_number, o.customer_email, o.product_name].some((v) => String(v || '').toLowerCase().includes(q));
+    });
+  }, [orders, query, filter]);
+
+  const StatusSelect = ({ o }) => (
+    <div className="relative">
+      <select
+        value=""
+        disabled={busyId === o.id}
+        onChange={(e) => updateStatus(o, e.target.value)}
+        aria-label={`Cambiar estado del pedido ${o.order_number}`}
+        className="input !py-1.5 !text-base sm:!text-xs"
+      >
+        <option value="">Cambiar estado…</option>
+        {STATUS_OPTIONS.filter((s) => s !== o.commercial_status).map((s) => (
+          <option key={s} value={s}>{COMMERCIAL[s][0]}</option>
+        ))}
+      </select>
+      {busyId === o.id && <Loader2 size={14} className="absolute right-8 top-1/2 -translate-y-1/2 animate-spin text-brand-textMuted" />}
+    </div>
+  );
+
+  const chips = ['all', ...STATUS_OPTIONS.filter((s) => counts[s])];
+
   return (
-    <div>
+    <div className="space-y-5">
       <PageTitle title="Pedidos" description="Gestiona pedidos comerciales." />
-      {loading && <div>Cargando...</div>}
-      {error && <div className="text-red-400">{error}</div>}
-      {!loading && !error && (
-        <table className="w-full text-sm">
-          <thead><tr><th>Número</th><th>Cliente</th><th>Producto</th><th>Total</th><th>Comercial</th><th>Pago</th><th>Acción</th></tr></thead>
-          <tbody>
-            {orders.map(o => (
-              <tr key={o.id} className="border-t border-brand-border">
-                <td>{o.order_number}</td>
-                <td>{o.customer_email}</td>
-                <td>{o.product_name}</td>
-                <td>{o.total_amount} {o.currency}</td>
-                <td>{o.commercial_status}</td>
-                <td>{o.payment_status}</td>
-                <td>
-                  <select onChange={e=>{ if(e.target.value) updateStatus(o.id, e.target.value); e.target.value=''; }} defaultValue="" className="input text-xs">
-                    <option value="">Cambiar...</option>
-                    {STATUS_OPTIONS.map(s=><option key={s} value={s}>{s}</option>)}
-                  </select>
-                </td>
-              </tr>
+
+      <div className="card-static space-y-3 p-4">
+        <div className="relative">
+          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por número, cliente o producto"
+            aria-label="Buscar pedidos"
+            className="input !pl-10 !text-base sm:!text-sm"
+          />
+        </div>
+        <div className="custom-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {chips.map((s) => {
+            const active = filter === s;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFilter(s)}
+                className={`flex-none rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  active
+                    ? 'border-brand-accent bg-brand-accent text-white'
+                    : 'border-brand-border bg-white text-brand-textMuted hover:border-brand-accent/40 hover:text-brand-text'
+                }`}
+              >
+                {s === 'all' ? 'Todos' : COMMERCIAL[s][0]}
+                <span className={`ml-1.5 ${active ? 'text-white/80' : 'text-brand-textMuted/70'}`}>{counts[s] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {error && (
+        <div className="card-static flex items-center gap-3 p-4 text-sm text-rose-700">
+          <AlertTriangle size={18} /> {error}
+          <button type="button" onClick={load} className="ml-auto font-semibold underline">Reintentar</button>
+        </div>
+      )}
+
+      {loading && !error && (
+        <div className="card-static animate-pulse space-y-3 p-4" aria-busy="true">
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-lg bg-brand-border/60" />)}
+        </div>
+      )}
+
+      {!loading && !error && visible.length === 0 && (
+        <div className="card-static flex flex-col items-center gap-2 p-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
+            <PackageOpen size={22} />
+          </span>
+          <p className="text-sm font-semibold text-brand-text">No hay pedidos para mostrar</p>
+          <p className="text-xs text-brand-textMuted">Ajusta la búsqueda o el filtro de estado.</p>
+        </div>
+      )}
+
+      {!loading && !error && visible.length > 0 && (
+        <>
+          {/* Escritorio */}
+          <div className="card-static hidden overflow-hidden md:block">
+            <div className="custom-scrollbar overflow-x-auto">
+              <table className="table w-full text-sm">
+                <thead className="bg-brand-dark/70 text-left text-xs font-semibold uppercase tracking-wider text-brand-textMuted">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">Pedido</th>
+                    <th scope="col" className="px-4 py-3">Cliente</th>
+                    <th scope="col" className="px-4 py-3">Producto</th>
+                    <th scope="col" className="px-4 py-3 text-right">Total</th>
+                    <th scope="col" className="px-4 py-3">Estado</th>
+                    <th scope="col" className="px-4 py-3">Pago</th>
+                    <th scope="col" className="px-4 py-3">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-border">
+                  {visible.map((o) => (
+                    <tr key={o.id} className="transition-colors hover:bg-brand-dark/60">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-brand-text">{o.order_number}</td>
+                      <td className="max-w-[200px] truncate px-4 py-3 text-brand-textMuted" title={o.customer_email}>{o.customer_email}</td>
+                      <td className="px-4 py-3 text-brand-text">{o.product_name}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-brand-text">{money(o.total_amount, o.currency)}</td>
+                      <td className="px-4 py-3"><Badge map={COMMERCIAL} value={o.commercial_status} /></td>
+                      <td className="px-4 py-3"><Badge map={PAYMENT} value={o.payment_status} /></td>
+                      <td className="min-w-[170px] px-4 py-3"><StatusSelect o={o} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Móvil */}
+          <ul className="space-y-3 md:hidden">
+            {visible.map((o) => (
+              <li key={o.id} className="card-static p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs font-semibold text-brand-text">{o.order_number}</p>
+                    <p className="mt-1 text-sm font-semibold text-brand-text">{o.product_name}</p>
+                    <p className="break-all text-xs text-brand-textMuted">{o.customer_email}</p>
+                  </div>
+                  <p className="whitespace-nowrap text-sm font-bold text-brand-text">{money(o.total_amount, o.currency)}</p>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Badge map={COMMERCIAL} value={o.commercial_status} />
+                  <Badge map={PAYMENT} value={o.payment_status} />
+                </div>
+                <div className="mt-3 border-t border-brand-border pt-3">
+                  <StatusSelect o={o} />
+                </div>
+              </li>
             ))}
-          </tbody>
-        </table>
+          </ul>
+
+          <p className="text-center text-xs text-brand-textMuted">
+            Mostrando {visible.length} de {orders.length} pedidos
+          </p>
+        </>
       )}
     </div>
   );
 };
+
 export default AdminOrders;

@@ -1,108 +1,154 @@
-import React, { useState } from 'react';
-import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, HelpCircle, Menu, X as XIcon, ShieldCheck, LogOut as LogOutIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard, Users, Package, ScrollText, HelpCircle, Menu, X as XIcon, ShieldCheck, LogOut,
+} from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import Help from './help';
+import AdminHome from './AdminHome';
 import AdminUsers from './Users';
 import AdminOrders from './Orders';
+import AdminAudit from './Audit';
 
-const ROLE_TONE = { admin: 'text-rose-400' };
+const NAV = [
+  { to: '/admin', label: 'Resumen', icon: LayoutDashboard, end: true },
+  { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
+  { to: '/admin/pedidos', label: 'Pedidos', icon: Package },
+  { to: '/admin/auditoria', label: 'Auditoría', icon: ScrollText },
+  { to: '/admin/ayuda', label: 'Ayuda', icon: HelpCircle },
+];
 
-const AdminHome = () => (
-  <div>
-    <h2 className="text-2xl font-bold text-brand-text mb-2">Panel administrativo</h2>
-    <p className="text-brand-textMuted text-sm">Gestiona usuarios, pedidos y configuración del sistema.</p>
-  </div>
-);
+const Sidebar = ({ open, setOpen, user, logout }) => {
+  const display = user?.name || user?.email || 'Administrador';
+  const initial = display.charAt(0).toUpperCase();
 
-const Sidebar = ({ open, setOpen, user, logout }) => (
-  <>
-    {open && (
-      <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setOpen(false)} aria-hidden="true" />
-    )}
-    <aside
-      className={`fixed md:static top-0 left-0 z-40 h-full md:h-auto w-60 bg-brand-dark/95 md:bg-transparent border-r border-black/10 md:border-0 p-4 transition-transform ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
-      aria-label="Panel administrativo"
-    >
-      <div className="flex items-center justify-between mb-6 md:mb-4 md:hidden">
-        <div className="flex items-center gap-2">
-          <ShieldCheck size={16} className="text-brand-accent" aria-hidden="true" />
-          <span className="font-bold text-brand-text text-sm">Admin</span>
-        </div>
-        <button onClick={() => setOpen(false)} className="p-1 text-brand-textMuted hover:text-brand-text">
-          <XIcon size={18} aria-hidden="true" />
-        </button>
-      </div>
-
-      <div className="px-2 pb-4 border-b border-black/10 md:border-0 md:pb-0">
-        <div className="flex items-center gap-3 mb-4 md:mb-6">
-          <div className="w-8 h-8 rounded-full bg-brand-accent/20 border border-brand-accent/40 flex items-center justify-center text-brand-accent text-xs font-bold">
-            {(user?.name || user?.email?.split('@')[0] || 'A').charAt(0).toUpperCase()}
+  return (
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        aria-label="Panel administrativo"
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white p-4 shadow-2xl transition-transform duration-300 lg:sticky lg:top-24 lg:z-auto lg:max-h-[calc(100vh-7rem)] lg:w-60 lg:flex-none lg:translate-x-0 lg:self-start lg:rounded-2xl lg:border lg:border-brand-border lg:shadow-card ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="mb-4 flex items-center justify-between lg:hidden">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-accent text-white">
+              <ShieldCheck size={16} aria-hidden="true" />
+            </span>
+            <span className="text-sm font-bold text-brand-text">Administración</span>
           </div>
-          <div className="hidden md:flex flex-col">
-            <span className="text-xs font-semibold text-brand-text">{user?.name || user?.email || 'Administrador'}</span>
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${ROLE_TONE.admin}`}>Administrador</span>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-brand-textMuted hover:bg-black/5 hover:text-brand-text"
+            aria-label="Cerrar menú"
+          >
+            <XIcon size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl bg-brand-dark p-3">
+          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent text-sm font-bold text-white">
+            {initial}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-brand-text">{display}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-accent">Administrador</p>
           </div>
         </div>
-      </div>
 
-      <div className="overflow-y-auto custom-scrollbar flex-1 pr-2 md:pr-0">
-        <nav className="space-y-1">
-          {[
-            { to: '/admin', label: 'Resumen', icon: LayoutDashboard, end: true },
-            { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
-            { to: '/admin/pedidos', label: 'Pedidos', icon: Package },
-            { to: '/admin/ayuda', label: 'Ayuda', icon: HelpCircle },
-          ].map((n) => (
+        <nav className="custom-scrollbar mt-4 flex-1 space-y-1 overflow-y-auto">
+          {NAV.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.end}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-brand-accent/10 text-brand-accent'
-                    : 'text-brand-textMuted hover:text-brand-text hover:bg-black/5'
+                    ? 'bg-brand-accent text-white shadow-soft'
+                    : 'text-brand-textMuted hover:bg-brand-dark hover:text-brand-text'
                 }`
               }
             >
-              <n.icon size={16} aria-hidden="true" />
+              <n.icon size={18} aria-hidden="true" />
               {n.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="mt-6 pt-4 border-t border-black/10 space-y-1">
+        <div className="mt-4 border-t border-brand-border pt-4">
           <button
+            type="button"
             onClick={() => { setOpen(false); logout(); }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
           >
-            <LogOutIcon size={16} aria-hidden="true" /> Cerrar sesión
+            <LogOut size={18} aria-hidden="true" /> Cerrar sesión
           </button>
         </div>
-      </div>
-    </aside>
-  </>
-);
+      </aside>
+    </>
+  );
+};
 
 const Admin = () => {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
+
+  const clean = pathname.replace(/\/$/, '') || '/';
+  const current = NAV.find((n) => (n.end ? clean === n.to : clean.startsWith(n.to))) || NAV[0];
+
   return (
-    <div className="flex gap-6">
-      <button onClick={() => setOpen(true)} className="md:hidden fixed bottom-4 left-4 z-20 p-3 rounded-full bg-brand-accent text-brand-dark shadow-lg">
-        <Menu size={20} aria-label="Abrir menú" />
-      </button>
+    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+      {/* Barra superior móvil */}
+      <div className="card-static flex items-center justify-between p-3 lg:hidden">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-accent/10 text-brand-accent">
+            <current.icon size={18} aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Administración</p>
+            <p className="text-sm font-bold text-brand-text">{current.label}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-border text-brand-text hover:bg-brand-dark"
+          aria-label="Abrir menú"
+        >
+          <Menu size={20} aria-hidden="true" />
+        </button>
+      </div>
+
       <Sidebar open={open} setOpen={setOpen} user={user} logout={logout} />
-      <div className="flex-1 min-w-0">
+
+      <div className="min-w-0 flex-1">
         <Routes>
           <Route index element={<AdminHome />} />
           <Route path="usuarios" element={<AdminUsers />} />
           <Route path="pedidos" element={<AdminOrders />} />
+          <Route path="auditoria" element={<AdminAudit />} />
           <Route path="ayuda" element={<Help />} />
-          <Route path="*" element={<AdminHome />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
     </div>
@@ -110,4 +156,3 @@ const Admin = () => {
 };
 
 export default Admin;
-
