@@ -6,6 +6,8 @@ import { useToast } from '../../components/useToast';
 import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import { Package } from 'lucide-react';
 
+const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+
 const commercialLabels = {
   draft: 'Borrador',
   pending_confirmation: 'Pendiente de confirmación',
@@ -33,6 +35,7 @@ const commercialTone = {
 };
 
 const paymentLabels = {
+  unpaid: 'Sin pagar',
   approved: 'Aprobado',
   pending: 'Pendiente',
   in_process: 'En proceso',
@@ -42,6 +45,7 @@ const paymentLabels = {
 };
 
 const paymentTone = {
+  unpaid: 'neutral',
   approved: 'ok',
   pending: 'warn',
   in_process: 'warn',
@@ -51,15 +55,15 @@ const paymentTone = {
 };
 
 const tones = {
-  ok: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-  info: 'bg-brand-accent/10 text-brand-accent border-brand-accent/30',
-  warn: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-  bad: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
-  neutral: 'bg-black/5 text-brand-textMuted border-brand-border',
+  ok: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  info: 'bg-sky-50 text-sky-700 ring-sky-600/20',
+  warn: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  bad: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  neutral: 'bg-slate-100 text-slate-700 ring-slate-500/20',
 };
 
 const Badge = ({ tone = 'neutral', children }) => (
-  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium border whitespace-nowrap ${tones[tone]}`}>
+  <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${tones[tone] || tones.neutral}`}>
     {children}
   </span>
 );
@@ -80,7 +84,9 @@ const formatAmount = (amount, currency) => {
 const formatDate = (value) => {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO');
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 export const OrdersPage = () => {
@@ -112,14 +118,14 @@ export const OrdersPage = () => {
   if (loading) return <PageLoader />;
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Tus pedidos"
         description="Consulta el estado de tus solicitudes de sticker y productos."
       />
 
-      <div className="card-static p-6 lg:p-8">
-        {orders.length === 0 ? (
+      {orders.length === 0 ? (
+        <div className={`${panel} p-6 lg:p-8`}>
           <EmptyState
             icon={Package}
             title="No tienes pedidos registrados"
@@ -129,48 +135,82 @@ export const OrdersPage = () => {
               Ver productos
             </Link>
           </EmptyState>
-        ) : (
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-left text-sm border-collapse min-w-[640px]">
-              <thead>
-                <tr className="border-b border-brand-border text-xs uppercase tracking-wider text-brand-textMuted">
-                  <th className="px-2 pb-3 font-semibold">Número</th>
-                  <th className="px-2 pb-3 font-semibold">Producto</th>
-                  <th className="px-2 pb-3 font-semibold">Estado</th>
-                  <th className="px-2 pb-3 font-semibold">Pago</th>
-                  <th className="px-2 pb-3 font-semibold">Total</th>
-                  <th className="px-2 pb-3 font-semibold">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((o) => (
-                  <tr key={o.id} className="border-b border-brand-border/50 hover:bg-black/[0.03] transition-colors">
-                    <td className="px-2 py-4 text-brand-text font-mono text-xs">{o.order_number}</td>
-                    <td className="px-2 py-4 text-brand-textMuted">{o.product_name}</td>
-                    <td className="px-2 py-4">
-                      <Badge tone={commercialTone[o.commercial_status]}>
-                        {commercialLabels[o.commercial_status] || o.commercial_status}
-                      </Badge>
-                    </td>
-                    <td className="px-2 py-4">
-                      <Badge tone={paymentTone[o.payment_status]}>
-                        {paymentLabels[o.payment_status] || o.payment_status || '—'}
-                      </Badge>
-                    </td>
-                    <td className="px-2 py-4 text-brand-text whitespace-nowrap">
-                      {formatAmount(o.total_amount, o.currency)}
-                    </td>
-                    <td className="px-2 py-4 text-brand-textMuted whitespace-nowrap">{formatDate(o.created_at)}</td>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-brand-textMuted">
+            {orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}
+          </p>
+
+          {/* Escritorio */}
+          <div className={`${panel} hidden overflow-hidden md:block`}>
+            <div className="custom-scrollbar overflow-x-auto">
+              <table className="table w-full text-left text-sm">
+                <thead className="bg-brand-dark/70 text-xs font-semibold uppercase tracking-wider text-brand-textMuted">
+                  <tr>
+                    <th scope="col" className="px-5 py-3">Número</th>
+                    <th scope="col" className="px-5 py-3">Producto</th>
+                    <th scope="col" className="px-5 py-3">Estado</th>
+                    <th scope="col" className="px-5 py-3">Pago</th>
+                    <th scope="col" className="px-5 py-3 text-right">Total</th>
+                    <th scope="col" className="px-5 py-3">Fecha</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-brand-border">
+                  {orders.map((o) => (
+                    <tr key={o.id} className="transition-colors hover:bg-brand-dark/60">
+                      <td className="whitespace-nowrap px-5 py-4 font-mono text-xs font-semibold text-brand-text">{o.order_number}</td>
+                      <td className="px-5 py-4 text-brand-text">{o.product_name}</td>
+                      <td className="px-5 py-4">
+                        <Badge tone={commercialTone[o.commercial_status]}>
+                          {commercialLabels[o.commercial_status] || o.commercial_status}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-4">
+                        <Badge tone={paymentTone[o.payment_status]}>
+                          {paymentLabels[o.payment_status] || o.payment_status || '—'}
+                        </Badge>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-brand-text">
+                        {formatAmount(o.total_amount, o.currency)}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-brand-textMuted">{formatDate(o.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Móvil */}
+          <ul className="space-y-3 md:hidden">
+            {orders.map((o) => (
+              <li key={o.id} className={`${panel} p-4`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs font-semibold text-brand-text">{o.order_number}</p>
+                    <p className="mt-1 text-sm font-semibold text-brand-text">{o.product_name}</p>
+                    <p className="mt-0.5 text-xs text-brand-textMuted">{formatDate(o.created_at)}</p>
+                  </div>
+                  <p className="whitespace-nowrap text-sm font-bold text-brand-text">
+                    {formatAmount(o.total_amount, o.currency)}
+                  </p>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5 border-t border-brand-border pt-3">
+                  <Badge tone={commercialTone[o.commercial_status]}>
+                    {commercialLabels[o.commercial_status] || o.commercial_status}
+                  </Badge>
+                  <Badge tone={paymentTone[o.payment_status]}>
+                    Pago: {paymentLabels[o.payment_status] || o.payment_status || '—'}
+                  </Badge>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 };
 
 export default OrdersPage;
-

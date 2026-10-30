@@ -7,7 +7,6 @@ import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import {
   Download,
   Link as LinkIcon,
-  QrCode,
   Check,
   Clock,
   AlertTriangle,
@@ -20,24 +19,10 @@ import {
 
 const QR_PRICE_COP = 30000;
 
+const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+
 const getQrProduct = (products) =>
   (products || []).find((p) => p.slug === 'qr-digital-basico') || null;
-
-const commercialLabels = {
-  pending_confirmation: 'Pendiente de confirmación',
-  pending_payment: 'Pendiente de pago',
-  paid: 'Pagado',
-  rejected: 'Rechazado',
-  cancelled: 'Cancelado',
-};
-const paymentLabels = {
-  unpaid: 'No pagado',
-  pending: 'Pendiente',
-  in_process: 'En proceso',
-  approved: 'Aprobado',
-  rejected: 'Rechazado',
-  cancelled: 'Cancelado',
-};
 
 const formatAmount = (amount) => {
   try {
@@ -50,6 +35,69 @@ const formatAmount = (amount) => {
     return `$${amount}`;
   }
 };
+
+const STEP_LABELS = ['Pago', 'Activación', 'QR listo'];
+const STEP_INDEX = {
+  no_order: 0,
+  unpaid: 0,
+  under_review: 0,
+  rejected: 0,
+  approved_no_qr: 1,
+  active: 2,
+};
+
+const Stepper = ({ current }) => (
+  <ol className="mb-6 flex items-center" aria-label="Progreso de activación">
+    {STEP_LABELS.map((label, i) => {
+      const done = i < current || current === 2;
+      const active = i === current && current !== 2;
+      return (
+        <li key={label} className={`flex items-center ${i < STEP_LABELS.length - 1 ? 'flex-1' : ''}`}>
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-bold ring-1 ${
+                done
+                  ? 'bg-brand-accent text-white ring-brand-accent'
+                  : active
+                    ? 'bg-brand-accent/10 text-brand-accent ring-brand-accent/40'
+                    : 'bg-white text-brand-textMuted ring-brand-border'
+              }`}
+            >
+              {done ? <Check size={15} aria-hidden="true" /> : i + 1}
+            </span>
+            <span className={`hidden text-sm font-medium sm:inline ${done || active ? 'text-brand-text' : 'text-brand-textMuted'}`}>
+              {label}
+            </span>
+          </div>
+          {i < STEP_LABELS.length - 1 && (
+            <span className={`mx-3 h-px flex-1 ${i < current ? 'bg-brand-accent' : 'bg-brand-border'}`} aria-hidden="true" />
+          )}
+        </li>
+      );
+    })}
+  </ol>
+);
+
+const TONES = {
+  amber: 'bg-amber-50 text-amber-600 ring-amber-600/15',
+  emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-600/15',
+  rose: 'bg-rose-50 text-rose-600 ring-rose-600/15',
+};
+
+const StateCard = ({ icon: Icon, tone = 'amber', title, children, actions }) => (
+  <section className={`${panel} p-5 sm:p-6 lg:p-8`}>
+    <div className="flex items-start gap-4">
+      <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 ${TONES[tone]}`}>
+        <Icon size={24} aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-lg font-semibold text-brand-text">{title}</h2>
+        <div className="mt-1 text-sm leading-relaxed text-brand-textMuted">{children}</div>
+      </div>
+    </div>
+    {actions && <div className="mt-6 flex flex-wrap items-center gap-3">{actions}</div>}
+  </section>
+);
 
 export const QrPage = () => {
   const toast = useToast();
@@ -123,7 +171,7 @@ export const QrPage = () => {
         const qrOrder = orders.find((o) => o.product_slug === 'qr-digital-basico');
         setOrder(qrOrder || null);
         setState(deriveState(null, qrOrder));
-      } catch (error) {
+      } catch {
         if (!mounted) return;
         toastRef.current.error('No se pudo cargar el estado de tu QR');
         setState('error');
@@ -135,7 +183,7 @@ export const QrPage = () => {
       mounted = false;
       if (objectUrl) window.URL.revokeObjectURL(objectUrl);
     };
-  }, [deriveState, toast]);
+  }, [deriveState]);
 
   useEffect(() => {
     if (!qrProduct) {
@@ -209,7 +257,6 @@ export const QrPage = () => {
       setState('active');
       toast.success('QR activado. Ya puedes descargarlo y compartir tu enlace público.');
     } catch (error) {
-      setActing(false);
       try {
         showApiError(error);
       } catch (err) {
@@ -230,7 +277,7 @@ export const QrPage = () => {
       link.click();
       link.remove();
       toast.success('QR descargado');
-    } catch (err) {
+    } catch {
       toast.error('No se pudo descargar el QR');
     }
   };
@@ -246,184 +293,185 @@ export const QrPage = () => {
     }
   };
 
-  const formatMoney = (amount) => formatAmount(amount);
-
   if (loading) return <PageLoader />;
 
-  const isActing = acting;
+  const price = formatAmount(QR_PRICE_COP);
+  const stepCurrent = STEP_INDEX[state];
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Mi código QR de emergencia"
         description="El QR funcional y tu página pública de emergencia quedan habilitados tras el pago único de $30.000 COP."
       />
 
-      {/* --- Sin compra: estado pendiente --- */}
+      {stepCurrent !== undefined && <Stepper current={stepCurrent} />}
+
+      {/* --- Sin compra --- */}
       {state === 'no_order' && (
-        <div className="card-static p-6 lg:p-8 mb-8 border-rose-500/20">
-          <div className="flex items-start gap-4 mb-6">
-            <AlertCircle className="w-8 h-8 text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <section className={`${panel} p-5 sm:p-6 lg:p-8`}>
+          <div className="flex items-start gap-4">
+            <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 ${TONES.amber}`}>
+              <AlertCircle size={24} aria-hidden="true" />
+            </span>
             <div>
-              <h2 className="font-semibold text-brand-text text-lg">Tu QR de emergencia todavía no está activado</h2>
-              <p className="text-brand-textMuted text-sm leading-relaxed mt-1">
+              <h2 className="text-lg font-semibold text-brand-text">Tu QR de emergencia todavía no está activado</h2>
+              <p className="mt-1 text-sm leading-relaxed text-brand-textMuted">
                 Completa tu perfil, revisa qué información compartirás y realiza el pago único de{' '}
-                <span className="font-bold text-brand-text">{formatMoney(QR_PRICE_COP)}</span> para habilitar tu QR.
+                <span className="font-bold text-brand-text">{price}</span> para habilitar tu QR.
               </p>
             </div>
           </div>
 
-          <div className="rounded-lg border border-brand-border bg-brand-dark/60 p-5 mb-6">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted mb-3">
-              Qué estás adquiriendo
-            </h3>
-            <ul className="space-y-2 text-sm text-brand-textMuted">
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-brand-accent flex-shrink-0" aria-hidden="true" />
-                <span>Activación digital de tu código QR de emergencia (página pública autorizada).</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-brand-accent flex-shrink-0" aria-hidden="true" />
-                <span>Pago único de <span className="font-bold text-brand-text">{formatMoney(QR_PRICE_COP)}</span>. Sin suscripción mensual ni anual.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-brand-accent flex-shrink-0" aria-hidden="true" />
-                <span>Sin cobros automáticos de renovación.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-brand-accent flex-shrink-0" aria-hidden="true" />
-                <span>El QR contiene solo el enlace con tu identificador, nunca tus datos personales ni médicos.</span>
-              </li>
+          <div className="mt-6 rounded-xl border border-brand-border bg-brand-dark/60 p-5">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted">
+                Qué estás adquiriendo
+              </h3>
+              <p className="text-right">
+                <span className="text-2xl font-extrabold tracking-tight text-brand-accent">{price}</span>
+                <span className="block text-[11px] text-brand-textMuted">pago único</span>
+              </p>
+            </div>
+            <ul className="space-y-2.5 text-sm text-brand-textMuted">
+              {[
+                'Activación digital de tu código QR de emergencia (página pública autorizada).',
+                <>Pago único de <span className="font-bold text-brand-text">{price}</span>. Sin suscripción mensual ni anual.</>,
+                'Sin cobros automáticos de renovación.',
+                'El QR contiene solo el enlace con tu identificador, nunca tus datos personales ni médicos.',
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
+                    <Check size={12} aria-hidden="true" />
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
-            <p className="text-[11px] text-brand-textMuted mt-3 leading-relaxed">
+            <p className="mt-4 text-[11px] leading-relaxed text-brand-textMuted">
               El sticker físico es un producto adicional con costo y envío separados; no está incluido en esta
               activación digital.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={createOrderAndPay}
-              disabled={isActing}
-              variant="primary"
-              className="lg:px-8"
-            >
-              <CreditCard className="w-4 h-4" />{' '}
-              {isActing ? 'Creando pedido...' : `Activar mi QR por ${formatMoney(QR_PRICE_COP)}`}
+          <div className="mt-6">
+            <Button onClick={createOrderAndPay} disabled={acting} variant="primary" className="w-full sm:w-auto sm:px-8">
+              <CreditCard size={16} /> {acting ? 'Creando pedido...' : `Activar mi QR por ${price}`}
             </Button>
           </div>
-        </div>
+        </section>
       )}
 
       {/* --- Pago pendiente / en revisión --- */}
       {(state === 'unpaid' || state === 'under_review') && (
-        <div className="card-static p-6 lg:p-8 mb-8">
-          <div className="flex items-start gap-4 mb-6">
-            <Clock className="w-8 h-8 text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h2 className="font-semibold text-brand-text text-lg">
-                {state === 'under_review' ? 'Pago en revisión' : 'Pago pendiente'}
-              </h2>
-              <p className="text-brand-textMuted text-sm leading-relaxed mt-1">
-                {state === 'under_review'
-                  ? 'Tu pago está siendo procesado por Mercado Pago. Una vez aprobado, podrás activar tu QR.'
-                  : 'Tienes un pedido pendiente por ' + formatMoney(QR_PRICE_COP) + '. Completa el pago para activar tu QR.'}
-              </p>
-            </div>
-          </div>
-          <div className="rounded-lg border border-brand-border bg-brand-dark/60 p-4 mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <CreditCard className="w-4 h-4 text-brand-accent" aria-hidden="true" />
-              <span className="text-sm text-brand-text">Pedido {order?.order_number}</span>
-            </div>
-            <div className="text-xs text-brand-textMuted space-y-1">
-              <div>Producto: Activación de QR digital</div>
-              <div>Importe: <span className="font-bold text-brand-text">{formatMoney(QR_PRICE_COP)}</span></div>
-              <div>Pago único, sin suscripción.</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={retryPayment} disabled={isActing} variant="primary">
-              {isActing ? 'Procesando...' : 'Ir al pago'}
+        <StateCard
+          icon={Clock}
+          tone="amber"
+          title={state === 'under_review' ? 'Pago en revisión' : 'Pago pendiente'}
+          actions={
+            <Button onClick={retryPayment} disabled={acting} variant="primary">
+              {acting ? 'Procesando...' : 'Ir al pago'}
             </Button>
-          </div>
-        </div>
+          }
+        >
+          <p>
+            {state === 'under_review'
+              ? 'Tu pago está siendo procesado por Mercado Pago. Una vez aprobado, podrás activar tu QR.'
+              : `Tienes un pedido pendiente por ${price}. Completa el pago para activar tu QR.`}
+          </p>
+          <dl className="mt-4 space-y-2 rounded-xl border border-brand-border bg-brand-dark/60 p-4 text-xs">
+            <div className="flex justify-between gap-3">
+              <dt>Pedido</dt>
+              <dd className="font-mono font-semibold text-brand-text">{order?.order_number || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt>Producto</dt>
+              <dd className="text-brand-text">Activación de QR digital</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt>Importe</dt>
+              <dd className="font-bold text-brand-text">{price}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt>Modalidad</dt>
+              <dd className="text-brand-text">Pago único, sin suscripción</dd>
+            </div>
+          </dl>
+        </StateCard>
       )}
 
       {/* --- Pago aprobado, QR por activar --- */}
       {state === 'approved_no_qr' && (
-        <div className="card-static p-6 lg:p-8 mb-8 border-emerald-500/20">
-          <div className="flex items-start gap-4 mb-6">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h2 className="font-semibold text-brand-text text-lg">Pago aprobado</h2>
-              <p className="text-brand-textMuted text-sm leading-relaxed mt-1">
-                El pago de {formatMoney(QR_PRICE_COP)} fue verificado. Ahora activa tu QR para generar tu
-                identificador público y descargarlo.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={activateQr} disabled={isActing} variant="primary" className="lg:px-8">
-              {isActing ? 'Activando...' : 'Activar mi QR'}
+        <StateCard
+          icon={CheckCircle2}
+          tone="emerald"
+          title="Pago aprobado"
+          actions={
+            <Button onClick={activateQr} disabled={acting} variant="primary" className="sm:px-8">
+              {acting ? 'Activando...' : 'Activar mi QR'}
             </Button>
-          </div>
-        </div>
+          }
+        >
+          El pago de {price} fue verificado. Ahora activa tu QR para generar tu identificador público y
+          descargarlo.
+        </StateCard>
       )}
 
       {/* --- QR activo --- */}
       {state === 'active' && identifier && (
-        <div className="grid lg:grid-cols-5 gap-6 mb-8">
-          <div className="lg:col-span-3 card-static p-6 lg:p-8">
-            <div className="flex justify-center mb-6">
-              <div className="rounded-2xl bg-white p-5 shadow-glow">
+        <div className="grid gap-6 lg:grid-cols-5">
+          <section className={`${panel} p-5 sm:p-6 lg:col-span-3 lg:p-8`}>
+            <div className="mb-6 flex justify-center">
+              <div className="rounded-2xl border border-brand-border bg-white p-4 shadow-[0_20px_50px_-20px_rgba(159,18,57,0.35)] sm:p-5">
                 {qrImage ? (
-                  <img src={qrImage} alt="Código QR de emergencia" className="w-56 h-56 sm:w-64 sm:h-64" />
+                  <img src={qrImage} alt="Código QR de emergencia" className="h-56 w-56 sm:h-64 sm:w-64" />
                 ) : (
-                  <div className="w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center text-sm text-slate-500 text-center">
+                  <div className="flex h-56 w-56 items-center justify-center text-center text-sm text-slate-500 sm:h-64 sm:w-64">
                     Imagen no disponible
                   </div>
                 )}
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
+            <div className="mb-4 flex flex-col justify-center gap-3 sm:flex-row">
               <Button onClick={downloadQr} disabled={!qrImage} variant="primary">
-                <Download className="w-4 h-4" /> Descargar QR
+                <Download size={16} /> Descargar QR
               </Button>
               <Button variant="secondary" onClick={copyLink}>
-                {copied ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+                {copied ? <Check size={16} /> : <LinkIcon size={16} />}
                 {copied ? 'Copiado' : 'Copiar enlace'}
               </Button>
             </div>
-            <p className="mt-4 text-center text-xs text-brand-textMuted break-all">{qrUrl}</p>
-            <p className="mt-2 text-center text-[11px] text-brand-textMuted">
+            <p className="break-all rounded-lg bg-brand-dark/70 px-3 py-2 text-center font-mono text-xs text-brand-textMuted">
+              {qrUrl}
+            </p>
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-brand-textMuted">
               Escanear este QR abre tu página pública de emergencia. El código solo contiene el enlace, nunca
               tus datos personales.
             </p>
-          </div>
+          </section>
 
-          <aside className="lg:col-span-2 card-static p-6 h-fit">
-            <h2 className="font-semibold text-brand-text mb-4">Estado del QR</h2>
-            <div className="flex items-center gap-2 mb-5">
-              <Check className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-              <span className="text-emerald-300 text-sm font-medium">Activo y verificable públicamente</span>
+          <aside className={`${panel} h-fit p-5 sm:p-6 lg:col-span-2`}>
+            <h2 className="mb-4 text-base font-semibold text-brand-text">Estado del QR</h2>
+            <div className="mb-5 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700">
+              <CheckCircle2 size={16} className="flex-none" aria-hidden="true" />
+              Activo y verificable públicamente
             </div>
-            <div className="space-y-3 text-sm text-brand-textMuted mb-6">
-              <div className="flex justify-between">
-                <span>Identificador</span>
-                <span className="font-mono text-brand-text truncate max-w-xs">{identifier.value}</span>
+            <dl className="mb-6 space-y-3 text-sm">
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Identificador</dt>
+                <dd className="mt-0.5 break-all font-mono text-xs text-brand-text">{identifier.value}</dd>
               </div>
-              <div className="flex justify-between">
-                <span>Enlace público</span>
-                <span className="font-mono text-brand-text truncate max-w-xs">{qrUrl}</span>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Enlace público</dt>
+                <dd className="mt-0.5 break-all font-mono text-xs text-brand-text">{qrUrl}</dd>
               </div>
-              <div className="flex justify-between">
-                <span>Tipo de pago</span>
-                <span>Pago único, sin suscripción</span>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Tipo de pago</dt>
+                <dd className="mt-0.5 text-brand-text">Pago único, sin suscripción</dd>
               </div>
-            </div>
-            <Button variant="outline" onClick={() => toast.info('Desactivación: disponible desde el panel de privacidad')}>
-              <Lock className="w-4 h-4" /> Desactivar QR
+            </dl>
+            <Button variant="outline" className="w-full" onClick={() => toast.info('Desactivación: disponible desde el panel de privacidad')}>
+              <Lock size={16} /> Desactivar QR
             </Button>
           </aside>
         </div>
@@ -431,28 +479,24 @@ export const QrPage = () => {
 
       {/* --- Rechazado / cancelado --- */}
       {state === 'rejected' && (
-        <div className="card-static p-6 lg:p-8 mb-8 border-rose-500/20">
-          <div className="flex items-start gap-4 mb-6">
-            <AlertTriangle className="w-8 h-8 text-rose-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h2 className="font-semibold text-brand-text text-lg">Pago no completado</h2>
-              <p className="text-brand-textMuted text-sm leading-relaxed mt-1">
-                El pago de tu pedido no fue aprobado (rechazado o cancelado). Tu QR no está activo y no se
-                expone información pública. Puedes intentar nuevamente.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={retryPayment} disabled={isActing} variant="primary">
-              {isActing ? 'Procesando...' : 'Intentar nuevamente'}
+        <StateCard
+          icon={AlertTriangle}
+          tone="rose"
+          title="Pago no completado"
+          actions={
+            <Button onClick={retryPayment} disabled={acting} variant="primary">
+              {acting ? 'Procesando...' : 'Intentar nuevamente'}
             </Button>
-          </div>
-        </div>
+          }
+        >
+          El pago de tu pedido no fue aprobado (rechazado o cancelado). Tu QR no está activo y no se
+          expone información pública. Puedes intentar nuevamente.
+        </StateCard>
       )}
 
       {/* --- Desactivado --- */}
       {state === 'deactivated' && (
-        <div className="card-static p-6 lg:p-8 mb-8 border-rose-500/20">
+        <div className={`${panel} p-6 lg:p-8`}>
           <EmptyState
             icon={AlertCircle}
             title="QR desactivado"
@@ -463,15 +507,15 @@ export const QrPage = () => {
 
       {/* --- Error --- */}
       {state === 'error' && (
-        <div className="card-static p-6 lg:p-8 mb-8">
+        <div className={`${panel} p-6 lg:p-8`}>
           <EmptyState
             icon={AlertCircle}
             title="No se pudo cargar el estado del QR"
             text="Intenta nuevamente en unos momentos."
           />
-          <div className="mt-6">
+          <div className="mt-6 flex justify-center">
             <Button onClick={() => window.location.reload()} variant="outline">
-              <RotateCcw className="w-4 h-4" /> Recargar
+              <RotateCcw size={16} /> Recargar
             </Button>
           </div>
         </div>

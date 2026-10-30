@@ -5,10 +5,14 @@ import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
 import { Button, Input, Label, Textarea } from '../../components/ui';
 import { PageTitle, PageLoader } from '../../components/DashPage';
-import { Save, Image, ImageOff, AlertTriangle, Stethoscope, Pill, FileText, Upload, Trash2, Mail, Lock } from 'lucide-react';
+import {
+  Save, ImageOff, AlertTriangle, Stethoscope, Pill, FileText, Upload, Trash2, Mail, Lock, User, Eye, EyeOff,
+} from 'lucide-react';
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 // Campos que el usuario puede completar. Ninguno es obligatorio salvo el nombre
 // público cuando se desea mostrar en la página de emergencia.
@@ -17,11 +21,10 @@ const fields = [
     key: 'display_name',
     label: 'Nombre completo',
     category: 'Identificación',
-    icon: Mail,
+    icon: User,
     input: 'text',
     placeholder: 'Juan Pérez',
     hint: 'Nombre que se mostrará en tu página pública de emergencia.',
-    sensitive: false,
   },
   {
     key: 'allergies',
@@ -31,7 +34,6 @@ const fields = [
     input: 'textarea',
     placeholder: 'Ejemplo: Penicilina, mariscos',
     hint: 'Información crítica para el personal de salud.',
-    sensitive: true,
   },
   {
     key: 'medical_conditions',
@@ -41,7 +43,6 @@ const fields = [
     input: 'textarea',
     placeholder: 'Ejemplo: Asma, diabetes, hipertensión',
     hint: 'Condiciones que deben saberse en una emergencia.',
-    sensitive: true,
   },
   {
     key: 'medications',
@@ -51,7 +52,6 @@ const fields = [
     input: 'textarea',
     placeholder: 'Ejemplo: Salbutamol (inhalador) 200 mcg, cada 6 horas',
     hint: 'Medicamentos que tomas regularmente.',
-    sensitive: true,
   },
   {
     key: 'additional_info',
@@ -61,11 +61,10 @@ const fields = [
     input: 'textarea',
     placeholder: 'Tipo de sangre, grupo, notas relevantes...',
     hint: 'Cualquier otra información que pueda salvarte la vida.',
-    sensitive: true,
   },
 ];
 
-const categories = ['Identificación', 'Médico', 'Adicional'];
+const PRIVACY_KEYS = ['display_name', 'photo_url', 'allergies', 'medical_conditions', 'medications', 'additional_info'];
 
 const emptyForm = {
   display_name: '',
@@ -78,36 +77,97 @@ const emptyForm = {
   privacy: {},
 };
 
+const mapPrivacy = (privacy = {}) =>
+  PRIVACY_KEYS.reduce((acc, k) => ({ ...acc, [k]: privacy[k] === true }), {});
+
+const VisBadge = ({ pub }) => (
+  <span
+    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${
+      pub ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-slate-100 text-slate-600 ring-slate-500/20'
+    }`}
+  >
+    {pub ? <Eye size={11} aria-hidden="true" /> : <EyeOff size={11} aria-hidden="true" />}
+    {pub ? 'Público' : 'Privado'}
+  </span>
+);
+
+const VisSwitch = ({ id, label, checked, onChange }) => (
+  <div className="flex items-center justify-between gap-3 rounded-lg bg-brand-dark/70 px-3 py-2.5">
+    <label htmlFor={id} className="cursor-pointer text-xs text-brand-textMuted">
+      {checked ? 'Visible en tu página de emergencia' : 'Solo tú puedes verlo'}
+    </label>
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={`${label}: ${checked ? 'público' : 'privado'}`}
+      onClick={onChange}
+      className={`relative h-6 w-11 flex-none rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 ${
+        checked ? 'bg-brand-accent' : 'bg-slate-300'
+      }`}
+    >
+      <span
+        className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  </div>
+);
+
+const Section = ({ title, description, children }) => (
+  <section className="space-y-5">
+    <div>
+      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted">{title}</h2>
+      {description && <p className="mt-1 max-w-md text-xs text-brand-textMuted">{description}</p>}
+    </div>
+    {children}
+  </section>
+);
+
+const FieldBlock = ({ f, value, isPublic, onChange, onToggle }) => {
+  const Icon = f.icon;
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Icon size={15} className="text-brand-accent" aria-hidden="true" />
+        <Label htmlFor={`f_${f.key}`} className="!mb-0">{f.label}</Label>
+        <VisBadge pub={isPublic} />
+      </div>
+      {f.input === 'textarea' ? (
+        <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="text-base sm:text-sm" />
+      ) : (
+        <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm" />
+      )}
+      {f.hint && <p className="text-xs text-brand-textMuted">{f.hint}</p>}
+      <VisSwitch id={`pub_${f.key}`} label={f.label} checked={isPublic} onChange={onToggle} />
+    </div>
+  );
+};
+
 export const ProfilePage = () => {
   const { user } = useAuth();
   const toast = useToast();
-  const formRef = useRef(null);
+  const fileRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dirty, setDirty] = useState(false);
-  const unloadHandlerBound = useRef(false);
 
   const markDirty = useCallback(() => setDirty(true), []);
 
-  const resetDirty = useCallback(() => setDirty(false), []);
-
+  // Avisa si se intenta salir con cambios sin guardar.
   useEffect(() => {
+    if (!dirty) return undefined;
     const handleBeforeUnload = (e) => {
-      if (!dirty) return;
       e.preventDefault();
       e.returnValue = 'Tienes cambios sin guardar. ¿Salir de todos modos?';
       return e.returnValue;
     };
-    if (dirty && !unloadHandlerBound.current) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      unloadHandlerBound.current = true;
-    }
-    if (!dirty && unloadHandlerBound.current) {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      unloadHandlerBound.current = false;
-    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [dirty]);
 
   // Escucha sesión caducada (el cliente HTTP lo lanza en 401).
@@ -127,7 +187,6 @@ export const ProfilePage = () => {
         const res = await api.get('/profiles/me');
         if (!mounted) return;
         const p = res.data.profile || res.data;
-        const privacy = p.privacy || {};
         setForm({
           display_name: p.display_name || '',
           allergies: p.allergies || '',
@@ -136,14 +195,7 @@ export const ProfilePage = () => {
           additional_info: p.additional_info || '',
           photo_url: p.photo_url || '',
           photoFile: null,
-          privacy: {
-            display_name: privacy.display_name === true,
-            photo_url: privacy.photo_url === true,
-            allergies: privacy.allergies === true,
-            medical_conditions: privacy.medical_conditions === true,
-            medications: privacy.medications === true,
-            additional_info: privacy.additional_info === true,
-          },
+          privacy: mapPrivacy(p.privacy),
         });
         if (p.photo_url) setPhotoPreview(p.photo_url);
         setDirty(false);
@@ -164,6 +216,7 @@ export const ProfilePage = () => {
 
   const handlePhotoChange = (e) => {
     const file = e.target.files && e.target.files[0];
+    e.target.value = '';
     if (!file) return;
     if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
       toast.error('Tipo de archivo no permitido. Usa JPG, PNG o WebP.');
@@ -247,20 +300,12 @@ export const ProfilePage = () => {
       const res = await api.get('/profiles/me');
       if (res.data.profile) {
         const p = res.data.profile;
-        const privacy = p.privacy || {};
         setPhotoPreview(p.photo_url || null);
         setForm((prev) => ({
           ...prev,
           photo_url: p.photo_url || '',
           photoFile: null,
-          privacy: {
-            display_name: privacy.display_name === true,
-            photo_url: privacy.photo_url === true,
-            allergies: privacy.allergies === true,
-            medical_conditions: privacy.medical_conditions === true,
-            medications: privacy.medications === true,
-            additional_info: privacy.additional_info === true,
-          },
+          privacy: mapPrivacy(p.privacy),
         }));
       }
 
@@ -279,303 +324,180 @@ export const ProfilePage = () => {
 
   if (loading) return <PageLoader />;
 
+  const filled =
+    fields.filter((f) => String(form[f.key] || '').trim()).length + (photoPreview ? 1 : 0);
+  const totalFields = fields.length + 1;
+  const completion = Math.round((filled / totalFields) * 100);
+  const publicCount = PRIVACY_KEYS.filter((k) => privacyPublic(k)).length;
+
+  const blockProps = (f) => ({
+    f,
+    value: form[f.key] || '',
+    isPublic: privacyPublic(f.key),
+    onChange: handleChange(f.key),
+    onToggle: () => togglePrivacy(f.key),
+  });
+
+  const labelFor = { photo_url: 'Fotografía', ...Object.fromEntries(fields.map((f) => [f.key, f.label])) };
+
   return (
-    <div ref={formRef}>
+    <div>
       <PageTitle
         title="Perfil de emergencia"
         description="Registra y administra tu información personal, médica y de contacto. Decides qué se muestra públicamente."
       />
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card-static p-6 lg:p-8 space-y-8">
-          <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <form onSubmit={handleSubmit} noValidate className={`${panel} lg:col-span-2`}>
+          <div className="space-y-10 p-5 sm:p-6 lg:p-8">
             {/* Identificación */}
-            <section aria-labelledby="id-heading">
-              <h2 id="id-heading" className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-textMuted mb-4">
-                Identificación
-              </h2>
-              <div className="space-y-5">
-                {fields
-                  .filter((f) => f.category === 'Identificación')
-                  .map((f) => (
-                    <div key={f.key} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`f_${f.key}`}>{f.label}</Label>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                            privacyPublic(f.key)
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                              : 'bg-black/5 text-brand-textMuted border-brand-border'
-                          }`}
-                        >
-                          {privacyPublic(f.key) ? 'Público' : 'Privado'}
-                        </span>
-                      </div>
-                      {f.key === 'photo_url' ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={handlePhotoChange}
-                              className="flex items-center gap-2 rounded-lg border border-brand-border bg-brand-dark px-3 py-2 text-sm text-brand-textMuted hover:text-brand-text hover:border-brand-accent/40 transition-colors"
-                              aria-label="Subir fotografía"
-                            >
-                              <Upload className="w-4 h-4" /> Seleccionar fotografía
-                            </button>
-                            <input
-                              id="photo_file"
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              className="sr-only"
-                              onChange={handlePhotoChange}
-                            />
-                            {form.photoFile && (
-                              <Button
-                                type="button"
-                                variant="danger"
-                                size="sm"
-                                onClick={removePhoto}
-                                className="ml-2"
-                              >
-                                <Trash2 className="w-3 h-3" /> Quitar
-                              </Button>
-                            )}
-                          </div>
-                          {photoPreview ? (
-                            <div className="relative inline-block">
-                              <img
-                                src={photoPreview}
-                                alt="Vista previa de la fotografía"
-                                className="w-24 h-24 rounded-full object-cover border border-brand-border shadow-sm"
-                              />
-                              <p className="text-[11px] text-brand-textMuted mt-1">
-                                Se mostrará públicamente solo si marcas la fotografía como Pública.
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-brand-textMuted">
-                              La fotografía se almacena de forma privada y solo es pública si así lo autorizas.
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <>
-                          <Input
-                            id={`f_${f.key}`}
-                            type={f.input}
-                            value={form[f.key] || ''}
-                            onChange={handleChange(f.key)}
-                            placeholder={f.placeholder}
-                            className={f.input === 'textarea' ? 'min-h-[100px]' : ''}
-                          />
-                          {f.hint && <p className="text-xs text-brand-textMuted">{f.hint}</p>}
-                          <div className="flex items-center gap-2">
-                            <input
-                              id={`pub_${f.key}`}
-                              type="checkbox"
-                              checked={privacyPublic(f.key)}
-                              onChange={() => togglePrivacy(f.key)}
-                              className="h-4 w-4 rounded border-brand-border text-brand-accent"
-                              aria-label={`${f.label}: público`}
-                            />
-                            <Label htmlFor={`pub_${f.key}`} className="mb-0 text-sm">
-                              Público
-                            </Label>
-                            <span className="ml-auto text-[11px] text-brand-textMuted">
-                              {privacyPublic(f.key) ? 'Visible en tu página de emergencia' : 'Solo tú puedes verlo'}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
+            <Section title="Identificación">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ImageOff size={15} className="text-brand-accent" aria-hidden="true" />
+                  <Label htmlFor="photo_file" className="!mb-0">Fotografía</Label>
+                  <VisBadge pub={privacyPublic('photo_url')} />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-20 w-20 flex-none items-center justify-center overflow-hidden rounded-full bg-brand-dark ring-2 ring-brand-border">
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Vista previa de la fotografía" className="h-full w-full object-cover" />
+                    ) : (
+                      <User size={30} className="text-brand-textMuted/60" aria-hidden="true" />
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
+                      <Upload size={16} /> {photoPreview ? 'Cambiar' : 'Subir fotografía'}
+                    </Button>
+                    {photoPreview && (
+                      <Button type="button" variant="ghost" onClick={removePhoto}>
+                        <Trash2 size={16} /> Quitar
+                      </Button>
+                    )}
+                  </div>
+                  <input
+                    ref={fileRef}
+                    id="photo_file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={handlePhotoChange}
+                  />
+                </div>
+                <p className="text-xs text-brand-textMuted">
+                  JPG, PNG o WebP, máximo 2 MB. Se almacena de forma privada y solo es pública si así lo autorizas.
+                </p>
+                <VisSwitch
+                  id="pub_photo_url"
+                  label="Fotografía"
+                  checked={privacyPublic('photo_url')}
+                  onChange={() => togglePrivacy('photo_url')}
+                />
               </div>
-            </section>
+
+              {fields.filter((f) => f.category === 'Identificación').map((f) => (
+                <FieldBlock key={f.key} {...blockProps(f)} />
+              ))}
+            </Section>
 
             {/* Médico */}
-            <section aria-labelledby="medical-heading">
-              <h2 id="medical-heading" className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-textMuted mb-4">
-                Información médica
-              </h2>
-              <p className="text-xs text-brand-textMuted mb-4 max-w-md">
-                Rellena solo lo que corresponda a tu situación. Ningún campo médico es obligatorio.
-              </p>
-              <div className="space-y-5">
-                {fields
-                  .filter((f) => f.category === 'Médico')
-                  .map((f) => (
-                    <div key={f.key} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`f_${f.key}`}>{f.label}</Label>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                            privacyPublic(f.key)
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                              : 'bg-black/5 text-brand-textMuted border-brand-border'
-                          }`}
-                        >
-                          {privacyPublic(f.key) ? 'Público' : 'Privado'}
-                        </span>
-                      </div>
-                      <Textarea
-                        id={`f_${f.key}`}
-                        value={form[f.key] || ''}
-                        onChange={handleChange(f.key)}
-                        placeholder={f.placeholder}
-                        rows={3}
-                      />
-                      {f.hint && <p className="text-xs text-brand-textMuted">{f.hint}</p>}
-                      <div className="flex items-center gap-2">
-                        <input
-                          id={`pub_${f.key}`}
-                          type="checkbox"
-                          checked={privacyPublic(f.key)}
-                          onChange={() => togglePrivacy(f.key)}
-                          className="h-4 w-4 rounded border-brand-border text-brand-accent"
-                          aria-label={`${f.label}: público`}
-                        />
-                        <Label htmlFor={`pub_${f.key}`} className="mb-0 text-sm">
-                          Público
-                        </Label>
-                        <span className="ml-auto text-[11px] text-brand-textMuted">
-                          {privacyPublic(f.key) ? 'Visible en tu página de emergencia' : 'Solo tú puedes verlo'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </section>
+            <Section title="Información médica" description="Rellena solo lo que corresponda a tu situación. Ningún campo médico es obligatorio.">
+              {fields.filter((f) => f.category === 'Médico').map((f) => (
+                <FieldBlock key={f.key} {...blockProps(f)} />
+              ))}
+            </Section>
 
             {/* Adicional */}
-            <section aria-labelledby="additional-heading">
-              <h2 id="additional-heading" className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-textMuted mb-4">
-                Información adicional
-              </h2>
-              <div className="space-y-5">
-                {fields
-                  .filter((f) => f.category === 'Adicional')
-                  .map((f) => (
-                    <div key={f.key} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`f_${f.key}`}>{f.label}</Label>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                            privacyPublic(f.key)
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                              : 'bg-black/5 text-brand-textMuted border-brand-border'
-                          }`}
-                        >
-                          {privacyPublic(f.key) ? 'Público' : 'Privado'}
-                        </span>
-                      </div>
-                      <Textarea
-                        id={`f_${f.key}`}
-                        value={form[f.key] || ''}
-                        onChange={handleChange(f.key)}
-                        placeholder={f.placeholder}
-                        rows={3}
-                      />
-                      {f.hint && <p className="text-xs text-brand-textMuted">{f.hint}</p>}
-                      <div className="flex items-center gap-2">
-                        <input
-                          id={`pub_${f.key}`}
-                          type="checkbox"
-                          checked={privacyPublic(f.key)}
-                          onChange={() => togglePrivacy(f.key)}
-                          className="h-4 w-4 rounded border-brand-border text-brand-accent"
-                          aria-label={`${f.label}: público`}
-                        />
-                        <Label htmlFor={`pub_${f.key}`} className="mb-0 text-sm">
-                          Público
-                        </Label>
-                        <span className="ml-auto text-[11px] text-brand-textMuted">
-                          {privacyPublic(f.key) ? 'Visible en tu página de emergencia' : 'Solo tú puedes verlo'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </section>
+            <Section title="Información adicional">
+              {fields.filter((f) => f.category === 'Adicional').map((f) => (
+                <FieldBlock key={f.key} {...blockProps(f)} />
+              ))}
+            </Section>
 
-            {/* Consentimiento y privacidad */}
-            <section className="rounded-lg border border-brand-border bg-brand-dark/50 p-5">
-              <h3 className="text-sm font-semibold text-brand-text mb-3">Configuración de privacidad y consentimiento</h3>
-              <p className="text-xs text-brand-textMuted leading-relaxed mb-4">
+            {/* Consentimiento */}
+            <section className="rounded-xl border border-brand-border bg-brand-dark/60 p-5">
+              <h3 className="mb-2 text-sm font-semibold text-brand-text">Privacidad y consentimiento</h3>
+              <p className="mb-4 text-xs leading-relaxed text-brand-textMuted">
                 Cada control define si ese campo se publica en tu página de emergencia. Cualquier persona con
                 acceso al enlace del QR podrá consultar solo lo que marques como Público. Los campos Privados
                 solo se consultan desde tu panel autenticado.
               </p>
-              <div className="rounded-lg border border-brand-border bg-black/40 p-4">
-                <div className="flex items-start gap-3">
-                  <input
-                    id="consent"
-                    type="checkbox"
-                    checked
-                    readOnly
-                    disabled
-                    className="mt-0.5 h-4 w-4 rounded border-brand-border text-brand-accent"
-                  />
-                  <div className="text-sm text-brand-text leading-relaxed">
-                    Autorizo que la información que marque como Público sea accesible a través de mi página de
-                    emergencia. Puedes cambiar la visibilidad o eliminar tus datos en cualquier momento desde
-                    este panel. No incluyas contraseñas, datos financieros ni información innecesaria.
-                  </div>
-                </div>
+              <div className="flex items-start gap-3 rounded-lg border border-brand-border bg-white p-4">
+                <input
+                  id="consent"
+                  type="checkbox"
+                  checked
+                  readOnly
+                  disabled
+                  className="mt-0.5 h-4 w-4 flex-none rounded border-brand-border accent-brand-accent"
+                />
+                <label htmlFor="consent" className="text-sm leading-relaxed text-brand-text">
+                  Autorizo que la información que marque como Público sea accesible a través de mi página de
+                  emergencia. Puedes cambiar la visibilidad o eliminar tus datos en cualquier momento desde
+                  este panel. No incluyas contraseñas, datos financieros ni información innecesaria.
+                </label>
               </div>
             </section>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <Button type="submit" variant="primary" disabled={saving}>
-                <Save size={18} /> {saving ? 'Guardando...' : 'Guardar cambios'}
-              </Button>
-            </div>
-          </form>
-        </div>
+          {/* Barra de guardado */}
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-b-2xl border-t border-brand-border bg-white/90 px-5 py-4 backdrop-blur sm:px-6 lg:px-8">
+            <p className={`text-xs ${dirty ? 'font-medium text-amber-700' : 'text-brand-textMuted'}`}>
+              {dirty ? 'Tienes cambios sin guardar' : 'Todo guardado'}
+            </p>
+            <Button type="submit" variant="primary" disabled={saving || !dirty}>
+              <Save size={18} /> {saving ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          </div>
+        </form>
 
-        <aside className="lg:col-span-1 card-static p-6 h-fit overflow-y-auto">
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-semibold text-brand-text mb-2">Cuenta</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-3">
-                  <Mail size={16} className="mt-0.5 text-brand-accent flex-shrink-0" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <div className="text-xs uppercase tracking-wider text-brand-textMuted mb-0.5">Correo</div>
-                    <div className="text-brand-text break-all">{user?.email || '—'}</div>
-                  </div>
-                </div>
+        <aside className="h-fit space-y-4 lg:sticky lg:top-24">
+          <div className={`${panel} p-5`}>
+            <h2 className="mb-4 text-sm font-semibold text-brand-text">Cuenta</h2>
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-accent/10 text-brand-accent">
+                <Mail size={16} aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Correo</p>
+                <p className="break-all text-sm text-brand-text">{user?.email || '—'}</p>
               </div>
             </div>
+          </div>
 
-            <div className="rounded-lg border border-brand-border bg-brand-dark/50 p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted mb-3">
-                Visibilidad actual
-              </h3>
-              <ul className="space-y-2 text-xs">
-                {fields.map((f) => (
-                  <li key={f.key} className="flex justify-between items-start">
-                    <span className="text-brand-textMuted truncate max-w-[90px]">{f.label}</span>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${
-                        privacyPublic(f.key)
-                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                          : 'bg-black/5 text-brand-textMuted border-brand-border'
-                      }`}
-                    >
-                      {privacyPublic(f.key) ? 'Público' : 'Privado'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          <div className={`${panel} p-5`}>
+            <div className="flex items-end justify-between">
+              <h2 className="text-sm font-semibold text-brand-text">Perfil completado</h2>
+              <span className="text-2xl font-extrabold tracking-tight text-brand-accent">{completion}%</span>
             </div>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-brand-border/70">
+              <div className="h-full rounded-full bg-brand-accent transition-all duration-500" style={{ width: `${completion}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-brand-textMuted">{filled} de {totalFields} campos con información</p>
+          </div>
 
-            <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4">
-              <Lock size={14} className="mt-0.5 text-rose-400 flex-shrink-0" aria-hidden="true" />
-              <p className="text-xs text-brand-textMuted mt-1 leading-relaxed">
-                Ningún dato sensible es público por defecto. Tú decides qué compartir y puedes cambiarlo en
-                cualquier momento.
-              </p>
+          <div className={`${panel} p-5`}>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-brand-text">Visibilidad actual</h2>
+              <span className="text-xs text-brand-textMuted">{publicCount} públicos</span>
             </div>
+            <ul className="space-y-2.5">
+              {PRIVACY_KEYS.map((k) => (
+                <li key={k} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="truncate text-brand-textMuted">{labelFor[k]}</span>
+                  <VisBadge pub={privacyPublic(k)} />
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4">
+            <Lock size={16} className="mt-0.5 flex-none text-rose-700" aria-hidden="true" />
+            <p className="text-xs leading-relaxed text-brand-textMuted">
+              Ningún dato sensible es público por defecto. Tú decides qué compartir y puedes cambiarlo en
+              cualquier momento.
+            </p>
           </div>
         </aside>
       </div>

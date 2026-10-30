@@ -5,7 +5,13 @@ import { useToast } from '../../components/useToast';
 import { Button, Input, Label } from '../../components/ui';
 import Modal from '../../components/Modal';
 import { PageTitle, PageLoader, EmptyState, CheckField } from '../../components/DashPage';
-import { Trash2, Save, Pencil, Users, Phone as PhoneIcon, Mail as MailIcon, Eye, EyeOff } from 'lucide-react';
+import {
+  Trash2, Save, Pencil, Users, Phone as PhoneIcon, Mail as MailIcon, Eye, EyeOff, User, Heart, ListOrdered,
+} from 'lucide-react';
+
+const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const iconCls = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted';
+const inputCls = 'h-11 pl-10 text-base sm:text-sm';
 
 const emptyForm = {
   name: '',
@@ -124,70 +130,68 @@ export const ContactsPage = () => {
   const sorted = contacts.slice().sort((a, b) => (a.priority_order || 0) - (b.priority_order || 0));
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Contactos de emergencia"
         description="Personas que se podrán contactar desde tu página pública de emergencia. Solo se muestran los que marques como públicos."
       />
 
-      <div ref={formRef} className="card-static p-6 lg:p-8 mb-8 scroll-mt-24">
-        <h2 className="font-semibold text-brand-text mb-5">
-          {editingId ? 'Editar contacto' : 'Agregar contacto'}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid md:grid-cols-12 gap-4">
-            <div className="md:col-span-4 space-y-2">
+      <section ref={formRef} className={`${panel} scroll-mt-24 p-5 sm:p-6 lg:p-8`} aria-labelledby="contact-form-title">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
+            {editingId ? <Pencil size={18} aria-hidden="true" /> : <Users size={18} aria-hidden="true" />}
+          </span>
+          <div>
+            <h2 id="contact-form-title" className="text-base font-semibold text-brand-text">
+              {editingId ? 'Editar contacto' : 'Agregar contacto'}
+            </h2>
+            <p className="text-xs text-brand-textMuted">
+              {editingId ? 'Modifica los datos y guarda los cambios.' : 'Añade a una persona de confianza.'}
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
               <Label htmlFor="c_name">Nombre</Label>
-              <Input
-                id="c_name"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="María López"
-              />
+              <div className="relative">
+                <User size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_name" required autoComplete="off" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="María López" className={inputCls} />
+              </div>
             </div>
-            <div className="md:col-span-3 space-y-2">
+            <div>
               <Label htmlFor="c_rel">Relación</Label>
-              <Input
-                id="c_rel"
-                value={form.relationship}
-                onChange={(e) => setForm({ ...form, relationship: e.target.value })}
-                placeholder="Esposa"
-              />
+              <div className="relative">
+                <Heart size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_rel" value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value })} placeholder="Esposa" className={inputCls} />
+              </div>
             </div>
-            <div className="md:col-span-3 space-y-2">
+            <div>
               <Label htmlFor="c_phone">Teléfono</Label>
-              <Input
-                id="c_phone"
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+57 300 000 0000"
-              />
+              <div className="relative">
+                <PhoneIcon size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_phone" type="tel" autoComplete="off" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+57 300 000 0000" className={inputCls} />
+              </div>
             </div>
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="c_prio">Prioridad</Label>
-              <Input
-                id="c_prio"
-                type="number"
-                min="0"
-                value={form.priority_order}
-                onChange={(e) => setForm({ ...form, priority_order: e.target.value })}
-              />
-            </div>
-            <div className="md:col-span-6 space-y-2">
+            <div>
               <Label htmlFor="c_email">Correo</Label>
-              <Input
-                id="c_email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="maria@ejemplo.com"
-              />
+              <div className="relative">
+                <MailIcon size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
+              </div>
+            </div>
+            <div className="md:max-w-[50%]">
+              <Label htmlFor="c_prio">Prioridad</Label>
+              <div className="relative">
+                <ListOrdered size={18} className={iconCls} aria-hidden="true" />
+                <Input id="c_prio" type="number" min="0" value={form.priority_order} onChange={(e) => setForm({ ...form, priority_order: e.target.value })} className={inputCls} />
+              </div>
+              <p className="mt-1.5 text-xs text-brand-textMuted">Un número menor se muestra primero.</p>
             </div>
           </div>
 
-          <div className="rounded-lg border border-brand-border bg-brand-dark/60 p-4 space-y-3">
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-dark/60 p-4">
             <CheckField
               id="c_public"
               checked={form.is_public}
@@ -196,7 +200,7 @@ export const ContactsPage = () => {
               hint="Aparecerá en tu página de emergencia cuando alguien escanee el QR."
             />
             {form.is_public && (
-              <div className="pl-7 space-y-3">
+              <div className="space-y-3 border-t border-brand-border pl-7 pt-3">
                 <CheckField
                   id="c_dphone"
                   checked={form.display_phone}
@@ -213,25 +217,25 @@ export const ContactsPage = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button type="submit" variant="primary" disabled={saving}>
-              <Save size={16} />
-              {saving ? 'Guardando...' : editingId ? 'Actualizar contacto' : 'Agregar contacto'}
-            </Button>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
             {editingId && (
               <Button type="button" variant="ghost" onClick={resetForm}>
                 Cancelar
               </Button>
             )}
+            <Button type="submit" variant="primary" disabled={saving} className="sm:ml-auto">
+              <Save size={16} />
+              {saving ? 'Guardando...' : editingId ? 'Actualizar contacto' : 'Agregar contacto'}
+            </Button>
           </div>
         </form>
-      </div>
+      </section>
 
-      <div className="card-static p-6 lg:p-8">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-brand-text">Lista de contactos</h2>
+      <section className={`${panel} p-5 sm:p-6 lg:p-8`} aria-labelledby="contact-list-title">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 id="contact-list-title" className="text-base font-semibold text-brand-text">Lista de contactos</h2>
           {sorted.length > 0 && (
-            <span className="text-xs text-brand-textMuted">
+            <span className="rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
               {sorted.length} {sorted.length === 1 ? 'contacto' : 'contactos'}
             </span>
           )}
@@ -245,72 +249,89 @@ export const ContactsPage = () => {
           />
         ) : (
           <ul className="space-y-3">
-            {sorted.map((c) => (
-              <li
-                key={c.id}
-                className="flex flex-wrap sm:flex-nowrap items-center gap-4 p-4 rounded-lg border border-brand-border hover:border-brand-accent/30 hover:bg-black/[0.03] transition-colors"
-              >
-                <div
-                  className="flex-shrink-0 w-9 h-9 rounded-full bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent text-xs font-bold"
-                  title="Prioridad"
+            {sorted.map((c) => {
+              const shown = [c.display_phone && 'teléfono', c.display_email && 'correo'].filter(Boolean);
+              return (
+                <li
+                  key={c.id}
+                  className={`rounded-xl border p-4 transition-colors hover:border-brand-accent/30 hover:bg-brand-dark/50 ${
+                    editingId === c.id ? 'border-brand-accent/50 bg-brand-accent/5' : 'border-brand-border bg-white'
+                  }`}
                 >
-                  {c.priority_order ?? 0}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-brand-text truncate">{c.name}</p>
-                  {c.relationship && <p className="text-xs text-brand-textMuted truncate">{c.relationship}</p>}
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brand-textMuted">
-                  {c.phone && (
-                    <span className="flex items-center gap-1.5">
-                      <PhoneIcon size={14} aria-hidden="true" />
-                      <span className="truncate max-w-[130px]">{c.phone}</span>
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent/10 text-sm font-bold text-brand-accent ring-1 ring-brand-accent/15"
+                      title="Prioridad"
+                    >
+                      {c.priority_order ?? 0}
                     </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="truncate text-sm font-semibold text-brand-text">{c.name}</p>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${
+                            c.is_public
+                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+                              : 'bg-slate-100 text-slate-600 ring-slate-500/20'
+                          }`}
+                        >
+                          {c.is_public ? <Eye size={11} aria-hidden="true" /> : <EyeOff size={11} aria-hidden="true" />}
+                          {c.is_public ? 'Público' : 'Privado'}
+                        </span>
+                      </div>
+                      {c.relationship && <p className="mt-0.5 truncate text-xs text-brand-textMuted">{c.relationship}</p>}
+                    </div>
+                    <div className="flex flex-none gap-1">
+                      <button
+                        type="button"
+                        onClick={() => edit(c)}
+                        className="rounded-lg p-2 text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text"
+                        aria-label={`Editar ${c.name}`}
+                        title="Editar"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToDelete(c)}
+                        className="rounded-lg p-2 text-rose-600 transition-colors hover:bg-rose-50"
+                        aria-label={`Eliminar ${c.name}`}
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {(c.phone || c.email) && (
+                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-brand-border pt-3 text-xs text-brand-textMuted sm:pl-[52px]">
+                      {c.phone && (
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <PhoneIcon size={14} className="flex-none" aria-hidden="true" />
+                          <span className="truncate">{c.phone}</span>
+                        </span>
+                      )}
+                      {c.email && (
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <MailIcon size={14} className="flex-none" aria-hidden="true" />
+                          <span className="truncate">{c.email}</span>
+                        </span>
+                      )}
+                      {c.is_public && shown.length > 0 && (
+                        <span className="text-brand-accent">Visible: {shown.join(' y ')}</span>
+                      )}
+                    </div>
                   )}
-                  {c.email && (
-                    <span className="flex items-center gap-1.5">
-                      <MailIcon size={14} aria-hidden="true" />
-                      <span className="truncate max-w-[150px]">{c.email}</span>
-                    </span>
-                  )}
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                      c.is_public
-                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                        : 'bg-black/5 text-brand-textMuted border-brand-border'
-                    }`}
-                  >
-                    {c.is_public ? <Eye size={12} /> : <EyeOff size={12} />}
-                    {c.is_public ? 'Público' : 'Privado'}
-                  </span>
-                </div>
-                <div className="flex gap-1 ml-auto">
-                  <button
-                    onClick={() => edit(c)}
-                    className="p-2 rounded-lg text-brand-textMuted hover:text-brand-text hover:bg-black/5 transition-colors"
-                    aria-label={`Editar ${c.name}`}
-                    title="Editar"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    onClick={() => setToDelete(c)}
-                    className="p-2 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
-                    aria-label={`Eliminar ${c.name}`}
-                    title="Eliminar"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
-      </div>
+      </section>
 
       <Modal isOpen={!!toDelete} onClose={() => setToDelete(null)} title="Eliminar contacto">
-        <p className="text-sm text-brand-textMuted leading-relaxed mb-6">
-          ¿Seguro que deseas eliminar a <span className="text-brand-text font-medium">{toDelete?.name}</span>?
+        <p className="mb-6 text-sm leading-relaxed text-brand-textMuted">
+          ¿Seguro que deseas eliminar a <span className="font-semibold text-brand-text">{toDelete?.name}</span>?
           Dejará de aparecer en tu página de emergencia. Esta acción no se puede deshacer.
         </p>
         <div className="flex justify-end gap-3">
@@ -327,4 +348,3 @@ export const ContactsPage = () => {
 };
 
 export default ContactsPage;
-

@@ -2,16 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
-  LogOut,
-  User,
-  Users,
-  ShieldCheck,
-  QrCode,
-  Package,
-  LayoutDashboard,
-  Menu,
-  X,
-  ArrowLeft,
+  LogOut, User, Users, ShieldCheck, QrCode, Package, LayoutDashboard, Menu, X, ArrowLeft, Settings,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import { routes } from '../../utils/routes';
@@ -28,17 +19,29 @@ const navItems = [
 const EASE = [0.22, 1, 0.36, 1];
 
 const Brand = () => (
-  <Link to={routes.home} className="flex items-center gap-2.5 font-bold text-brand-text tracking-tight">
-    <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-accent to-brand-deep flex items-center justify-center text-brand-dark">
-      <ShieldCheck size={18} strokeWidth={2.4} />
+  <Link to={routes.home} className="flex items-center gap-2.5 font-bold tracking-tight text-brand-text">
+    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent text-white shadow-soft">
+      <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
     </span>
     <span className="text-sm">Emergencia ID</span>
   </Link>
 );
 
-const SidebarNav = ({ onNavigate, onLogout }) => (
-  <>
-    <nav className="space-y-1" aria-label="Panel">
+const linkBase = 'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors';
+
+const SidebarContent = ({ displayName, email, initial, isAdmin, onNavigate, onLogout }) => (
+  <div className="flex h-full flex-col">
+    <div className="flex items-center gap-3 rounded-xl bg-brand-dark p-3">
+      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent text-sm font-bold text-white">
+        {initial}
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-brand-text">{displayName}</p>
+        {email && email !== displayName && <p className="truncate text-xs text-brand-textMuted">{email}</p>}
+      </div>
+    </div>
+
+    <nav className="mt-5 space-y-1" aria-label="Panel">
       {navItems.map(({ label, href, icon: Icon, end }) => (
         <NavLink
           key={href}
@@ -46,10 +49,10 @@ const SidebarNav = ({ onNavigate, onLogout }) => (
           end={end}
           onClick={onNavigate}
           className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+            `${linkBase} ${
               isActive
-                ? 'bg-brand-accent/10 text-brand-accent border-brand-accent/30'
-                : 'border-transparent text-brand-textMuted hover:text-brand-text hover:bg-black/5'
+                ? 'bg-brand-accent text-white shadow-soft'
+                : 'text-brand-textMuted hover:bg-brand-dark hover:text-brand-text'
             }`
           }
         >
@@ -57,22 +60,21 @@ const SidebarNav = ({ onNavigate, onLogout }) => (
         </NavLink>
       ))}
     </nav>
-    <div className="mt-6 pt-6 border-t border-brand-border space-y-1">
-      <Link
-        to={routes.home}
-        onClick={onNavigate}
-        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-brand-textMuted hover:text-brand-text hover:bg-black/5 transition-colors"
-      >
+
+    <div className="mt-auto space-y-1 border-t border-brand-border pt-4">
+      {isAdmin && (
+        <Link to="/admin" onClick={onNavigate} className={`${linkBase} text-brand-accent hover:bg-brand-accent/10`}>
+          <Settings size={18} aria-hidden="true" /> Panel administrativo
+        </Link>
+      )}
+      <Link to={routes.home} onClick={onNavigate} className={`${linkBase} text-brand-textMuted hover:bg-brand-dark hover:text-brand-text`}>
         <ArrowLeft size={18} aria-hidden="true" /> Volver al sitio
       </Link>
-      <button
-        onClick={onLogout}
-        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
-      >
+      <button type="button" onClick={onLogout} className={`${linkBase} text-rose-700 hover:bg-rose-50`}>
         <LogOut size={18} aria-hidden="true" /> Cerrar sesión
       </button>
     </div>
-  </>
+  </div>
 );
 
 export const Dashboard = () => {
@@ -97,23 +99,29 @@ export const Dashboard = () => {
 
   if (!isAuthenticated) return null;
 
-  const displayName = user?.name || user?.email || 'Usuario';
+  const displayName = user?.name || user?.email?.split('@')[0] || 'Usuario';
   const initial = displayName.charAt(0).toUpperCase();
+  const isAdmin = user?.role === 'admin';
+
+  const clean = pathname.replace(/\/$/, '') || '/';
+  const current = navItems.find((n) => (n.end ? clean === n.href : clean.startsWith(n.href))) || navItems[0];
 
   const handleLogout = () => {
     setSidebarOpen(false);
     logout();
   };
 
+  const sidebarProps = { displayName, email: user?.email, initial, isAdmin, onLogout: handleLogout };
+
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen bg-brand-dark">
       {/* Sidebar escritorio */}
-      <aside className="hidden lg:flex lg:w-64 flex-shrink-0 flex-col border-r border-brand-border bg-brand-navy/50">
-        <div className="sticky top-0 p-6">
-          <div className="mb-8">
-            <Brand />
+      <aside className="hidden flex-none lg:block lg:w-64">
+        <div className="sticky top-0 flex h-screen flex-col gap-6 border-r border-brand-border bg-white p-5">
+          <Brand />
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+            <SidebarContent {...sidebarProps} />
           </div>
-          <SidebarNav onLogout={handleLogout} />
         </div>
       </aside>
 
@@ -122,7 +130,7 @@ export const Dashboard = () => {
         {sidebarOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-20 bg-brand-dark/80 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm lg:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -130,64 +138,71 @@ export const Dashboard = () => {
               aria-hidden="true"
             />
             <motion.aside
-              className="fixed inset-y-0 left-0 z-30 w-72 bg-brand-panel border-r border-brand-border flex flex-col lg:hidden"
+              className="fixed inset-y-0 left-0 z-30 flex w-72 flex-col bg-white p-5 shadow-2xl lg:hidden"
               initial={reduce ? false : { x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ duration: 0.3, ease: EASE }}
               aria-label="Menú del panel"
             >
-              <div className="flex items-center justify-between p-6">
+              <div className="mb-5 flex items-center justify-between">
                 <Brand />
                 <button
+                  type="button"
                   onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-lg text-brand-textMuted hover:bg-black/5 hover:text-brand-text"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-brand-textMuted hover:bg-brand-dark hover:text-brand-text"
                   aria-label="Cerrar menú"
                 >
                   <X size={20} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-6">
-                <SidebarNav onNavigate={() => setSidebarOpen(false)} onLogout={handleLogout} />
+              <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+                <SidebarContent {...sidebarProps} onNavigate={() => setSidebarOpen(false)} />
               </div>
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-10 border-b border-brand-border bg-brand-dark/80 backdrop-blur-md px-4 sm:px-6 lg:px-12 h-16 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 -ml-2 rounded-lg text-brand-textMuted hover:bg-black/5 hover:text-brand-text"
-            aria-label="Abrir menú"
-            aria-expanded={sidebarOpen}
-          >
-            <Menu size={22} />
-          </button>
-          <div className="hidden lg:block text-xs uppercase tracking-[0.18em] text-brand-textMuted">
-            Panel de usuario
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-brand-border bg-brand-dark/85 px-4 backdrop-blur-md sm:px-6 lg:px-10">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-brand-text hover:bg-white lg:hidden"
+              aria-label="Abrir menú"
+              aria-expanded={sidebarOpen}
+            >
+              <Menu size={22} />
+            </button>
+            <div>
+              <p className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-textMuted lg:block">
+                Panel de usuario
+              </p>
+              <p className="text-sm font-bold text-brand-text">{current.label}</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col items-end leading-tight">
-              <span className="font-medium text-brand-text text-sm max-w-[14rem] truncate">{displayName}</span>
+            <div className="hidden flex-col items-end leading-tight sm:flex">
+              <span className="max-w-[14rem] truncate text-sm font-medium text-brand-text">{displayName}</span>
               {user?.email && user.email !== displayName && (
-                <span className="text-xs text-brand-textMuted max-w-[14rem] truncate">{user.email}</span>
+                <span className="max-w-[14rem] truncate text-xs text-brand-textMuted">{user.email}</span>
               )}
             </div>
-            <div className="w-9 h-9 rounded-full bg-brand-accent/15 border border-brand-accent/40 flex items-center justify-center text-brand-accent text-sm font-bold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-accent text-sm font-bold text-white">
               {initial}
-            </div>
+            </span>
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-12 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-10">
           <motion.div
             key={pathname}
             initial={reduce ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="max-w-5xl"
+            className="mx-auto max-w-5xl"
           >
             <Outlet />
           </motion.div>
@@ -198,4 +213,3 @@ export const Dashboard = () => {
 };
 
 export default Dashboard;
-
