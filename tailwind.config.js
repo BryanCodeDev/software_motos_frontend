@@ -10,17 +10,24 @@ export default {
         // Paleta corporativa: azul marino profundo + azul acero + detalle dorado sobrio.
         // Se conservan los nombres de tokens para no romper el resto de la app.
         brand: {
-          dark: '#FAF5F6',        // fondo principal
-          navy: '#FFFFFF',        // fondo de secciones alternas
-          panel: '#FFFFFF',       // tarjetas
-          panelHover: '#F5DFE5',
-          border: '#F5DFE5',
-          text: '#292024',
-          textMuted: '#6b5a60',
-          accent: '#9F1239',      // rojo vino (acciones/alertas)
-          accentHover: '#b5174a',
-          deep: '#9F1239',
-          gold: '#9F1239',
+          dark: '#07101f',        // fondo principal (azul marino casi negro)
+          navy: '#0b1830',        // fondo de secciones alternas
+          panel: '#0f1f3a',       // tarjetas
+          panelHover: '#132648',
+          border: '#1f3355',
+          text: '#eef3fa',
+          textMuted: '#9db0cc',
+          textFaint: '#6f84a3',
+          accent: '#5b9cf0',      // azul acero (acciones, iconos)
+          accentHover: '#82b4f5',
+          deep: '#2f6fd6',        // azul corporativo (degradados, énfasis)
+          gold: '#c9a96a',        // detalle premium, usar con moderación
+        },
+        status: {
+          success: '#34d399',
+          warning: '#fbbf24',
+          danger: '#fb7185',
+          info: '#5b9cf0',
         },
         gray: {
           clean: '#f4f6f8',

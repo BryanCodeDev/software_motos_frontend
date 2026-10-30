@@ -7,30 +7,23 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    overflow-x: hidden;
   }
   body {
     @apply bg-brand-dark text-brand-text antialiased;
-    overflow-x: hidden;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    background-image:
+      radial-gradient(900px 500px at 85% -10%, rgba(47, 111, 214, 0.16), transparent 60%),
+      radial-gradient(700px 400px at -10% 30%, rgba(91, 156, 240, 0.07), transparent 60%);
+    background-attachment: fixed;
   }
   h1, h2, h3 {
     @apply tracking-tight;
   }
-  img, video, svg, canvas {
-    max-width: 100%;
-    height: auto;
-  }
-  table {
-    display: block;
-    max-width: 100%;
-    overflow-x: auto;
-  }
   ::selection {
-    background: rgba(159, 18, 57, 0.25);
+    background: rgba(91, 156, 240, 0.35);
   }
   :focus-visible {
-    outline: 2px solid #9F1239;
+    outline: 2px solid #5b9cf0;
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -108,7 +101,7 @@
     @apply btn border border-brand-border bg-transparent text-brand-text px-6 py-3 text-sm lg:text-base hover:border-brand-accent/60 hover:bg-brand-panel active:scale-[0.98];
   }
   .btn-ghost {
-    @apply btn text-brand-textMuted hover:text-brand-text hover:bg-black/5 px-4 py-2 text-sm;
+    @apply btn text-brand-textMuted hover:text-brand-text hover:bg-white/5 px-4 py-2 text-sm;
   }
   .card {
     @apply bg-brand-panel/80 border border-brand-border rounded-xl shadow-card backdrop-blur-sm transition-all duration-300 hover:border-brand-accent/40 hover:shadow-glow hover:-translate-y-0.5;
@@ -123,23 +116,66 @@
     @apply block text-sm font-medium text-brand-textMuted mb-1.5;
   }
 
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(91, 156, 240, 0.35) transparent;
+  /* ---- Documentación / panel administrativo ---- */
+  .icon-box {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand-accent/10 border border-brand-accent/30 text-brand-accent;
   }
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  .badge {
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+  .badge-neutral {
+    @apply badge bg-white/5 text-brand-textMuted border-brand-border;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(91, 156, 240, 0.35);
-    border-radius: 999px;
+  .badge-info {
+    @apply badge bg-brand-accent/10 text-brand-accent border-brand-accent/30;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(91, 156, 240, 0.55);
+  .badge-success {
+    @apply badge bg-emerald-500/10 text-emerald-300 border-emerald-500/30;
+  }
+  .badge-warning {
+    @apply badge bg-amber-500/10 text-amber-300 border-amber-500/30;
+  }
+  .callout-info,
+  .callout-warning {
+    @apply flex gap-3 rounded-lg border p-4 text-sm leading-relaxed;
+  }
+  .callout-info {
+    @apply bg-brand-accent/10 border-brand-accent/30 text-brand-textMuted;
+  }
+  .callout-info > svg {
+    @apply text-brand-accent;
+  }
+  .callout-warning {
+    @apply bg-amber-500/10 border-amber-500/30 text-amber-100/80;
+  }
+  .callout-warning > svg {
+    @apply text-amber-300;
+  }
+  .prose-doc {
+    @apply text-sm leading-relaxed text-brand-textMuted;
+  }
+  .code-inline {
+    @apply rounded border border-brand-border bg-brand-dark px-1.5 py-0.5 font-mono text-xs text-brand-accent;
+  }
+  .field-hint {
+    @apply text-xs leading-relaxed text-brand-textMuted;
+  }
+  .table-wrap {
+    @apply overflow-x-auto rounded-xl border border-brand-border bg-brand-panel/60;
+  }
+  .table-base {
+    @apply w-full min-w-[520px] text-left text-sm border-collapse;
+  }
+  .table-base th {
+    @apply bg-brand-navy/80 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-brand-textMuted border-b border-brand-border;
+  }
+  .table-base td {
+    @apply px-4 py-3 align-top text-brand-textMuted border-b border-brand-border/50;
+  }
+  .table-base tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .table-base tbody tr:hover td {
+    @apply bg-white/[0.03];
   }
 }
-
