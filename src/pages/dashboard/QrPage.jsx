@@ -145,8 +145,9 @@ export const QrPage = () => {
         try {
           const res = await api.get('/identifiers/my');
           if (!mounted) return;
-          const data = res.data.identifier || res.data;
-          setIdentifier(data);
+           const data = res.data.identifier || res.data;
+           if (!data) throw { response: { status: 404 } };
+           setIdentifier(data);
           const code = data.value;
           setQrUrl(`${window.location.origin}/e/${encodeURIComponent(code)}`);
           try {
