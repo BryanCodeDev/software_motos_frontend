@@ -172,10 +172,16 @@ export const QrPage = () => {
         const qrOrder = orders.find((o) => o.product_slug === 'qr-digital-basico');
         setOrder(qrOrder || null);
         setState(deriveState(null, qrOrder));
-      } catch {
-        if (!mounted) return;
-        toastRef.current.error('No se pudo cargar el estado de tu QR');
-        setState('error');
+      } catch (err) {
+        if (mounted) {
+          if (err.response && err.response.status === 401) {
+            setState('error');
+            setLoading(false);
+            return;
+          }
+          toastRef.current.error('No se pudo cargar el estado de tu QR');
+          setState('error');
+        }
       } finally {
         if (mounted) setLoading(false);
       }
