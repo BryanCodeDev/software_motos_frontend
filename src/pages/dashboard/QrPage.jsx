@@ -170,12 +170,22 @@ export const QrPage = () => {
       } finally {
         if (mounted) setLoading(false);
       }
-    }, [deriveState]);
+    })();
+
+    // Timeout de seguridad: si tarda más de 10s, forzar fin de carga
+    const timer = setTimeout(() => {
+      if (mounted && loading) {
+        setLoading(false);
+        setState('error');
+      }
+    }, 10000);
+
     return () => {
       mounted = false;
+      clearTimeout(timer);
       if (objectUrl) window.URL.revokeObjectURL(objectUrl);
     };
-  }, [deriveState]);
+  }, [deriveState, loading]);
 
   useEffect(() => {
     if (!qrProduct) {

@@ -8,7 +8,7 @@ import { PageTitle } from '../../components/DashPage';
 import {
   Save, ImageOff, AlertTriangle, Stethoscope, Pill, FileText, Upload, Trash2, Mail, Lock, User, Eye, EyeOff,
 } from 'lucide-react';
-import { FormSection, FieldRow, Badge, EmptyState, ConfirmDialog } from '../../components/ui-kit';
+import { FormSection, FieldRow, Badge, EmptyState } from '../../components/ui-kit';
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -147,7 +147,6 @@ export const ProfilePage = () => {
   const [form, setForm] = useState({ ...emptyForm });
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dirty, setDirty] = useState(false);
-  const [confirmDeletePhoto, setConfirmDeletePhoto] = useState(false);
 
   const markDirty = useCallback(() => setDirty(true), []);
 
@@ -226,13 +225,8 @@ export const ProfilePage = () => {
   };
 
   const removePhoto = () => {
-    setConfirmDeletePhoto(true);
-  };
-
-  const confirmRemovePhoto = () => {
     setForm((prev) => ({ ...prev, photoFile: null, photo_url: '' }));
     setPhotoPreview(null);
-    setConfirmDeletePhoto(false);
     markDirty();
   };
 
@@ -495,15 +489,6 @@ export const ProfilePage = () => {
           </div>
         </aside>
       </div>
-
-      <ConfirmDialog
-        isOpen={confirmDeletePhoto}
-        onClose={() => setConfirmDeletePhoto(false)}
-        title="Quitar fotografía"
-        text="¿Estás seguro de que deseas quitar tu fotografía de perfil?"
-        onConfirm={confirmRemovePhoto}
-        confirmLabel="Quitar"
-      />
     </div>
   );
 };

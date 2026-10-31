@@ -59,9 +59,9 @@ const App = () => (
                 <Route path="/auth/restablecer-contrasena" element={<ResetPassword />} />
               </Route>
 
-              {/* Panel de USUARIO - rutas /app/* */}
+              {/* Panel de USUARIO - rutas /panel/* */}
               <Route element={<UserLayout />}>
-                <Route path="/app">
+                <Route path="/panel">
                   <Route index element={<DashboardIndex />} />
                   <Route path="perfil" element={<ProfilePage />} />
                   <Route path="contactos" element={<ContactsPage />} />
