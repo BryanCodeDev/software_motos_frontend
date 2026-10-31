@@ -123,9 +123,23 @@ export const QrPage = () => {
     return 'error';
   }, []);
 
+  const qrObjectUrlRef = useRef(null);
+  const loadingRef = useRef(loading);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
   useEffect(() => {
     let mounted = true;
-    let objectUrl = null;
+
+    const cleanupBlob = () => {
+      if (qrObjectUrlRef.current) {
+        window.URL.revokeObjectURL(qrObjectUrlRef.current);
+        qrObjectUrlRef.current = null;
+      }
+    };
+
     (async () => {
       try {
         try {
@@ -139,7 +153,9 @@ export const QrPage = () => {
           try {
             const qr = await api.get('/identifiers/my/qr', { responseType: 'blob' });
             if (!mounted) return;
-            objectUrl = window.URL.createObjectURL(qr.data);
+            cleanupBlob();
+            const objectUrl = window.URL.createObjectURL(qr.data);
+            qrObjectUrlRef.current = objectUrl;
             setQrImage(objectUrl);
           } catch {
             if (mounted) setQrImage('');
@@ -172,9 +188,8 @@ export const QrPage = () => {
       }
     })();
 
-    // Timeout de seguridad: si tarda más de 10s, forzar fin de carga
     const timer = setTimeout(() => {
-      if (mounted && loading) {
+      if (mounted && loadingRef.current) {
         setLoading(false);
         setState('error');
       }
@@ -183,9 +198,9 @@ export const QrPage = () => {
     return () => {
       mounted = false;
       clearTimeout(timer);
-      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+      cleanupBlob();
     };
-  }, [deriveState, loading]);
+  }, [deriveState]);
 
   useEffect(() => {
     if (!qrProduct) {
