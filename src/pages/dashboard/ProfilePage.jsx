@@ -126,7 +126,7 @@ const FieldBlock = ({ f, value, isPublic, onChange, onToggle }) => {
   return (
     <FieldRow icon={Icon} label={f.label} hint={f.hint} className="space-y-2">
       {f.input === 'textarea' ? (
-        <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="text-base sm:text-sm" />
+        <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="border-brand-border text-base sm:text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent" />
       ) : (
         <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm" />
       )}

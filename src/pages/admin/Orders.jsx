@@ -197,7 +197,7 @@ export const AdminOrders = () => {
 
       {!loading && !error && visible.length > 0 && (
         <>
-          <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden">
+          <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden hidden md:block">
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-sm">
                 <thead className="bg-brand-dark/70 text-left text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
