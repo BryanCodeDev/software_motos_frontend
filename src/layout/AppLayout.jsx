@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { useAuth } from '../contexts/useAuth';
 import { routes } from '../utils/routes';
@@ -89,7 +89,14 @@ const SidebarContent = ({ items, displayName, email, initial, role, onNavigate, 
 export const AppLayout = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate(routes.home, { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const role = user?.role || 'user';
   const items = role === 'admin' ? adminNav : userNav;
@@ -113,9 +120,10 @@ export const AppLayout = () => {
   const clean = pathname.replace(/\/$/, '') || '/';
   const current = items.find((n) => (n.end ? clean === n.to : clean.startsWith(n.to))) || items[0];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setSidebarOpen(false);
-    logout();
+    await logout();
+    navigate(routes.home, { replace: true });
   };
 
   const sidebarProps = { items, displayName, email: user?.email, initial, role, onLogout: handleLogout };
@@ -153,7 +161,7 @@ export const AppLayout = () => {
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent text-white shadow-soft">
                   <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
                 </span>
-                <span className="text-sm">Emergencia ID</span>
+                <span className="text-sm">Tu QR te Cuida</span>
               </div>
               <button
                 type="button"

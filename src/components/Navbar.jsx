@@ -76,7 +76,7 @@ export const Navbar = () => {
     setDrop(false);
     setOpen(false);
     await logout();
-    navigate(routes.home);
+    navigate(routes.home, { replace: true });
   };
 
   return (

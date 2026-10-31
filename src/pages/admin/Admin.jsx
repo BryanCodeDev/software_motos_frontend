@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Package, ScrollText, HelpCircle, Menu, X as XIcon, ShieldCheck, LogOut,
 } from 'lucide-react';
@@ -18,7 +18,7 @@ const NAV = [
   { to: '/admin/ayuda', label: 'Ayuda', icon: HelpCircle },
 ];
 
-const Sidebar = ({ open, setOpen, user, logout }) => {
+const Sidebar = ({ open, setOpen, user, onLogout }) => {
   const display = user?.name || user?.email || 'Administrador';
   const initial = display.charAt(0).toUpperCase();
 
@@ -88,7 +88,7 @@ const Sidebar = ({ open, setOpen, user, logout }) => {
         <div className="mt-4 border-t border-brand-border pt-4">
           <button
             type="button"
-            onClick={() => { setOpen(false); logout(); }}
+            onClick={onLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
           >
             <LogOut size={18} aria-hidden="true" /> Cerrar sesión
@@ -101,8 +101,15 @@ const Sidebar = ({ open, setOpen, user, logout }) => {
 
 const Admin = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setOpen(false);
+    await logout();
+    navigate('/', { replace: true });
+  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -139,7 +146,7 @@ const Admin = () => {
         </button>
       </div>
 
-      <Sidebar open={open} setOpen={setOpen} user={user} logout={logout} />
+      <Sidebar open={open} setOpen={setOpen} user={user} onLogout={handleLogout} />
 
       <div className="min-w-0 flex-1">
         <Routes>

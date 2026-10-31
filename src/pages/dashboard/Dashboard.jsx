@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   LogOut, User, Users, ShieldCheck, QrCode, Package, LayoutDashboard, Menu, X, ArrowLeft, Settings,
@@ -23,7 +23,7 @@ const Brand = () => (
     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent text-white shadow-soft">
       <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
     </span>
-    <span className="text-sm">Emergencia ID</span>
+    <span className="text-sm">Tu QR te Cuida</span>
   </Link>
 );
 
@@ -80,6 +80,7 @@ const SidebarContent = ({ displayName, email, initial, isAdmin, onNavigate, onLo
 export const Dashboard = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const reduce = useReducedMotion();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -106,9 +107,10 @@ export const Dashboard = () => {
   const clean = pathname.replace(/\/$/, '') || '/';
   const current = navItems.find((n) => (n.end ? clean === n.href : clean.startsWith(n.href))) || navItems[0];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setSidebarOpen(false);
-    logout();
+    await logout();
+    navigate(routes.home, { replace: true });
   };
 
   const sidebarProps = { displayName, email: user?.email, initial, isAdmin, onLogout: handleLogout };

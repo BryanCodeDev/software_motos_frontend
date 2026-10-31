@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   User, Users, ShieldCheck, QrCode, Package, LayoutDashboard, LogOut, ArrowLeft,
   X as XIcon, Menu as MenuIcon, Settings,
@@ -25,7 +25,7 @@ const Brand = () => (
     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent text-white shadow-soft">
       <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
     </span>
-    <span className="text-sm">Emergencia ID</span>
+    <span className="text-sm">Tu QR te Cuida</span>
   </Link>
 );
 
@@ -81,6 +81,7 @@ const SidebarContent = ({ items, displayName, email, initial, role, onNavigate, 
 export const DashboardLayout = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -99,9 +100,10 @@ export const DashboardLayout = () => {
   const clean = pathname.replace(/\/$/, '') || '/';
   const current = userNav.find((n) => (n.end ? clean === n.to : clean.startsWith(n.to))) || userNav[0];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setSidebarOpen(false);
-    logout();
+    await logout();
+    navigate(routes.home, { replace: true });
   };
 
   const props = { items: userNav, displayName, email: user?.email, initial, role, onLogout: handleLogout };
