@@ -13,10 +13,10 @@ const fmt = (n) => (n === undefined || n === null ? '—' : nf.format(Number(n))
 const getNested = (obj, path) => path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj);
 
 const KPI_CARDS = [
-  { key: 'users', label: 'Usuarios', valueKey: 'users', icon: Users, tone: 'from-sky-500 to-blue-600', text: 'text-sky-700', hint: 'Cuentas registradas' },
-  { key: 'profiles', label: 'Perfiles de emergencia', valueKey: 'profiles', icon: HeartPulse, tone: 'from-brand-accent to-rose-600', text: 'text-brand-accent', hint: 'Completaron su perfil' },
-  { key: 'qr', label: 'QR activos', valueKey: 'identifiers.active', icon: QrCode, tone: 'from-emerald-500 to-teal-600', text: 'text-emerald-700', hint: 'Identificadores en uso' },
-  { key: 'orders', label: 'Pedidos (7 días)', valueKey: 'orders.recent', icon: ShoppingBag, tone: 'from-amber-500 to-orange-600', text: 'text-amber-700', hint: 'Actividad reciente' },
+  { key: 'users', label: 'Usuarios', valueKey: 'users', icon: Users, tone: 'bg-sky-500/20 text-sky-600 ring-sky-600/20', text: 'text-sky-700', hint: 'Cuentas registradas' },
+  { key: 'profiles', label: 'Perfiles de emergencia', valueKey: 'profiles', icon: HeartPulse, tone: 'bg-brand-accent/20 text-brand-accent ring-brand-accent/20', text: 'text-brand-accent', hint: 'Completaron su perfil' },
+  { key: 'qr', label: 'QR activos', valueKey: 'identifiers.active', icon: QrCode, tone: 'bg-emerald-500/20 text-emerald-600 ring-emerald-600/20', text: 'text-emerald-700', hint: 'Identificadores en uso' },
+  { key: 'orders', label: 'Pedidos (7 días)', valueKey: 'orders.recent', icon: ShoppingBag, tone: 'bg-amber-500/20 text-amber-600 ring-amber-600/20', text: 'text-amber-700', hint: 'Actividad reciente' },
 ];
 
 const PIPELINE = [
@@ -40,9 +40,8 @@ const StatCard = ({ card, value }) => (
         {card.hint && <p className="mt-3 text-xs text-brand-textMuted">{card.hint}</p>}
       </div>
       <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset shadow-lg">
-        <span className={`relative flex h-8 w-8 items-center justify-center rounded-lg ${card.tone} text-white`}>
-          <card.icon size={16} strokeWidth={2.5} aria-hidden="true" />
-          <span className="absolute -inset-1 rounded-xl opacity-20 blur" style={{ background: 'linear-gradient(to bottom right, #9F1239, #9F1239)' }} />
+        <span className={`relative flex h-8 w-8 items-center justify-center rounded-lg ${card.tone.split(' ')[0]} ring-1 ${card.tone.split(' ')[2] || card.tone.split(' ')[0]}`}>
+          <card.icon size={16} strokeWidth={2.5} className={`${card.tone.split(' ')[1]}`} aria-hidden="true" />
         </span>
       </div>
     </div>

@@ -231,28 +231,31 @@ export const DashboardIndex = () => {
       <section>
         <h2 className="mb-4 text-base font-semibold text-brand-text">Accesos rápidos</h2>
         <div className="grid gap-3 sm:grid-cols-3">
-          {QUICK_ACTIONS.map(({ to, label, desc, icon: Icon, tone }) => (
-            <motion.div
-              key={to}
-              initial={reduce ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: QUICK_ACTIONS.indexOf({ to, label, desc, icon: Icon, tone }) * 0.05, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Link
-                to={to}
-                className="group relative rounded-2xl border border-brand-border/50 bg-white/90 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brand-accent/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1"
+          {QUICK_ACTIONS.map((action, idx) => {
+            const { to, label, desc, icon: Icon, tone } = action;
+            return (
+              <motion.div
+                key={to}
+                initial={reduce ? false : { opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
               >
-                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone} shadow-lg`}>
-                  <Icon size={20} strokeWidth={2.2} aria-hidden="true" />
-                </span>
-                <div className="mt-4">
-                  <p className="text-sm font-semibold text-brand-text">{label}</p>
-                  <p className="mt-1 text-xs text-brand-textMuted">{desc}</p>
-                </div>
-                <ArrowRight size={14} className="absolute right-5 top-5 text-brand-textMuted transition-transform group-hover:translate-x-1 group-hover:text-brand-accent" aria-hidden="true" />
-              </Link>
-            </motion.div>
-          ))}
+                <Link
+                  to={to}
+                  className="group relative rounded-2xl border border-brand-border/50 bg-white/90 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brand-accent/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1"
+                >
+                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone} shadow-lg`}>
+                    <Icon size={20} strokeWidth={2.2} aria-hidden="true" />
+                  </span>
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold text-brand-text">{label}</p>
+                    <p className="mt-1 text-xs text-brand-textMuted">{desc}</p>
+                  </div>
+                  <ArrowRight size={14} className="absolute right-5 top-5 text-brand-textMuted transition-transform group-hover:translate-x-1 group-hover:text-brand-accent" aria-hidden="true" />
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 

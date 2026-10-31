@@ -87,9 +87,9 @@ const VisBadge = ({ pub }) => (
 );
 
 const VisSwitch = ({ id, label, checked, onChange }) => (
-  <div className="flex items-center justify-between gap-3 rounded-lg bg-brand-dark/70 px-3 py-2.5">
-    <label htmlFor={id} className="cursor-pointer text-xs text-brand-textMuted">
-      {checked ? 'Visible en tu página de emergencia' : 'Solo tú puedes verlo'}
+  <div className="flex items-center justify-between gap-3 rounded-lg border border-brand-border bg-brand-dark/60 px-3 py-2.5">
+    <label htmlFor={id} className="cursor-pointer text-xs text-brand-textMuted leading-tight">
+      {checked ? 'Público' : 'Privado'}
     </label>
     <button
       id={id}
@@ -124,13 +124,15 @@ const Section = ({ title, description, children }) => (
 const FieldBlock = ({ f, value, isPublic, onChange, onToggle }) => {
   const Icon = f.icon;
   return (
-    <FieldRow icon={Icon} label={f.label} hint={f.hint} className="space-y-2">
+    <FieldRow icon={Icon} label={f.label} hint={f.hint} className="space-y-3">
       {f.input === 'textarea' ? (
-        <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="border-brand-border text-base sm:text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent" />
+        <div className="relative">
+          <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="border-brand-border text-base sm:text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent" />
+        </div>
       ) : (
-        <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm" />
+        <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm border-brand-border focus:border-brand-accent focus:ring-1 focus:ring-brand-accent" />
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 sm:flex-wrap">
         <VisBadge pub={isPublic} />
         <VisSwitch id={`pub_${f.key}`} label={f.label} checked={isPublic} onChange={onToggle} />
       </div>
@@ -337,7 +339,7 @@ export const ProfilePage = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <form onSubmit={handleSubmit} noValidate className={`${panel} lg:col-span-2`}>
-          <div className="space-y-10 p-5 sm:p-6 lg:p-8">
+          <div className="space-y-10 p-4 sm:p-6 lg:p-8 pb-24 sm:pb-28 lg:pb-32">
             {/* Identificación */}
             <Section title="Identificación">
               <div className="space-y-3">
@@ -346,20 +348,20 @@ export const ProfilePage = () => {
                   <Label htmlFor="photo_file" className="!mb-0">Fotografía</Label>
                   <VisBadge pub={privacyPublic('photo_url')} />
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 flex-none items-center justify-center overflow-hidden rounded-full bg-brand-dark ring-2 ring-brand-border">
+                <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 flex-none items-center justify-center overflow-hidden rounded-full bg-brand-dark ring-2 ring-brand-border">
                     {photoPreview ? (
                       <img src={photoPreview} alt="Vista previa de la fotografía" className="h-full w-full object-cover" />
                     ) : (
-                      <User size={30} className="text-brand-textMuted/60" aria-hidden="true" />
+                      <User size={28} className="text-brand-textMuted/60" aria-hidden="true" />
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} className="w-full sm:w-auto sm:px-4 py-2.5 text-sm">
                       <Upload size={16} /> {photoPreview ? 'Cambiar' : 'Subir fotografía'}
                     </Button>
                     {photoPreview && (
-                      <Button type="button" variant="ghost" onClick={removePhoto}>
+                      <Button type="button" variant="ghost" onClick={removePhoto} className="w-full sm:w-auto sm:px-4 py-2.5 text-sm text-rose-600">
                         <Trash2 size={16} /> Quitar
                       </Button>
                     )}
