@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../api/client';
-import { Phone, Mail, ShieldAlert, AlertCircle, Droplet, AlertTriangle, FileText, Siren, Image, ImageOff, Stethoscope, Pill } from 'lucide-react';
+import {
+  Phone, Mail, ShieldAlert, AlertCircle, Droplet, AlertTriangle,
+  FileText, Bell, Stethoscope, Pill, MessageCircle, User, CheckCircle2,
+} from 'lucide-react';
 import Seo from '../../components/Seo';
 
 const cleanPhone = (phone) => String(phone).replace(/[^\d+]/g, '');
 
-/** Contenedor común. Las páginas públicas nunca deben indexarse: contienen datos personales. */
 const Shell = ({ children, title = 'Perfil de emergencia' }) => (
   <main className="min-h-screen bg-brand-dark py-8 px-4 sm:py-12">
     <Seo title={title} description="Información de contacto de emergencia" noindex />
-    <div className="max-w-xl mx-auto animate-slide-up">{children}</div>
-    <p className="max-w-xl mx-auto mt-8 text-center text-[11px] text-brand-textMuted">
+    <div className="max-w-2xl mx-auto animate-slide-up">{children}</div>
+    <p className="max-w-2xl mx-auto mt-10 text-center text-[11px] text-brand-textMuted">
       Tu QR te Cuida · <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent transition-colors">MasterCode Company</a>
     </p>
   </main>
@@ -20,11 +22,10 @@ const Shell = ({ children, title = 'Perfil de emergencia' }) => (
 
 const Notice = ({ icon: Icon, tone = 'muted', title, text, extra }) => (
   <Shell title={title}>
-    <div className="card-static p-8 sm:p-10 text-center">
-      <Icon
-        className={`w-12 h-12 mx-auto mb-4 ${tone === 'danger' ? 'text-rose-400' : 'text-brand-textMuted'}`}
-        aria-hidden="true"
-      />
+    <div className="card-static p-8 sm:p-10 text-center rounded-2xl border border-brand-border bg-brand-dark shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full mx-auto mb-5 text-brand-textMuted">
+        <Icon className="w-7 h-7" aria-hidden="true" />
+      </div>
       <h1 className="text-2xl font-bold text-brand-text mb-3">{title}</h1>
       {text && <p className="text-brand-textMuted leading-relaxed">{text}</p>}
       {extra && <p className="mt-4 text-xs text-brand-textMuted leading-relaxed">{extra}</p>}
@@ -32,22 +33,76 @@ const Notice = ({ icon: Icon, tone = 'muted', title, text, extra }) => (
   </Shell>
 );
 
-const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-start gap-4 p-4 rounded-xl bg-brand-dark/70 border border-brand-border">
-    <span className="flex-shrink-0 w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-300">
+const StatItem = ({ icon: Icon, label, value, accent = 'brand-accent' }) => (
+  <div className="flex items-center gap-3 p-3 rounded-xl bg-brand-dark/50 border border-brand-border/50">
+    <span className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-${accent} bg-${accent}/10 border border-${accent}/20`}>
       <Icon className="w-5 h-5" aria-hidden="true" />
     </span>
     <div className="min-w-0">
-      <div className="text-[11px] uppercase tracking-wider text-brand-textMuted mb-0.5">{label}</div>
-      <div className="text-brand-text font-medium leading-snug break-words">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-brand-textMuted font-bold">{label}</div>
+      <div className="text-sm font-semibold text-brand-text leading-tight break-words">{value}</div>
     </div>
   </div>
 );
 
+const ContactCard = ({ c }) => {
+  const phone = cleanPhone(c.phone);
+  const hasPhone = Boolean(c.phone);
+  const hasEmail = Boolean(c.email);
+
+  return (
+    <div className="p-4 sm:p-5 rounded-2xl border border-brand-border bg-brand-dark shadow-[0_8px_24px_-12px_rgba(159,18,57,0.25)]">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="text-sm font-semibold text-brand-text truncate">{c.name}</div>
+            <span className="px-1.5 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent text-[10px] font-bold">
+              Público
+            </span>
+          </div>
+          {c.relationship && <div className="text-[11px] text-brand-textMuted">{c.relationship}</div>}
+        </div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/20">
+          <User className="w-4 h-4" aria-hidden="true" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {hasPhone && (
+          <a
+            href={`tel:${phone}`}
+            className="flex items-center justify-center gap-2 rounded-xl border border-brand-accent bg-brand-accent text-white font-semibold text-sm py-2.5 hover:bg-brand-accentHover transition-colors"
+          >
+            <Phone className="w-4 h-4" aria-hidden="true" /> Llamar
+          </a>
+        )}
+        {hasEmail && (
+          <a
+            href={`mailto:${c.email}`}
+            className="flex items-center justify-center gap-2 rounded-xl border border-brand-border text-brand-text font-semibold text-sm py-2.5 hover:bg-brand-dark/50 transition-colors"
+          >
+            <Mail className="w-4 h-4" aria-hidden="true" /> Correo
+          </a>
+        )}
+        {hasPhone && (
+          <a
+            href={'https://wa.me/' + phone.replace('+', '') + '?text=' + encodeURIComponent('Hola, soy un contacto de emergencia de Tu QR te Cuida.')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold text-sm py-2.5 hover:bg-emerald-100 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const PublicEmergency = () => {
   const { identifier } = useParams();
   const [profile, setProfile] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading, active, inactive, notfound, error
+  const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -101,7 +156,7 @@ export const PublicEmergency = () => {
         <Seo title="Perfil de emergencia" noindex />
         <div className="text-center">
           <div className="w-10 h-10 border-[3px] border-brand-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-brand-textMuted text-sm">Cargando información de emergencia...</p>
+          <p className="text-brand-textMuted text-sm">Cargando información de emergencia…</p>
         </div>
       </main>
     );
@@ -133,105 +188,123 @@ export const PublicEmergency = () => {
 
   const medical = profile.medical || {};
   const contacts = profile.contacts || [];
+  const hasMedicalData = Boolean(
+    profile.blood_type || medical.allergies || medical.medical_conditions || medical.medications
+  );
+  const hasAdditionalData = Boolean(profile.additional_info || profile.emergency_note);
+  const hasContacts = contacts.length > 0;
+  const displayName = profile.display_name || 'Titular';
 
   return (
     <Shell>
-      <div className="text-center mb-5">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold tracking-[0.14em]">
+      <div className="mb-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold tracking-[0.14em]">
           <ShieldAlert className="w-4 h-4" aria-hidden="true" />
           PERFIL DE EMERGENCIA
         </div>
+        <p className="mt-2 text-sm text-brand-textMuted text-center">
+          Información compartida por el titular a través de su código QR
+        </p>
       </div>
 
-      {/* Línea de emergencias de Colombia */}
       <a
         href="tel:123"
-        className="flex items-center justify-between gap-4 mb-5 p-4 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/15 transition-colors"
+        className="flex items-center justify-between gap-4 mb-6 p-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/15 transition-colors"
       >
-        <span className="flex items-center gap-3">
-          <Siren className="w-6 h-6 text-rose-300 flex-shrink-0" aria-hidden="true" />
-          <span className="text-sm leading-snug text-brand-text">
-            <strong className="block">Si requiere atención inmediata</strong>
-            <span className="text-brand-textMuted">Llama primero a la línea de emergencias</span>
-          </span>
-        </span>
-        <span className="flex-shrink-0 rounded-lg bg-rose-500 text-white font-bold px-4 py-2 text-lg">123</span>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500 text-white shadow-lg">
+            <Bell className="w-5 h-5" aria-hidden="true" />
+          </div>
+          <div className="text-left">
+            <strong className="block text-sm text-brand-text">Si requiere atención inmediata</strong>
+            <span className="text-[11px] text-brand-textMuted">Llama primero a la línea de emergencias</span>
+          </div>
+        </div>
+        <span className="flex-shrink-0 h-10 w-10 items-center justify-center rounded-lg bg-rose-500 text-white font-bold text-lg">123</span>
       </a>
 
-        <div className="card-static p-6 sm:p-8 space-y-6">
-          {profile.photo_url && (
-            <img
-              src={profile.photo_url}
-              alt="Fotografía del titular"
-              className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border border-brand-border"
-            />
-          )}
-          <h1 className="text-3xl font-bold text-brand-text leading-tight break-words text-center">
-            {profile.display_name || 'Titular'}
-          </h1>
+      <div className="rounded-2xl border border-brand-border bg-white shadow-[0_20px_50px_-20px_rgba(159,18,57,0.35)] overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-1">
+            <h1 className="text-3xl font-extrabold tracking-tight text-brand-text leading-tight break-words">
+              {displayName}
+            </h1>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent text-white ring-1 ring-brand-accent/20">
+              <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+            </span>
+          </div>
 
-          {(profile.blood_type || medical.allergies || medical.medical_conditions || medical.medications) && (
-            <div className="space-y-3">
-              {profile.blood_type && <InfoRow icon={Droplet} label="Grupo sanguíneo" value={profile.blood_type} />}
-              {medical.allergies && <InfoRow icon={AlertTriangle} label="Alergias" value={medical.allergies} />}
-              {medical.medical_conditions && (
-                <InfoRow icon={Stethoscope} label="Condiciones médicas" value={medical.medical_conditions} />
-              )}
-              {medical.medications && <InfoRow icon={Pill} label="Medicamentos" value={medical.medications} />}
+          {profile.photo_url && (
+            <div className="mt-6 flex justify-center">
+              <img
+                src={profile.photo_url}
+                alt="Fotografía del titular"
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+              />
             </div>
           )}
 
-          {(profile.additional_info || profile.emergency_note) && (
-            <div className="space-y-3">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {profile.blood_type && (
+              <StatItem icon={Droplet} label="Grupo sanguíneo" value={profile.blood_type} accent="rose-500" />
+            )}
+            {medical.allergies && (
+              <StatItem icon={AlertTriangle} label="Alergias" value={medical.allergies} accent="amber-500" />
+            )}
+            {medical.medical_conditions && (
+              <StatItem icon={Stethoscope} label="Condiciones médicas" value={medical.medical_conditions} accent="sky-500" />
+            )}
+            {medical.medications && (
+              <StatItem icon={Pill} label="Medicamentos" value={medical.medications} accent="emerald-500" />
+            )}
+          </div>
+
+          {hasAdditionalData && (
+            <div className="mt-8">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-brand-textMuted mb-3">
+                Información adicional
+              </h2>
               {profile.additional_info && (
-                <InfoRow icon={FileText} label="Información adicional" value={profile.additional_info} />
+                <div className="p-4 rounded-xl border border-brand-border bg-brand-dark/50">
+                  <FileText className="w-4 h-4 mr-2 text-brand-accent" aria-hidden="true" />
+                  <span className="text-sm text-brand-text leading-relaxed">{profile.additional_info}</span>
+                </div>
               )}
               {profile.emergency_note && (
-                <InfoRow icon={FileText} label="Nota de emergencia" value={profile.emergency_note} />
+                <div className="mt-3 p-4 rounded-xl border border-brand-border bg-brand-dark/50">
+                  <FileText className="w-4 h-4 mr-2 text-brand-accent" aria-hidden="true" />
+                  <span className="text-sm text-brand-text leading-relaxed">{profile.emergency_note}</span>
+                </div>
               )}
             </div>
           )}
 
-          {contacts.length > 0 && (
-            <section aria-labelledby="contacts-title">
-              <h2 id="contacts-title" className="text-lg font-semibold text-brand-text mb-3">
-                Contactos de emergencia
-              </h2>
-              <ul className="space-y-3">
+          {hasContacts && (
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-brand-text">Contactos de emergencia</h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-textMuted">
+                  {contacts.length} contacto{contacts.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className="space-y-3">
                 {contacts.map((c, i) => (
-                  <li key={c.id ?? i} className="p-4 rounded-xl bg-brand-dark/70 border border-brand-border">
-                    <div className="mb-3">
-                      <div className="text-brand-text font-semibold">{c.name}</div>
-                      {c.relationship && <div className="text-xs text-brand-textMuted mt-0.5">{c.relationship}</div>}
-                    </div>
-                    {(c.phone || c.email) && (
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        {c.phone && (
-                          <a
-                            href={`tel:${cleanPhone(c.phone)}`}
-                            className="flex-1 inline-flex items-center justify-center gap-2 min-h-[48px] px-4 rounded-lg bg-brand-accent text-brand-dark font-semibold hover:bg-brand-accentHover transition-colors"
-                          >
-                            <Phone className="w-5 h-5" aria-hidden="true" /> Llamar
-                          </a>
-                        )}
-                        {c.email && (
-                          <a
-                            href={`mailto:${c.email}`}
-                            className="flex-1 inline-flex items-center justify-center gap-2 min-h-[48px] px-4 rounded-lg border border-brand-border text-brand-text font-semibold hover:bg-brand-panel transition-colors"
-                          >
-                            <Mail className="w-5 h-5" aria-hidden="true" /> Correo
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </li>
+                  <ContactCard key={c.id ?? i} c={c} />
                 ))}
-              </ul>
-            </section>
+              </div>
+            </div>
+          )}
+
+          {!hasMedicalData && !hasAdditionalData && !hasContacts && (
+            <div className="mt-8 p-8 rounded-2xl border border-brand-border/50 bg-brand-dark/50 text-center text-brand-textMuted text-sm">
+              <AlertCircle className="w-5 h-5 mx-auto mb-2 opacity-50" aria-hidden="true" />
+              <p>No hay información adicional registrada públicamente.</p>
+            </div>
           )}
         </div>
+      </div>
 
-      <p className="mt-5 text-center text-[11px] text-brand-textMuted leading-relaxed">
+      <p className="mt-8 text-center text-[11px] text-brand-textMuted leading-relaxed">
         Información proporcionada por el propietario. Esta página no sustituye a los servicios oficiales de emergencia.
       </p>
     </Shell>

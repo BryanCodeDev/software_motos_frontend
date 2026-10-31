@@ -7,38 +7,7 @@ import { Card } from '../components/ui';
 import { AlertCircle, Info, Check, ArrowRight } from 'lucide-react';
 import Seo from '../components/Seo';
 import { Reveal, PageHeader } from '../components/Section';
-
-const plans = [
-  {
-    name: 'QR digital básico + sticker físico',
-    price: '$30.000 COP',
-    desc: 'Activación única de tu perfil de emergencia digital con código QR. Incluye sticker físico personalizado con envío gratis a domicilio. Pago único, sin suscripción mensual ni anual.',
-    features: ['Perfil y contactos de emergencia', 'Control de visibilidad por campo', 'Descarga del código QR', 'Página pública autorizada', 'Sticker físico personalizado', 'Envío gratis a domicilio'],
-    action: 'Activar mi QR',
-    href: routes.dashboardQr,
-    free: false,
-  },
-  {
-    name: 'QR + NFC',
-    price: 'Próximamente',
-    desc: 'Identificador QR con tecnología NFC. Próximamente disponible una vez validado el prototipo físico.',
-    features: ['Lectura por proximidad', 'Vinculado a tu perfil actual'],
-    action: null,
-    href: null,
-    coming: true,
-  },
-];
-
-const infoItems = [
-  'También puedes completar tu pago por WhatsApp escribiendo al +57 321 220 9943.',
-  'La activación del QR digital + sticker físico tiene un pago único de $30.000 COP con envío gratis a domicilio. No hay suscripciones ni cobros automáticos de renovación.',
-  'Al activar el QR por $30.000 COP se te envía el sticker físico personalizado sin costo adicional.',
-  'Los precios los configura el administrador y se confirman antes del pago.',
-  'El QR contiene solo el enlace con tu identificador, nunca datos personales ni médicos.',
-  'QR + NFC no está disponible para compra hasta que el prototipo físico sea validado.',
-];
-
-
+import { productPlans, productInfoItems } from '../data/products';
 
 export const Products = () => {
   const [products, setProducts] = useState([]);
@@ -104,7 +73,7 @@ export const Products = () => {
       <section className="pb-20">
         <div className="container-page">
           <div className="grid md:grid-cols-3 gap-6 mb-16">
-            {plans.map((p, i) => (
+            {productPlans.map((p, i) => (
               <Reveal key={p.name} delay={i * 0.1}>
                 <Card className={`p-7 h-full flex flex-col ${p.free ? 'border-brand-accent/40 shadow-glow' : ''}`}>
                   <div className="h-6 mb-3">
@@ -171,7 +140,7 @@ export const Products = () => {
             <Card className="p-8 lg:p-10">
               <h2 className="font-semibold text-brand-text mb-5">Información importante</h2>
               <ul className="space-y-3 text-brand-textMuted text-sm">
-                {infoItems.map((text) => (
+                {productInfoItems.map((text) => (
                   <li key={text} className="flex items-start gap-3">
                     <Info className="w-4 h-4 mt-0.5 text-brand-accent flex-shrink-0" />
                     {text}
