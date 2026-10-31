@@ -381,14 +381,6 @@ export const QrPage = () => {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Button
-              onClick={() => createOrderAndPay(false)}
-              disabled={acting}
-              variant="outline"
-              className="w-full sm:w-auto sm:px-8"
-            >
-              {acting ? 'Creando...' : 'Crear pedido'}
-            </Button>
-            <Button
               onClick={() => createOrderAndPay(true)}
               disabled={acting}
               variant="primary"
