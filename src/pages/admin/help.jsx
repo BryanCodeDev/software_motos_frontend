@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Circle,
 } from 'lucide-react';
+import { PageTitle } from '../../components/DashPage';
 import { Reveal } from '../../components/Section';
 
 /* ------------------------------------------------------------------ */
@@ -189,6 +190,8 @@ const Help = () => {
 
   return (
     <div className="space-y-10">
+      <PageTitle title="Documentación" description="Guía de referencia del panel administrativo y arquitectura del sistema." />
+
       {/* Encabezado */}
       <header className="space-y-3">
         <span className="eyebrow">Documentación</span>

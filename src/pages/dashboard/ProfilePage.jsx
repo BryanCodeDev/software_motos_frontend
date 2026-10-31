@@ -1,21 +1,20 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/useAuth';
 import api from '../../api/client';
 import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
 import { Button, Input, Label, Textarea } from '../../components/ui';
-import { PageTitle, PageLoader } from '../../components/DashPage';
+import { PageTitle } from '../../components/DashPage';
 import {
   Save, ImageOff, AlertTriangle, Stethoscope, Pill, FileText, Upload, Trash2, Mail, Lock, User, Eye, EyeOff,
 } from 'lucide-react';
+import { FormSection, FieldRow, Badge, EmptyState, ConfirmDialog } from '../../components/ui-kit';
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
-// Campos que el usuario puede completar. Ninguno es obligatorio salvo el nombre
-// público cuando se desea mostrar en la página de emergencia.
 const fields = [
   {
     key: 'display_name',
@@ -81,14 +80,10 @@ const mapPrivacy = (privacy = {}) =>
   PRIVACY_KEYS.reduce((acc, k) => ({ ...acc, [k]: privacy[k] === true }), {});
 
 const VisBadge = ({ pub }) => (
-  <span
-    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${
-      pub ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-slate-100 text-slate-600 ring-slate-500/20'
-    }`}
-  >
+  <Badge tone={pub ? 'success' : 'neutral'} size="sm">
     {pub ? <Eye size={11} aria-hidden="true" /> : <EyeOff size={11} aria-hidden="true" />}
     {pub ? 'Público' : 'Privado'}
-  </span>
+  </Badge>
 );
 
 const VisSwitch = ({ id, label, checked, onChange }) => (
@@ -129,20 +124,17 @@ const Section = ({ title, description, children }) => (
 const FieldBlock = ({ f, value, isPublic, onChange, onToggle }) => {
   const Icon = f.icon;
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <Icon size={15} className="text-brand-accent" aria-hidden="true" />
-        <Label htmlFor={`f_${f.key}`} className="!mb-0">{f.label}</Label>
-        <VisBadge pub={isPublic} />
-      </div>
+    <FieldRow icon={Icon} label={f.label} hint={f.hint} className="space-y-2">
       {f.input === 'textarea' ? (
         <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="text-base sm:text-sm" />
       ) : (
         <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm" />
       )}
-      {f.hint && <p className="text-xs text-brand-textMuted">{f.hint}</p>}
-      <VisSwitch id={`pub_${f.key}`} label={f.label} checked={isPublic} onChange={onToggle} />
-    </div>
+      <div className="flex items-center justify-between">
+        <VisBadge pub={isPublic} />
+        <VisSwitch id={`pub_${f.key}`} label={f.label} checked={isPublic} onChange={onToggle} />
+      </div>
+    </FieldRow>
   );
 };
 
@@ -155,10 +147,10 @@ export const ProfilePage = () => {
   const [form, setForm] = useState({ ...emptyForm });
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dirty, setDirty] = useState(false);
+  const [confirmDeletePhoto, setConfirmDeletePhoto] = useState(false);
 
   const markDirty = useCallback(() => setDirty(true), []);
 
-  // Avisa si se intenta salir con cambios sin guardar.
   useEffect(() => {
     if (!dirty) return undefined;
     const handleBeforeUnload = (e) => {
@@ -170,7 +162,6 @@ export const ProfilePage = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [dirty]);
 
-  // Escucha sesión caducada (el cliente HTTP lo lanza en 401).
   useEffect(() => {
     const onUnauthorized = () => {
       toast.info('Sesión caducada. Inicia sesión nuevamente.');
@@ -202,7 +193,6 @@ export const ProfilePage = () => {
       } catch (error) {
         if (!mounted) return;
         if (error.response && error.response.status === 404) {
-          // Sin perfil aún: se crea al guardar
           setDirty(false);
         } else {
           toast.error('No se pudo cargar el perfil');
@@ -236,8 +226,13 @@ export const ProfilePage = () => {
   };
 
   const removePhoto = () => {
+    setConfirmDeletePhoto(true);
+  };
+
+  const confirmRemovePhoto = () => {
     setForm((prev) => ({ ...prev, photoFile: null, photo_url: '' }));
     setPhotoPreview(null);
+    setConfirmDeletePhoto(false);
     markDirty();
   };
 
@@ -296,7 +291,6 @@ export const ProfilePage = () => {
         },
       });
 
-      // Recargar para reflejar el estado guardado (incluye visibilidad).
       const res = await api.get('/profiles/me');
       if (res.data.profile) {
         const p = res.data.profile;
@@ -310,7 +304,7 @@ export const ProfilePage = () => {
       }
 
       setDirty(false);
-      toast.success('Perfil guardado correctamente. La página pública refleja los cambios al instante.');
+      toast.success('Perfil guardado correctamente.');
     } catch (error) {
       try {
         showApiError(error);
@@ -322,7 +316,7 @@ export const ProfilePage = () => {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <div className="flex h-64 items-center justify-center"><div className="animate-pulse rounded-full h-12 w-12 bg-brand-border/60" /></div>;
 
   const filled =
     fields.filter((f) => String(form[f.key] || '').trim()).length + (photoPreview ? 1 : 0);
@@ -341,7 +335,7 @@ export const ProfilePage = () => {
   const labelFor = { photo_url: 'Fotografía', ...Object.fromEntries(fields.map((f) => [f.key, f.label])) };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Perfil de emergencia"
         description="Registra y administra tu información personal, médica y de contacto. Decides qué se muestra públicamente."
@@ -501,6 +495,15 @@ export const ProfilePage = () => {
           </div>
         </aside>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDeletePhoto}
+        onClose={() => setConfirmDeletePhoto(false)}
+        title="Quitar fotografía"
+        text="¿Estás seguro de que deseas quitar tu fotografía de perfil?"
+        onConfirm={confirmRemovePhoto}
+        confirmLabel="Quitar"
+      />
     </div>
   );
 };

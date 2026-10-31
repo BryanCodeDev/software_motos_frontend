@@ -1,28 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '../../api/client';
 import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
 import { Button } from '../../components/ui';
 import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import {
-  Download,
-  Link as LinkIcon,
-  Check,
-  Clock,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
-  RotateCcw,
-  CreditCard,
-  Lock,
+  Download, Link as LinkIcon, Check, Clock, AlertTriangle, AlertCircle, CheckCircle2,
+  RotateCcw, CreditCard, Lock,
 } from 'lucide-react';
+import { Badge, StepIndicator } from '../../components/ui-kit';
 
 const QR_PRICE_COP = 30000;
 
 const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
-
-const getQrProduct = (products) =>
-  (products || []).find((p) => p.slug === 'qr-digital-basico') || null;
 
 const formatAmount = (amount) => {
   try {
@@ -107,7 +97,6 @@ export const QrPage = () => {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
 
-  // Datos de activación
   const [identifier, setIdentifier] = useState(null);
   const [order, setOrder] = useState(null);
   const [qrProduct, setQrProduct] = useState(null);
@@ -115,8 +104,6 @@ export const QrPage = () => {
   const [qrUrl, setQrUrl] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Estado derivado de la activación
-  // 'loading' | 'no_order' | 'unpaid' | 'under_review' | 'approved_no_qr' | 'active' | 'rejected' | 'deactivated' | 'error'
   const [state, setState] = useState('loading');
 
   const deriveState = useCallback((id, ord) => {
@@ -141,13 +128,12 @@ export const QrPage = () => {
     let objectUrl = null;
     (async () => {
       try {
-        // 1. ¿Ya hay un identificador activo?
         try {
           const res = await api.get('/identifiers/my');
           if (!mounted) return;
-           const data = res.data.identifier || res.data;
-           if (!data) throw { response: { status: 404 } };
-           setIdentifier(data);
+          const data = res.data.identifier || res.data;
+          if (!data) throw { response: { status: 404 } };
+          setIdentifier(data);
           const code = data.value;
           setQrUrl(`${window.location.origin}/e/${encodeURIComponent(code)}`);
           try {
@@ -165,7 +151,6 @@ export const QrPage = () => {
           if (!(err.response && err.response.status === 404)) throw err;
         }
 
-        // 2. Sin identificador: revisar órdenes de activación de QR
         const res = await api.get('/orders');
         if (!mounted) return;
         const orders = res.data.orders || res.data || [];
@@ -185,7 +170,7 @@ export const QrPage = () => {
       } finally {
         if (mounted) setLoading(false);
       }
-    })();
+    }, [deriveState]);
     return () => {
       mounted = false;
       if (objectUrl) window.URL.revokeObjectURL(objectUrl);
@@ -196,7 +181,11 @@ export const QrPage = () => {
     if (!qrProduct) {
       api
         .get('/products')
-        .then((res) => setQrProduct(getQrProduct(res.data.products || res.data || [])))
+        .then((res) => {
+          const products = res.data.products || res.data || [];
+          const qr = products.find((p) => p.slug === 'qr-digital-basico');
+          setQrProduct(qr || null);
+        })
         .catch(() => setQrProduct(null));
     }
   }, [qrProduct]);
@@ -216,7 +205,6 @@ export const QrPage = () => {
       setOrder(newOrder);
       setState(deriveState(null, newOrder));
 
-      // Crear preferencia de pago y redirigir a Mercado Pago
       const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
       window.location.href = prefRes.data.init_point;
     } catch (error) {
@@ -314,7 +302,6 @@ export const QrPage = () => {
 
       {stepCurrent !== undefined && <Stepper current={stepCurrent} />}
 
-      {/* --- Sin compra --- */}
       {state === 'no_order' && (
         <section className={`${panel} p-5 sm:p-6 lg:p-8`}>
           <div className="flex items-start gap-4">
@@ -377,7 +364,6 @@ export const QrPage = () => {
         </section>
       )}
 
-      {/* --- Pago pendiente / en revisión --- */}
       {(state === 'unpaid' || state === 'under_review') && (
         <StateCard
           icon={Clock}
@@ -425,7 +411,6 @@ export const QrPage = () => {
         </StateCard>
       )}
 
-      {/* --- Pago aprobado, QR por activar --- */}
       {state === 'approved_no_qr' && (
         <StateCard
           icon={CheckCircle2}
@@ -442,7 +427,6 @@ export const QrPage = () => {
         </StateCard>
       )}
 
-      {/* --- QR activo --- */}
       {state === 'active' && identifier && (
         <div className="grid gap-6 lg:grid-cols-5">
           <section className={`${panel} p-5 sm:p-6 lg:col-span-3 lg:p-8`}>
@@ -502,7 +486,6 @@ export const QrPage = () => {
         </div>
       )}
 
-      {/* --- Rechazado / cancelado --- */}
       {state === 'rejected' && (
         <StateCard
           icon={AlertTriangle}
@@ -519,7 +502,6 @@ export const QrPage = () => {
         </StateCard>
       )}
 
-      {/* --- Desactivado --- */}
       {state === 'deactivated' && (
         <div className={`${panel} p-6 lg:p-8`}>
           <EmptyState
@@ -530,7 +512,6 @@ export const QrPage = () => {
         </div>
       )}
 
-      {/* --- Error --- */}
       {state === 'error' && (
         <div className={`${panel} p-6 lg:p-8`}>
           <EmptyState

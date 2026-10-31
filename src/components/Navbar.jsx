@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
-  Menu, X, LogOut, User, LayoutDashboard, ChevronDown, ShieldCheck, Settings, UserPlus, LogIn,
+  Menu, X, LogOut, User, Users, LayoutDashboard, ChevronDown, ShieldCheck, QrCode, Package, Settings, UserPlus, LogIn,
 } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
@@ -166,21 +166,41 @@ export const Navbar = () => {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-brand-text">{displayName}</p>
                         <p className="truncate text-xs text-brand-textMuted">{user?.email}</p>
+                        <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset ${
+                          isAdmin ? 'bg-rose-50 text-rose-700 ring-rose-600/20' : 'bg-brand-accent/10 text-brand-accent ring-brand-accent/20'
+                        }`}>
+                          {isAdmin ? 'Administrador' : 'Usuario'}
+                        </span>
                       </div>
                     </div>
-                    <Link role="menuitem" to={routes.dashboard} className={menuItem}>
-                      <LayoutDashboard size={16} /> Mi panel
-                    </Link>
-                    <Link role="menuitem" to={routes.dashboardProfile} className={menuItem}>
-                      <User size={16} /> Perfil
-                    </Link>
-                    <Link role="menuitem" to={routes.dashboardPrivacy} className={menuItem}>
-                      <ShieldCheck size={16} /> Privacidad
-                    </Link>
+                    {!isAdmin && (
+                      <>
+                        <Link role="menuitem" to={routes.dashboard} className={menuItem}>
+                          <LayoutDashboard size={16} /> Mi panel
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardProfile} className={menuItem}>
+                          <User size={16} /> Perfil
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardContacts} className={menuItem}>
+                          <Users size={16} /> Contactos
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardPrivacy} className={menuItem}>
+                          <ShieldCheck size={16} /> Privacidad
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardQr} className={menuItem}>
+                          <QrCode size={16} /> Mi QR
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardOrders} className={menuItem}>
+                          <Package size={16} /> Pedidos
+                        </Link>
+                      </>
+                    )}
                     {isAdmin && (
-                      <Link role="menuitem" to="/admin" className={`${menuItem} text-brand-accent`}>
-                        <Settings size={16} /> Dashboard admin
-                      </Link>
+                      <>
+                        <Link role="menuitem" to="/admin" className={`${menuItem} text-brand-accent`}>
+                          <Settings size={16} /> Panel administrativo
+                        </Link>
+                      </>
                     )}
                     <button
                       type="button"
@@ -246,15 +266,31 @@ export const Navbar = () => {
                       <p className="truncate text-xs text-brand-textMuted">{user?.email}</p>
                     </div>
                   </div>
-                  <Link to={routes.dashboard} className={`${menuItem} rounded-lg px-3`}>
-                    <LayoutDashboard size={18} /> Mi panel
-                  </Link>
-                  <Link to={routes.dashboardProfile} className={`${menuItem} rounded-lg px-3`}>
-                    <User size={18} /> Mi perfil
-                  </Link>
+                  {!isAdmin && (
+                    <>
+                      <Link to={routes.dashboard} className={`${menuItem} rounded-lg px-3`}>
+                        <LayoutDashboard size={18} /> Mi panel
+                      </Link>
+                      <Link to={routes.dashboardProfile} className={`${menuItem} rounded-lg px-3`}>
+                        <User size={18} /> Mi perfil
+                      </Link>
+                      <Link to={routes.dashboardContacts} className={`${menuItem} rounded-lg px-3`}>
+                        <Users size={18} /> Contactos
+                      </Link>
+                      <Link to={routes.dashboardPrivacy} className={`${menuItem} rounded-lg px-3`}>
+                        <ShieldCheck size={18} /> Privacidad
+                      </Link>
+                      <Link to={routes.dashboardQr} className={`${menuItem} rounded-lg px-3`}>
+                        <QrCode size={18} /> Mi QR
+                      </Link>
+                      <Link to={routes.dashboardOrders} className={`${menuItem} rounded-lg px-3`}>
+                        <Package size={18} /> Pedidos
+                      </Link>
+                    </>
+                  )}
                   {isAdmin && (
                     <Link to="/admin" className={`${menuItem} rounded-lg px-3 text-brand-accent`}>
-                      <Settings size={18} /> Dashboard admin
+                      <Settings size={18} /> Panel administrativo
                     </Link>
                   )}
                   <button

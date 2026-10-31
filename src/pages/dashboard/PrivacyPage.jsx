@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../../api/client';
 import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
@@ -7,6 +7,7 @@ import { PageTitle, PageLoader } from '../../components/DashPage';
 import {
   User, Image, AlertTriangle, Stethoscope, Pill, FileText, Save, Power, Lock, EyeOff, Eye,
 } from 'lucide-react';
+import { Badge, StepIndicator } from '../../components/ui-kit';
 
 const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
@@ -27,35 +28,32 @@ export const PrivacyPage = () => {
   const [saving, setSaving] = useState(false);
   const [toggles, setToggles] = useState({});
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get('/privacy/me');
-        if (!mounted) return;
-        const data = res.data.settings || res.data || [];
-        const map = {};
-        if (Array.isArray(data)) {
-          data.forEach((s) => {
-            if (s.field_name) map[s.field_name] = s.is_public;
-          });
-        }
-        setToggles(map);
-      } catch (error) {
-        if (!mounted) return;
-        if (!(error.response && error.response.status === 404)) {
-          toast.error('No se pudo cargar la configuración de privacidad');
-        }
-      } finally {
-        if (mounted) setLoading(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/privacy/me');
+      const data = res.data.settings || res.data || [];
+      const map = {};
+      if (Array.isArray(data)) {
+        data.forEach((s) => {
+          if (s.field_name) map[s.field_name] = s.is_public;
+        });
       }
-    })();
-    return () => {
-      mounted = false;
-    };
+      setToggles(map);
+    } catch (error) {
+      if (!(error.response && error.response.status === 404)) {
+        toast.error('No se pudo cargar la configuración de privacidad');
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
 
-  // Un campo sin configuración explícita se trata como Privado (por defecto nada es público).
+  useEffect(() => {
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
+  }, [load]);
+
   const isPublic = (key) => toggles[key] === true;
 
   const toggle = (key) => {
@@ -101,7 +99,9 @@ export const PrivacyPage = () => {
       {/* Resumen */}
       <section className={`${panel} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`} aria-label="Resumen de visibilidad">
         <div className="flex items-center gap-4">
-          <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
+          <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 ${
+            publicCount === 0 ? 'bg-brand-accent/10 text-brand-accent ring-brand-accent/15' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+          }`}>
             {publicCount === 0 ? <EyeOff size={22} aria-hidden="true" /> : <Eye size={22} aria-hidden="true" />}
           </span>
           <div>

@@ -1,101 +1,140 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   User, Users, ShieldCheck, QrCode, Package, ArrowRight, CheckCircle2, ChevronRight,
+  AlertTriangle, Loader2, Clock, CreditCard,
 } from 'lucide-react';
 import { routes } from '../../utils/routes';
 import { useAuth } from '../../contexts/useAuth';
 import { PageTitle } from '../../components/DashPage';
 import api from '../../api/client';
-import { useToast } from '../../components/useToast';
+import {
+  StatCard, Badge, StepIndicator, EmptyState, LoadingCard,
+} from '../../components/ui-kit';
 
-const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const nf = new Intl.NumberFormat('es-CO');
+const fmt = (n) => (n === undefined || n === null ? '—' : nf.format(Number(n)));
 
-const shortcuts = [
-  { to: routes.dashboardProfile, icon: User, title: 'Perfil', text: 'Datos personales, médicos y fotografía' },
-  { to: routes.dashboardContacts, icon: Users, title: 'Contactos', text: 'Personas de confianza para emergencias' },
-  { to: routes.dashboardPrivacy, icon: ShieldCheck, title: 'Privacidad', text: 'Visibilidad de cada campo' },
-  { to: routes.dashboardQr, icon: QrCode, title: 'Mi QR', text: 'Activar y descargar tu código QR' },
-  { to: routes.dashboardOrders, icon: Package, title: 'Pedidos', text: 'Estado de tus activaciones' },
+const getNested = (obj, path) => path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj);
+
+const STEPS = [
+  { label: 'Perfil', to: routes.dashboardProfile, icon: User, key: 'profile' },
+  { label: 'Contactos', to: routes.dashboardContacts, icon: Users, key: 'contacts' },
+  { label: 'Privacidad', to: routes.dashboardPrivacy, icon: ShieldCheck, key: 'privacy' },
+  { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode, key: 'qr' },
 ];
+
+const QUICK_ACTIONS = [
+  { to: routes.dashboardProfile, label: 'Perfil', desc: 'Datos personales y médicos', icon: User, tone: 'bg-brand-accent/10 text-brand-accent' },
+  { to: routes.dashboardContacts, label: 'Contactos', desc: 'Personas de confianza', icon: Users, tone: 'bg-emerald-50 text-emerald-700' },
+  { to: routes.dashboardPrivacy, label: 'Privacidad', desc: 'Visibilidad de campos', icon: ShieldCheck, tone: 'bg-sky-50 text-sky-700' },
+  { to: routes.dashboardQr, label: 'Mi QR', desc: 'Código y enlace público', icon: QrCode, tone: 'bg-amber-50 text-amber-700' },
+  { to: routes.dashboardOrders, label: 'Pedidos', desc: 'Estado y pagos', icon: Package, tone: 'bg-slate-100 text-slate-700' },
+];
+
+const Skeleton = () => (
+  <div className="space-y-6 animate-pulse" aria-busy="true">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="h-48 rounded-2xl bg-brand-border/60" />
+      ))}
+    </div>
+    <div className="grid gap-6 lg:grid-cols-3">
+      <div className="h-64 rounded-2xl bg-brand-border/60 lg:col-span-2" />
+      <div className="h-64 rounded-2xl bg-brand-border/60" />
+    </div>
+    <div className="grid gap-6 lg:grid-cols-3">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="h-52 rounded-2xl bg-brand-border/60" />
+      ))}
+    </div>
+  </div>
+);
 
 export const DashboardIndex = () => {
   const { user } = useAuth();
-  const toast = useToast();
   const reduce = useReducedMotion();
   const name = user?.name || user?.email?.split('@')[0];
 
-  const [profileComplete, setProfileComplete] = useState(null);
-  const [contactsCount, setContactsCount] = useState(null);
-  const [qrActive, setQrActive] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [stepsState, setStepsState] = useState({
+    profile: null,
+    contacts: null,
+    privacy: null,
+    qr: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const results = { profile: null, contacts: null, privacy: null, qr: null };
+    try {
+      const [profRes, contactsRes, identifiersRes] = await Promise.allSettled([
+        api.get('/profiles/me'),
+        api.get('/contacts'),
+        api.get('/identifiers/my'),
+      ]);
+
+      if (profRes.status === 'fulfilled') {
+        const p = profRes.value.data.profile || profRes.value.data;
+        results.profile = !!(p.display_name && p.display_name.trim());
+      }
+      if (contactsRes.status === 'fulfilled') {
+        results.contacts = ((contactsRes.value.data.contacts || contactsRes.value.data || []).length) > 0;
+      }
+      if (identifiersRes.status === 'fulfilled') {
+        const id = identifiersRes.value.data.identifier || identifiersRes.value.data;
+        results.qr = id?.status === 'active';
+      }
+      results.privacy = results.profile === true;
+
+      setStepsState(results);
+    } catch {
+      setError('No se pudo cargar el estado de tu panel');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get('/profiles/me');
-        if (!mounted) return;
-        const p = res.data.profile || res.data;
-        setProfileComplete(!!(p.display_name && p.display_name.trim()));
-      } catch {
-        setProfileComplete(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [toast]);
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
+  }, [load]);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get('/contacts');
-        if (!mounted) return;
-        setContactsCount((res.data.contacts || res.data || []).length);
-      } catch {
-        setContactsCount(0);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [toast]);
+  const ready = Object.values(stepsState).every((v) => v !== null);
+  const doneCount = Object.values(stepsState).filter(Boolean).length;
+  const pct = ready ? Math.round((doneCount / STEPS.length) * 100) : 0;
+  const next = ready ? STEPS.find((s, i) => !Object.values(stepsState)[i]) : null;
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get('/identifiers/my');
-        if (!mounted) return;
-        setQrActive((res.data.identifier || res.data).status === 'active');
-      } catch (error) {
-        if (!(error.response && error.response.status === 404)) {
-          toast.error('No se pudo cargar el estado del QR');
-        }
-        setQrActive(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [toast]);
+  if (loading && !stats) return <Skeleton />;
 
-  const steps = [
-    { to: routes.dashboardProfile, icon: User, title: 'Perfil', text: 'Completa tus datos personales y médicos.', done: profileComplete === true },
-    { to: routes.dashboardContacts, icon: Users, title: 'Contactos', text: 'Agrega tus contactos de emergencia.', done: (contactsCount || 0) > 0 },
-    { to: routes.dashboardPrivacy, icon: ShieldCheck, title: 'Privacidad', text: 'Define qué compartir públicamente.', done: profileComplete === true },
-    { to: routes.dashboardQr, icon: QrCode, title: 'Mi QR', text: 'Activa tu QR con el pago único de $30.000 COP.', done: qrActive === true },
-  ];
-
-  const ready = profileComplete !== null && contactsCount !== null && qrActive !== null;
-  const doneCount = steps.filter((s) => s.done).length;
-  const pct = Math.round((doneCount / steps.length) * 100);
-  const next = steps.find((s) => !s.done);
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-5/50 p-8 text-center shadow-soft">
+        <AlertTriangle size={24} className="mx-auto mb-4 text-rose-500" aria-hidden="true" />
+        <p className="mb-4 text-sm font-medium text-brand-text">{error}</p>
+        <button
+          type="button"
+          onClick={load}
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-brand-accentHover active:scale-[0.98]"
+        >
+          <RefreshCwIcon size={16} /> Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageTitle
         title={name ? `Hola, ${name}` : 'Mi panel'}
         description="Administra tu perfil de emergencia, contactos, privacidad y código QR desde un solo lugar."
       />
 
-      {/* Progreso */}
+      {/* Progreso de activación */}
       <section
         className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-accent via-[#7d0f2e] to-[#3f0617] p-6 text-white shadow-[0_24px_60px_-24px_rgba(159,18,57,0.55)] sm:p-8"
         aria-labelledby="progress-title"
@@ -105,13 +144,13 @@ export const DashboardIndex = () => {
           <div className="max-w-md">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Estado de activación</p>
             <h2 id="progress-title" className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              {!ready ? 'Cargando tu progreso…' : doneCount === steps.length ? 'Tu perfil está listo' : 'Termina de configurar tu perfil'}
+              {!ready ? 'Cargando tu progreso…' : doneCount === STEPS.length ? 'Tu perfil está listo' : 'Termina de configurar tu perfil'}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-white/75">
               {!ready
                 ? 'Estamos revisando el estado de tu cuenta.'
                 : next
-                  ? `Siguiente paso: ${next.title.toLowerCase()}. ${next.text}`
+                  ? `Siguiente paso: ${next.label.toLowerCase()}.`
                   : 'Todo completado. Tu página pública de emergencia está habilitada.'}
             </p>
             {ready && next && (
@@ -119,14 +158,14 @@ export const DashboardIndex = () => {
                 to={next.to}
                 className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-accent transition-transform hover:-translate-y-0.5"
               >
-                Continuar con {next.title} <ArrowRight size={16} aria-hidden="true" />
+                Continuar con {next.label} <ArrowRight size={16} aria-hidden="true" />
               </Link>
             )}
           </div>
           <div className="w-full md:w-64">
             <div className="flex items-end justify-between">
               <span className="text-4xl font-extrabold tracking-tight">{ready ? `${pct}%` : '—'}</span>
-              <span className="pb-1 text-xs text-white/70">{ready ? `${doneCount} de ${steps.length} pasos` : ''}</span>
+              <span className="pb-1 text-xs text-white/70">{ready ? `${doneCount} de ${STEPS.length} pasos` : ''}</span>
             </div>
             <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuenow={ready ? pct : 0} aria-valuemin={0} aria-valuemax={100}>
               <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${ready ? pct : 0}%` }} />
@@ -136,41 +175,47 @@ export const DashboardIndex = () => {
       </section>
 
       {/* Pasos */}
-      <section className={`${panel} p-5 sm:p-6`} aria-labelledby="steps-title">
-        <h2 id="steps-title" className="mb-4 text-base font-semibold text-brand-text">Pasos para activar tu QR</h2>
-        <ol className="space-y-2">
-          {steps.map((step, i) => (
-            <li key={step.title}>
+      <section className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-5 sm:p-6" aria-labelledby="steps-title">
+        <div className="flex items-center justify-between mb-4">
+          <h2 id="steps-title" className="text-base font-semibold text-brand-text">Pasos para activar tu QR</h2>
+        </div>
+        <StepIndicator steps={STEPS.map((s) => ({ label: s.label }))} current={doneCount} />
+        <ol className="mt-6 space-y-2">
+          {STEPS.map((step, i) => {
+            const done = Object.values(stepsState)[i] === true;
+            return (
               <Link
+                key={step.key}
                 to={step.to}
-                className="group flex items-center gap-4 rounded-xl border border-brand-border p-3.5 transition-colors hover:border-brand-accent/30 hover:bg-brand-dark/60 sm:p-4"
+                className="group flex items-center gap-3 rounded-xl border p-3 transition-colors sm:p-4 ${
+                  done
+                    ? 'border-emerald-100 bg-emerald-5/50'
+                    : 'border-brand-border hover:border-brand-accent/30 hover:bg-brand-dark/60'
+                }"
               >
                 <span
                   className={`flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold ${
-                    step.done ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20' : 'bg-brand-dark text-brand-textMuted ring-1 ring-brand-border'
+                    done
+                      ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
+                      : 'bg-brand-dark text-brand-textMuted ring-1 ring-brand-border'
                   }`}
                 >
-                  {step.done ? <CheckCircle2 size={18} aria-hidden="true" /> : i + 1}
+                  {done ? <CheckCircle2 size={18} aria-hidden="true" /> : i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-brand-text">{step.title}</p>
-                  <p className="truncate text-xs text-brand-textMuted">{step.text}</p>
+                  <p className="text-sm font-semibold text-brand-text">{step.label}</p>
+                  <p className="truncate text-xs text-brand-textMuted">
+                    {done ? 'Completado' : 'Pendiente'}
+                  </p>
                 </div>
-                <span
-                  className={`hidden rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset sm:inline-flex ${
-                    step.done ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-amber-50 text-amber-700 ring-amber-600/20'
-                  }`}
-                >
-                  {!ready ? '…' : step.done ? 'Completado' : 'Pendiente'}
-                </span>
                 <ChevronRight size={16} className="flex-none text-brand-textMuted transition-transform group-hover:translate-x-0.5 group-hover:text-brand-accent" aria-hidden="true" />
               </Link>
-            </li>
-          ))}
+            );
+          })}
         </ol>
 
-        {qrActive === false && (
-          <div className="mt-5 flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+        {stepsState.qr === false && (
+          <div className="mt-6 flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-relaxed text-brand-textMuted">
               Tu página pública de emergencia solo se habilita tras activar el QR con el pago único de{' '}
               <span className="font-bold text-brand-text">$30.000 COP</span>. Sin suscripción.
@@ -182,36 +227,58 @@ export const DashboardIndex = () => {
         )}
       </section>
 
-      {/* Accesos */}
-      <section aria-labelledby="shortcuts-title">
-        <h2 id="shortcuts-title" className="mb-3 text-base font-semibold text-brand-text">Accesos rápidos</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {shortcuts.map(({ to, icon: Icon, title, text }, i) => (
+      {/* Accesos rápidos */}
+      <section>
+        <h2 className="mb-4 text-base font-semibold text-brand-text">Accesos rápidos</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {QUICK_ACTIONS.map(({ to, label, desc, icon: Icon, tone }) => (
             <motion.div
               key={to}
               initial={reduce ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, delay: QUICK_ACTIONS.indexOf({ to, label, desc, icon: Icon, tone }) * 0.05, ease: [0.22, 1, 0.36, 1] }}
             >
               <Link
                 to={to}
-                className={`${panel} group flex h-full items-center gap-4 p-4 transition-all hover:-translate-y-0.5 hover:border-brand-accent/40`}
+                className="group relative rounded-2xl border border-brand-border/50 bg-white/90 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brand-accent/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1"
               >
-                <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15 transition-colors group-hover:bg-brand-accent group-hover:text-white">
-                  <Icon size={20} aria-hidden="true" />
+                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone} shadow-lg`}>
+                  <Icon size={20} strokeWidth={2.2} aria-hidden="true" />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-brand-text">{title}</h3>
-                  <p className="mt-0.5 text-xs leading-relaxed text-brand-textMuted">{text}</p>
+                <div className="mt-4">
+                  <p className="text-sm font-semibold text-brand-text">{label}</p>
+                  <p className="mt-1 text-xs text-brand-textMuted">{desc}</p>
                 </div>
-                <ArrowRight size={16} className="flex-none text-brand-textMuted opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden="true" />
+                <ArrowRight size={14} className="absolute right-5 top-5 text-brand-textMuted transition-transform group-hover:translate-x-1 group-hover:text-brand-accent" aria-hidden="true" />
               </Link>
             </motion.div>
           ))}
         </div>
       </section>
+
+      {stats && (
+        <section>
+          <h2 className="mb-4 text-base font-semibold text-brand-text">Resumen de tu cuenta</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Perfil de emergencia" value={fmt(stepsState.profile ? 1 : 0)} icon={User} tone="bg-brand-accent/10 text-brand-accent" hint="Datos personales y médicos" />
+            <StatCard label="Contactos" value={fmt(stepsState.contacts ? 1 : 0)} icon={Users} tone="bg-emerald-50 text-emerald-700" hint="Personas de confianza" />
+            <StatCard label="Privacidad" value={fmt(stepsState.privacy ? 1 : 0)} icon={ShieldCheck} tone="bg-sky-50 text-sky-700" hint="Campos configurados" />
+            <StatCard label="QR" value={fmt(stepsState.qr ? 1 : 0)} icon={QrCode} tone="bg-amber-50 text-amber-700" hint="Código de activación" />
+          </div>
+        </section>
+      )}
     </div>
   );
 };
+
+function RefreshCwIcon({ size }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 4v6a9 9 0 0 0 9 9" />
+      <path d="M23 4v6a9 9 0 0 1-9-9" />
+      <polyline points="17 24 23 4 17 4" />
+    </svg>
+  );
+}
 
 export default DashboardIndex;

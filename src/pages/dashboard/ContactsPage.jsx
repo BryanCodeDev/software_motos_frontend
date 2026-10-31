@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '../../api/client';
 import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
@@ -8,6 +8,7 @@ import { PageTitle, PageLoader, EmptyState, CheckField } from '../../components/
 import {
   Trash2, Save, Pencil, Users, Phone as PhoneIcon, Mail as MailIcon, Eye, EyeOff, User, Heart,
 } from 'lucide-react';
+import { Badge, ConfirmDialog } from '../../components/ui-kit';
 
 const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 const iconCls = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted';
@@ -34,6 +35,15 @@ export const ContactsPage = () => {
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  const loadContacts = useCallback(async () => {
+    try {
+      const res = await api.get('/contacts');
+      setContacts(res.data.contacts || res.data || []);
+    } catch {
+      // se conserva la lista actual
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -50,19 +60,8 @@ export const ContactsPage = () => {
         if (mounted) setLoading(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [toast]);
-
-  const reloadContacts = async () => {
-    try {
-      const res = await api.get('/contacts');
-      setContacts(res.data.contacts || res.data || []);
-    } catch {
-      // se conserva la lista actual
-    }
-  };
 
   const resetForm = () => {
     setEditingId(null);
@@ -80,7 +79,7 @@ export const ContactsPage = () => {
         await api.post('/contacts', payload);
       }
       resetForm();
-      await reloadContacts();
+      await loadContacts();
       toast.success('Contacto guardado');
     } catch (error) {
       try {
@@ -114,7 +113,7 @@ export const ContactsPage = () => {
       await api.delete(`/contacts/${toDelete.id}`);
       if (editingId === toDelete.id) resetForm();
       setToDelete(null);
-      await reloadContacts();
+      await loadContacts();
       toast.success('Contacto eliminado');
     } catch {
       toast.error('No se pudo eliminar el contacto');
@@ -179,20 +178,6 @@ export const ContactsPage = () => {
                 <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
               </div>
             </div>
-            <div>
-              <Label htmlFor="c_phone">Teléfono</Label>
-              <div className="relative">
-                <PhoneIcon size={18} className={iconCls} aria-hidden="true" />
-                <Input id="c_phone" type="tel" autoComplete="off" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+57 300 000 0000" className={inputCls} />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="c_email">Correo</Label>
-              <div className="relative">
-                <MailIcon size={18} className={iconCls} aria-hidden="true" />
-                <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
-              </div>
-            </div>
           </div>
 
           <div className="space-y-3 rounded-xl border border-brand-border bg-brand-dark/60 p-4">
@@ -239,9 +224,9 @@ export const ContactsPage = () => {
         <div className="mb-5 flex items-center justify-between">
           <h2 id="contact-list-title" className="text-base font-semibold text-brand-text">Lista de contactos</h2>
           {sorted.length > 0 && (
-            <span className="rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
+            <Badge tone="brand" size="md">
               {sorted.length} {sorted.length === 1 ? 'contacto' : 'contactos'}
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -265,23 +250,16 @@ export const ContactsPage = () => {
                   <div className="flex items-start gap-3">
                     <span
                       className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent/10 text-sm font-bold text-brand-accent ring-1 ring-brand-accent/15"
-                      title="Contacto"
                     >
                       {c.name?.charAt(0)?.toUpperCase() || '?'}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p className="truncate text-sm font-semibold text-brand-text">{c.name}</p>
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${
-                            c.is_public
-                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                              : 'bg-slate-100 text-slate-600 ring-slate-500/20'
-                          }`}
-                        >
+                        <Badge tone={c.is_public ? 'success' : 'neutral'} size="sm">
                           {c.is_public ? <Eye size={11} aria-hidden="true" /> : <EyeOff size={11} aria-hidden="true" />}
                           {c.is_public ? 'Público' : 'Privado'}
-                        </span>
+                        </Badge>
                       </div>
                       {c.relationship && <p className="mt-0.5 truncate text-xs text-brand-textMuted">{c.relationship}</p>}
                     </div>
@@ -291,7 +269,6 @@ export const ContactsPage = () => {
                         onClick={() => edit(c)}
                         className="rounded-lg p-2 text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text"
                         aria-label={`Editar ${c.name}`}
-                        title="Editar"
                       >
                         <Pencil size={16} />
                       </button>
@@ -300,7 +277,6 @@ export const ContactsPage = () => {
                         onClick={() => setToDelete(c)}
                         className="rounded-lg p-2 text-rose-600 transition-colors hover:bg-rose-50"
                         aria-label={`Eliminar ${c.name}`}
-                        title="Eliminar"
                       >
                         <Trash2 size={16} />
                       </button>

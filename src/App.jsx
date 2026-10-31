@@ -4,7 +4,8 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ToastProvider } from './components/Toast';
 import { PublicLayout } from './layout/PublicLayout';
-import { AppLayout } from './layout/AppLayout';
+import { UserLayout } from './layout/UserLayout';
+import { AdminLayout } from './layout/AdminLayout';
 import { RequireAdmin } from './components/RequireAdmin';
 import { AdminHome } from './pages/admin/AdminHome';
 import { AdminUsers } from './pages/admin/Users';
@@ -25,7 +26,7 @@ const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const PublicEmergency = lazy(() => import('./pages/public/PublicEmergency'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Dashboard pages
+// Dashboard (usuario) pages
 const DashboardIndex = lazy(() => import('./pages/dashboard/DashboardIndex'));
 const ProfilePage = lazy(() => import('./pages/dashboard/ProfilePage'));
 const ContactsPage = lazy(() => import('./pages/dashboard/ContactsPage'));
@@ -58,8 +59,8 @@ const App = () => (
                 <Route path="/auth/restablecer-contrasena" element={<ResetPassword />} />
               </Route>
 
-              {/* Rutas autenticadas: Navbar + Sidebar integrado (AppLayout) */}
-              <Route element={<AppLayout />}>
+              {/* Panel de USUARIO - rutas /app/* */}
+              <Route element={<UserLayout />}>
                 <Route path="/app">
                   <Route index element={<DashboardIndex />} />
                   <Route path="perfil" element={<ProfilePage />} />
@@ -68,11 +69,16 @@ const App = () => (
                   <Route path="qr" element={<QrPage />} />
                   <Route path="pedidos" element={<OrdersPage />} />
                 </Route>
+              </Route>
+
+              {/* Panel de ADMINISTRADOR - rutas /admin/* */}
+              <Route element={<AdminLayout />}>
                 <Route path="/admin">
                   <Route index element={<RequireAdmin><AdminHome /></RequireAdmin>} />
                   <Route path="usuarios" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
                   <Route path="pedidos" element={<RequireAdmin><AdminOrders /></RequireAdmin>} />
                   <Route path="auditoria" element={<RequireAdmin><AdminAudit /></RequireAdmin>} />
+                  <Route path="ayuda" element={<RequireAdmin><Help /></RequireAdmin>} />
                   <Route path="*" element={<RequireAdmin><AdminHome /></RequireAdmin>} />
                 </Route>
               </Route>

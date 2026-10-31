@@ -6,6 +6,7 @@ import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
+import { Badge, ConfirmDialog } from '../../components/ui-kit';
 
 const badge = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset';
 
@@ -41,6 +42,7 @@ export const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [confirmRole, setConfirmRole] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -117,18 +119,18 @@ export const AdminUsers = () => {
 
   const verified = (u) =>
     u.email_verified === undefined ? null : u.email_verified ? (
-      <span className={`${badge} bg-emerald-50 text-emerald-700 ring-emerald-600/20`}>
+      <Badge tone="success" size="sm">
         <BadgeCheck size={12} /> Verificado
-      </span>
+      </Badge>
     ) : (
-      <span className={`${badge} bg-slate-100 text-slate-600 ring-slate-500/20`}>Sin verificar</span>
+      <Badge tone="neutral" size="sm">Sin verificar</Badge>
     );
 
   return (
     <div className="space-y-5">
       <PageTitle title="Gestión de usuarios" description="Administra cuentas y roles." />
 
-      <form onSubmit={submitSearch} className="card-static flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+      <form onSubmit={submitSearch} className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted" />
           <input
@@ -160,20 +162,20 @@ export const AdminUsers = () => {
       </form>
 
       {error && (
-        <div className="card-static flex items-center gap-3 p-4 text-sm text-rose-700">
+        <div className="rounded-2xl border border-rose-200 bg-rose-5/50 p-4 text-sm text-rose-700 flex items-center gap-3">
           <AlertTriangle size={18} /> {error}
           <button type="button" onClick={load} className="ml-auto font-semibold underline">Reintentar</button>
         </div>
       )}
 
       {loading && !error && (
-        <div className="card-static animate-pulse space-y-3 p-4" aria-busy="true">
+        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
           {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-lg bg-brand-border/60" />)}
         </div>
       )}
 
       {!loading && !error && users.length === 0 && (
-        <div className="card-static p-10 text-center">
+        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-10 text-center">
           <p className="text-sm font-semibold text-brand-text">No se encontraron usuarios</p>
           <p className="mt-1 text-xs text-brand-textMuted">Prueba con otra búsqueda o limpia los filtros.</p>
         </div>
@@ -181,11 +183,10 @@ export const AdminUsers = () => {
 
       {!loading && !error && users.length > 0 && (
         <>
-          {/* Escritorio */}
-          <div className="card-static hidden overflow-hidden md:block">
+          <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden">
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-sm">
-                <thead className="bg-brand-dark/70 text-left text-xs font-semibold uppercase tracking-wider text-brand-textMuted">
+                <thead className="bg-brand-dark/70 text-left text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
                   <tr>
                     <th scope="col" className="px-4 py-3">Usuario</th>
                     <th scope="col" className="px-4 py-3">Rol</th>
@@ -215,10 +216,9 @@ export const AdminUsers = () => {
             </div>
           </div>
 
-          {/* Móvil */}
           <ul className="space-y-3 md:hidden">
             {users.map((u) => (
-              <li key={u.id} className="card-static p-4">
+              <li key={u.id} className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-4">
                 <div className="flex items-start gap-3">
                   <Avatar email={u.email} />
                   <div className="min-w-0 flex-1">

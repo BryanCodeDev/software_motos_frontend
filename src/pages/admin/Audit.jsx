@@ -2,15 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, AlertTriangle, ScrollText } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
+import { Badge } from '../../components/ui-kit';
 
 const badge = 'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset';
 
 const actionTone = (action = '') => {
   const a = action.toLowerCase();
-  if (/(delete|remove|deactivat|cancel|revoke)/.test(a)) return 'bg-rose-50 text-rose-700 ring-rose-600/20';
-  if (/(create|register|activat)/.test(a)) return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
-  if (/(update|role|change|patch)/.test(a)) return 'bg-amber-50 text-amber-700 ring-amber-600/20';
-  return 'bg-slate-100 text-slate-700 ring-slate-500/20';
+  if (/(delete|remove|deactivat|cancel|revoke)/.test(a)) return 'danger';
+  if (/(create|register|activat)/.test(a)) return 'success';
+  if (/(update|role|change|patch)/.test(a)) return 'warn';
+  return 'neutral';
 };
 
 const formatDate = (d) =>
@@ -56,7 +57,7 @@ export const AdminAudit = () => {
     <div className="space-y-5">
       <PageTitle title="Auditoría" description="Eventos administrativos registrados." />
 
-      <div className="card-static flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+      <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted" />
           <input
@@ -79,20 +80,20 @@ export const AdminAudit = () => {
       </div>
 
       {error && (
-        <div className="card-static flex items-center gap-3 p-4 text-sm text-rose-700">
+        <div className="rounded-2xl border border-rose-200 bg-rose-5/50 p-4 text-sm text-rose-700 flex items-center gap-3">
           <AlertTriangle size={18} /> {error}
           <button type="button" onClick={load} className="ml-auto font-semibold underline">Reintentar</button>
         </div>
       )}
 
       {loading && !error && (
-        <div className="card-static animate-pulse space-y-3 p-4" aria-busy="true">
+        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
           {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 rounded-lg bg-brand-border/60" />)}
         </div>
       )}
 
       {!loading && !error && visible.length === 0 && (
-        <div className="card-static flex flex-col items-center gap-2 p-10 text-center">
+        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col items-center gap-2 p-10 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
             <ScrollText size={22} />
           </span>
@@ -103,11 +104,10 @@ export const AdminAudit = () => {
 
       {!loading && !error && visible.length > 0 && (
         <>
-          {/* Escritorio */}
-          <div className="card-static hidden overflow-hidden md:block">
+          <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden">
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-sm">
-                <thead className="bg-brand-dark/70 text-left text-xs font-semibold uppercase tracking-wider text-brand-textMuted">
+                <thead className="bg-brand-dark/70 text-left text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
                   <tr>
                     <th scope="col" className="px-4 py-3">Fecha</th>
                     <th scope="col" className="px-4 py-3">Actor</th>
@@ -124,7 +124,7 @@ export const AdminAudit = () => {
                         {l.actor_email || <span className="text-brand-textMuted">Sistema</span>}
                         {l.ip_address && <span className="block text-[11px] text-brand-textMuted">{l.ip_address}</span>}
                       </td>
-                      <td className="px-4 py-3"><span className={`${badge} ${actionTone(l.action)}`}>{l.action}</span></td>
+                      <td className="px-4 py-3"><Badge tone={actionTone(l.action)} size="sm">{l.action}</Badge></td>
                       <td className="px-4 py-3 text-brand-text">{l.entity_type}</td>
                       <td className="px-4 py-3 font-mono text-xs text-brand-textMuted">{l.entity_id}</td>
                     </tr>
@@ -134,12 +134,11 @@ export const AdminAudit = () => {
             </div>
           </div>
 
-          {/* Móvil */}
           <ul className="space-y-3 md:hidden">
             {visible.map((l) => (
-              <li key={l.id} className="card-static p-4">
+              <li key={l.id} className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <span className={`${badge} ${actionTone(l.action)}`}>{l.action}</span>
+                  <Badge tone={actionTone(l.action)} size="sm">{l.action}</Badge>
                   <span className="text-right text-[11px] text-brand-textMuted">{formatDate(l.created_at)}</span>
                 </div>
                 <p className="mt-3 break-all text-sm font-medium text-brand-text">

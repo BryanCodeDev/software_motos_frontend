@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/client';
 import { routes } from '../../utils/routes';
 import { useToast } from '../../components/useToast';
 import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import { Package } from 'lucide-react';
+import { Badge } from '../../components/ui-kit';
 
 const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
@@ -22,11 +23,11 @@ const commercialLabels = {
 };
 
 const commercialTone = {
-  paid: 'ok',
+  paid: 'success',
   preparing: 'info',
   shipped: 'info',
-  delivered: 'ok',
-  cancelled: 'bad',
+  delivered: 'success',
+  cancelled: 'danger',
   refunded: 'neutral',
   refund_requested: 'warn',
   pending_payment: 'warn',
@@ -46,27 +47,13 @@ const paymentLabels = {
 
 const paymentTone = {
   unpaid: 'neutral',
-  approved: 'ok',
+  approved: 'success',
   pending: 'warn',
   in_process: 'warn',
-  rejected: 'bad',
-  cancelled: 'bad',
+  rejected: 'danger',
+  cancelled: 'danger',
   refunded: 'neutral',
 };
-
-const tones = {
-  ok: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-  info: 'bg-sky-50 text-sky-700 ring-sky-600/20',
-  warn: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  bad: 'bg-rose-50 text-rose-700 ring-rose-600/20',
-  neutral: 'bg-slate-100 text-slate-700 ring-slate-500/20',
-};
-
-const Badge = ({ tone = 'neutral', children }) => (
-  <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${tones[tone] || tones.neutral}`}>
-    {children}
-  </span>
-);
 
 const formatAmount = (amount, currency) => {
   if (amount === null || amount === undefined || amount === '') return '—';
@@ -94,26 +81,24 @@ export const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get('/orders');
-        if (!mounted) return;
-        setOrders(res.data.orders || res.data || []);
-      } catch (error) {
-        if (!mounted) return;
-        if (!(error.response && error.response.status === 404)) {
-          toast.error('No se pudieron cargar los pedidos');
-        }
-      } finally {
-        if (mounted) setLoading(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/orders');
+      setOrders(res.data.orders || res.data || []);
+    } catch (error) {
+      if (!(error.response && error.response.status === 404)) {
+        toast.error('No se pudieron cargar los pedidos');
       }
-    })();
-    return () => {
-      mounted = false;
-    };
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
+
+  useEffect(() => {
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
+  }, [load]);
 
   if (loading) return <PageLoader />;
 
@@ -146,7 +131,7 @@ export const OrdersPage = () => {
           <div className={`${panel} hidden overflow-hidden md:block`}>
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-left text-sm">
-                <thead className="bg-brand-dark/70 text-xs font-semibold uppercase tracking-wider text-brand-textMuted">
+                <thead className="bg-brand-dark/70 text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
                   <tr>
                     <th scope="col" className="px-5 py-3">Número</th>
                     <th scope="col" className="px-5 py-3">Producto</th>
