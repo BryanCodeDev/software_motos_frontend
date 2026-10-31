@@ -2,52 +2,54 @@ import { Loader2 } from 'lucide-react';
 
 /** Encabezado estándar de cada página del panel. */
 export const PageTitle = ({ title, description, actions }) => (
-  <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-    <div>
-      <h1 className="text-2xl lg:text-3xl font-bold text-brand-text tracking-tight">{title}</h1>
+  <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <div className="min-w-0">
+      <h1 className="text-2xl font-extrabold tracking-tight text-brand-text lg:text-3xl">{title}</h1>
       {description && (
-        <p className="mt-2 text-brand-textMuted text-sm leading-relaxed max-w-2xl">{description}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-brand-textMuted">{description}</p>
       )}
     </div>
-    {actions && <div className="flex-shrink-0">{actions}</div>}
+    {actions && <div className="w-full flex-shrink-0 sm:w-auto">{actions}</div>}
   </div>
 );
 
 /** Indicador de carga a pantalla de contenido. */
 export const PageLoader = () => (
-  <div className="flex h-64 items-center justify-center" role="status" aria-live="polite">
-    <Loader2 className="w-7 h-7 animate-spin text-brand-accent" aria-hidden="true" />
-    <span className="sr-only">Cargando...</span>
+  <div className="flex h-64 flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white ring-1 ring-brand-border shadow-soft">
+      <Loader2 className="h-6 w-6 animate-spin text-brand-accent" aria-hidden="true" />
+    </span>
+    <span className="text-xs font-medium text-brand-textMuted">Cargando…</span>
   </div>
 );
 
 /** Estado vacío con ícono, texto y acción opcional. */
 export const EmptyState = ({ icon: Icon, title, text, children }) => (
-  <div className="text-center py-12 px-4">
+  <div className="px-4 py-12 text-center">
     {Icon && (
-      <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent">
-        <Icon className="w-6 h-6" aria-hidden="true" />
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
+        <Icon className="h-6 w-6" aria-hidden="true" />
       </div>
     )}
-    <h3 className="font-semibold text-brand-text mb-1">{title}</h3>
-    {text && <p className="text-brand-textMuted text-sm max-w-sm mx-auto leading-relaxed">{text}</p>}
-    {children && <div className="mt-6">{children}</div>}
+    <h3 className="mb-1 font-semibold text-brand-text">{title}</h3>
+    {text && <p className="mx-auto max-w-sm text-sm leading-relaxed text-brand-textMuted">{text}</p>}
+    {children && <div className="mt-6 flex justify-center">{children}</div>}
   </div>
 );
 
 /** Casilla de verificación con la apariencia del sistema de diseño. */
 export const CheckField = ({ id, checked, onChange, label, hint }) => (
-  <label htmlFor={id} className="flex items-start gap-3 cursor-pointer select-none">
+  <label htmlFor={id} className="flex cursor-pointer select-none items-start gap-3 py-0.5">
     <input
       id={id}
       type="checkbox"
       checked={checked}
       onChange={(e) => onChange(e.target.checked)}
-      className="mt-0.5 h-4 w-4 rounded border-brand-border bg-brand-dark text-brand-accent focus:ring-brand-accent focus:ring-offset-0"
+      className="mt-0.5 h-5 w-5 flex-none cursor-pointer rounded border-brand-border bg-white text-brand-accent accent-brand-accent focus:ring-brand-accent focus:ring-offset-0"
     />
     <span>
-      <span className="block text-sm text-brand-text">{label}</span>
-      {hint && <span className="block text-xs text-brand-textMuted mt-0.5">{hint}</span>}
+      <span className="block text-sm font-medium text-brand-text">{label}</span>
+      {hint && <span className="mt-0.5 block text-xs leading-relaxed text-brand-textMuted">{hint}</span>}
     </span>
   </label>
 );

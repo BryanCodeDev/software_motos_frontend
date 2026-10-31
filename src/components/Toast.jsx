@@ -5,11 +5,12 @@ import PropTypes from 'prop-types';
 import { ToastContext } from './ToastContext';
 
 const TOAST_DURATION = 5000;
+const MAX_TOASTS = 4;
 
 const styles = {
-  success: { icon: CheckCircle2, color: 'text-emerald-400', bar: 'border-l-emerald-400' },
-  error: { icon: AlertCircle, color: 'text-rose-400', bar: 'border-l-rose-400' },
-  info: { icon: Info, color: 'text-brand-accent', bar: 'border-l-brand-accent' },
+  success: { icon: CheckCircle2, iconBox: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-500' },
+  error: { icon: AlertCircle, iconBox: 'bg-rose-50 text-rose-600', bar: 'bg-rose-500' },
+  info: { icon: Info, iconBox: 'bg-brand-accent/10 text-brand-accent', bar: 'bg-brand-accent' },
 };
 
 export const ToastProvider = ({ children }) => {
@@ -23,7 +24,7 @@ export const ToastProvider = ({ children }) => {
   const add = useCallback(
     (toast) => {
       const id = Math.random().toString(36).slice(2);
-      setToasts((prev) => [...prev, { ...toast, id }]);
+      setToasts((prev) => [...prev, { ...toast, id }].slice(-MAX_TOASTS));
       setTimeout(() => remove(id), TOAST_DURATION);
     },
     [remove]
@@ -42,7 +43,7 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={toast}>
       {children}
       <div
-        className="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"
+        className="pointer-events-none fixed inset-x-0 top-20 z-[100] flex flex-col items-center gap-2 px-4 sm:inset-x-auto sm:right-4 sm:items-end sm:px-0"
         role="region"
         aria-live="polite"
         aria-label="Notificaciones"
@@ -55,21 +56,34 @@ export const ToastProvider = ({ children }) => {
               <motion.div
                 key={t.id}
                 layout={!reduce}
+                role={t.type === 'error' ? 'alert' : 'status'}
                 initial={reduce ? false : { x: 40, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 40, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className={`pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border border-brand-border border-l-4 ${s.bar} bg-brand-panel/95 px-4 py-3 shadow-card backdrop-blur-md text-sm`}
+                className="pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-xl border border-brand-border bg-white px-4 py-3.5 text-sm shadow-[0_20px_50px_-20px_rgba(41,32,36,0.35)] sm:w-96 sm:max-w-[calc(100vw-2rem)]"
               >
-                <Icon className={`w-5 h-5 flex-shrink-0 mt-px ${s.color}`} aria-hidden="true" />
-                <div className="flex-1 text-brand-text leading-snug">{t.message}</div>
+                <span className={`flex h-8 w-8 flex-none items-center justify-center rounded-lg ${s.iconBox}`}>
+                  <Icon size={18} aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1 pt-1 leading-snug text-brand-text">{t.message}</div>
                 <button
+                  type="button"
                   onClick={() => remove(t.id)}
-                  className="flex-shrink-0 rounded p-0.5 text-brand-textMuted hover:text-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+                  className="flex-shrink-0 rounded-md p-1 text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
                   aria-label="Cerrar notificación"
                 >
                   <X size={16} />
                 </button>
+                {!reduce && (
+                  <motion.span
+                    className={`absolute inset-x-0 bottom-0 h-0.5 origin-left ${s.bar}`}
+                    initial={{ scaleX: 1 }}
+                    animate={{ scaleX: 0 }}
+                    transition={{ duration: TOAST_DURATION / 1000, ease: 'linear' }}
+                    aria-hidden="true"
+                  />
+                )}
               </motion.div>
             );
           })}
