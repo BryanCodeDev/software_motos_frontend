@@ -146,7 +146,9 @@ export const QrPage = () => {
           const res = await api.get('/identifiers/my');
           if (!mounted) return;
           const data = res.data.identifier || res.data;
-          if (!data) throw { response: { status: 404 } };
+          if (!data || data.status !== 'active') {
+            throw { response: { status: 404 } };
+          }
           setIdentifier(data);
           const code = data.value;
           setQrUrl(`${window.location.origin}/e/${encodeURIComponent(code)}`);
@@ -215,7 +217,7 @@ export const QrPage = () => {
     }
   }, [qrProduct]);
 
-  const createOrderAndPay = async () => {
+  const createOrderAndPay = async (goToPayment = true) => {
     if (!qrProduct) {
       toast.error('El producto de activación no está disponible');
       return;
@@ -230,8 +232,12 @@ export const QrPage = () => {
       setOrder(newOrder);
       setState(deriveState(null, newOrder));
 
-      const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
-      window.location.href = prefRes.data.init_point;
+      if (goToPayment) {
+        const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
+        window.location.href = prefRes.data.init_point;
+      } else {
+        toast.success('Pedido creado. Ahora puedes completar el pago.');
+      }
     } catch (error) {
       setActing(false);
       try {
@@ -374,8 +380,22 @@ export const QrPage = () => {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button onClick={createOrderAndPay} disabled={acting} variant="primary" className="w-full sm:w-auto sm:px-8">
-              <CreditCard size={16} /> {acting ? 'Creando pedido...' : `Activar mi QR por ${price}`}
+            <Button
+              onClick={() => createOrderAndPay(false)}
+              disabled={acting}
+              variant="outline"
+              className="w-full sm:w-auto sm:px-8"
+            >
+              {acting ? 'Creando...' : 'Crear pedido'}
+            </Button>
+            <Button
+              onClick={() => createOrderAndPay(true)}
+              disabled={acting}
+              variant="primary"
+              className="w-full sm:w-auto sm:px-8"
+            >
+              <CreditCard size={16} />
+              {acting ? 'Pagar con Mercado Pago...' : `Pagar con Mercado Pago (${price})`}
             </Button>
             <a
               href="https://wa.me/573212209943?text=Hola%2C%20quiero%20activar%20mi%20QR%20de%20emergencia%20por%20WhatsApp."
@@ -396,9 +416,15 @@ export const QrPage = () => {
           title={state === 'under_review' ? 'Pago en revisión' : 'Pago pendiente'}
           actions={
             <>
-              <Button onClick={retryPayment} disabled={acting} variant="primary">
-                {acting ? 'Procesando...' : 'Ir al pago'}
-              </Button>
+              {order ? (
+                <Button onClick={retryPayment} disabled={acting} variant="primary">
+                  {acting ? 'Procesando...' : 'Ir al pago'}
+                </Button>
+              ) : (
+                <Button onClick={() => createOrderAndPay(true)} disabled={acting} variant="primary">
+                  {acting ? 'Creando y pagando...' : 'Crear pedido y pagar'}
+                </Button>
+              )}
               <a
                 href="https://wa.me/573212209943?text=Hola%2C%20quiero%20pagar%20mi%20pedido%20de%20activaci%C3%B3n%20de%20QR%20por%20WhatsApp."
                 target="_blank"
@@ -413,26 +439,30 @@ export const QrPage = () => {
           <p>
             {state === 'under_review'
               ? 'Tu pago está siendo procesado por Mercado Pago. Una vez aprobado, podrás activar tu QR.'
-              : `Tienes un pedido pendiente por ${price}. Completa el pago para activar tu QR.`}
+              : order
+                ? `Tienes un pedido pendiente por ${price}. Completa el pago para activar tu QR.`
+                : `No tienes un pedido activo. Crea uno por ${price} para continuar.`}
           </p>
-          <dl className="mt-4 space-y-2 rounded-xl border border-brand-border bg-brand-dark/60 p-4 text-xs">
-            <div className="flex justify-between gap-3">
-              <dt>Pedido</dt>
-              <dd className="font-mono font-semibold text-brand-text">{order?.order_number || '—'}</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt>Producto</dt>
-              <dd className="text-brand-text">Activación de QR digital</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt>Importe</dt>
-              <dd className="font-bold text-brand-text">{price}</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt>Modalidad</dt>
-              <dd className="text-brand-text">Pago único, sin suscripción</dd>
-            </div>
-          </dl>
+          {order && (
+            <dl className="mt-4 space-y-2 rounded-xl border border-brand-border bg-brand-dark/60 p-4 text-xs">
+              <div className="flex justify-between gap-3">
+                <dt>Pedido</dt>
+                <dd className="font-mono font-semibold text-brand-text">{order?.order_number || '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Producto</dt>
+                <dd className="text-brand-text">Activación de QR digital</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Importe</dt>
+                <dd className="font-bold text-brand-text">{price}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Modalidad</dt>
+                <dd className="text-brand-text">Pago único, sin suscripción</dd>
+              </div>
+            </dl>
+          )}
         </StateCard>
       )}
 
@@ -517,13 +547,31 @@ export const QrPage = () => {
           tone="rose"
           title="Pago no completado"
           actions={
-            <Button onClick={retryPayment} disabled={acting} variant="primary">
-              {acting ? 'Procesando...' : 'Intentar nuevamente'}
-            </Button>
+            <>
+              {order ? (
+                <Button onClick={retryPayment} disabled={acting} variant="primary">
+                  {acting ? 'Procesando...' : 'Intentar nuevamente'}
+                </Button>
+              ) : (
+                <Button onClick={() => createOrderAndPay(true)} disabled={acting} variant="primary">
+                  {acting ? 'Creando y pagando...' : 'Crear nuevo pedido'}
+                </Button>
+              )}
+              <a
+                href="https://wa.me/573212209943?text=Hola%2C%20quiero%20pagar%20mi%20pedido%20de%20activaci%C3%B3n%20de%20QR%20por%20WhatsApp."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+              >
+                Pagar por WhatsApp
+              </a>
+            </>
           }
         >
-          El pago de tu pedido no fue aprobado (rechazado o cancelado). Tu QR no está activo y no se
-          expone información pública. Puedes intentar nuevamente.
+          <p>
+            El pago de tu pedido no fue aprobado (rechazado o cancelado). Tu QR no está activo y no se
+            expone información pública. Puedes crear un nuevo pedido o intentar nuevamente.
+          </p>
         </StateCard>
       )}
 

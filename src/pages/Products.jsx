@@ -14,17 +14,8 @@ const plans = [
     price: '$30.000 COP',
     desc: 'Activación única de tu perfil de emergencia digital con código QR. Incluye sticker físico personalizado con envío gratis a domicilio. Pago único, sin suscripción mensual ni anual.',
     features: ['Perfil y contactos de emergencia', 'Control de visibilidad por campo', 'Descarga del código QR', 'Página pública autorizada', 'Sticker físico personalizado', 'Envío gratis a domicilio'],
-    action: 'Crear cuenta y activar',
-    href: routes.register,
-    free: false,
-  },
-  {
-    name: 'Sticker QR personalizado',
-    price: '$30.000 COP (con QR)',
-    desc: 'Al activar el QR digital por $30.000 COP recibes también el sticker físico con envío gratis. No es necesario comprarlo por separado.',
-    features: ['Diseño personalizado', 'Envío gratis a domicilio', 'Reposición desde tu cuenta'],
-    action: 'Activar con QR',
-    href: routes.register,
+    action: 'Activar mi QR',
+    href: routes.dashboardQr,
     free: false,
   },
   {
@@ -190,7 +181,22 @@ export const Products = () => {
             </Card>
           </Reveal>
 
-          {!isAuthenticated && (
+          {isAuthenticated ? (
+            <Reveal className="mt-12">
+              <div className="relative overflow-hidden rounded-2xl border border-brand-accent/30 bg-gradient-to-br from-brand-panel via-brand-navy to-brand-dark p-10 lg:p-14 text-center shadow-glow">
+                <h2 className="text-2xl lg:text-3xl font-bold text-brand-text mb-3">
+                  Activa tu QR de emergencia
+                </h2>
+                <p className="text-brand-textMuted mb-7 max-w-md mx-auto leading-relaxed">
+                  Desde tu panel puedes completar tu perfil y activar tu QR con un pago único de{' '}
+                  <span className="font-bold text-brand-accent">$30.000 COP</span>. Sin suscripción.
+                </p>
+                <Link to={routes.dashboardQr} className="btn-primary">
+                  Ir a Mi QR <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </Reveal>
+          ) : (
             <Reveal className="mt-12">
               <div className="relative overflow-hidden rounded-2xl border border-brand-accent/30 bg-gradient-to-br from-brand-panel via-brand-navy to-brand-dark p-10 lg:p-14 text-center shadow-glow">
                 <h2 className="text-2xl lg:text-3xl font-bold text-brand-text mb-3">
