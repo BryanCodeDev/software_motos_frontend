@@ -7,8 +7,6 @@ export const routes = {
   contact: '/contacto',
   login: '/auth/login',
   register: '/auth/registro',
-  verifyEmail: '/auth/verificar-email',
-  resendVerification: '/auth/reenviar-codigo',
   forgotPassword: '/auth/olvido-contrasena',
   resetPassword: '/auth/restablecer-contrasena',
   dashboard: '/panel',

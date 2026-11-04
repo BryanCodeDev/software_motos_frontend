@@ -38,9 +38,6 @@ export const UserLayout = () => {
     if (user?.role === 'admin') {
       navigate('/admin', { replace: true });
     }
-    if (isAuthenticated && user && !user.email_verified && pathname !== routes.verifyEmail) {
-      navigate(routes.verifyEmail, { replace: true });
-    }
   }, [isAuthenticated, user, loading, navigate, pathname]);
 
   const displayName = user?.name || user?.email?.split('@')[0] || 'Usuario';

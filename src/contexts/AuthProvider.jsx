@@ -55,24 +55,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const verifyEmail = async (payload) => {
-    const { data } = await api.post('/auth/verify-email', payload);
-    if (data.user) setUser(data.user);
-    return data;
-  };
-
-  const resendVerification = async (payload) => {
-    const { data } = await api.post('/auth/resend-verification', payload);
-    return data;
-  };
-
   const value = {
     user,
     loading,
     login,
     register,
-    verifyEmail,
-    resendVerification,
     logout,
     isAuthenticated: !!user,
   };
