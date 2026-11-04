@@ -12,7 +12,11 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data } = await api.get('/auth/me');
         if (mounted) setUser(data.user || null);
-      } catch {
+      } catch (error) {
+        // 401 es esperado cuando no hay sesión activa; no es un error crítico.
+        if (mounted && error?.response?.status !== 401) {
+          console.error('Error verificando sesión:', error);
+        }
         if (mounted) setUser(null);
       } finally {
         if (mounted) setLoading(false);
@@ -42,11 +46,24 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const verifyEmail = async (payload) => {
+    const { data } = await api.post('/auth/verify-email', payload);
+    if (data.user) setUser(data.user);
+    return data;
+  };
+
+  const resendVerification = async (payload) => {
+    const { data } = await api.post('/auth/resend-verification', payload);
+    return data;
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
+    verifyEmail,
+    resendVerification,
     logout,
     isAuthenticated: !!user,
   };
@@ -57,3 +74,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

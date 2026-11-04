@@ -26,7 +26,7 @@ const STEPS = [
 ];
 
 const QUICK_ACTIONS = [
-  { to: routes.dashboardProfile, label: 'Perfil', desc: 'Datos personales y médicos', icon: User, tone: 'bg-brand-accent/10 text-brand-accent' },
+  { to: routes.dashboardProfile, label: 'Perfil', desc: 'Datos personales y médicos', icon: User, tone: 'bg-brand-500/10 text-brand-500' },
   { to: routes.dashboardContacts, label: 'Contactos', desc: 'Personas de confianza', icon: Users, tone: 'bg-emerald-50 text-emerald-700' },
   { to: routes.dashboardPrivacy, label: 'Privacidad', desc: 'Visibilidad de campos', icon: ShieldCheck, tone: 'bg-sky-50 text-sky-700' },
   { to: routes.dashboardQr, label: 'Mi QR', desc: 'Código y enlace público', icon: QrCode, tone: 'bg-amber-50 text-amber-700' },
@@ -37,16 +37,16 @@ const Skeleton = () => (
   <div className="space-y-6 animate-pulse" aria-busy="true">
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="h-48 rounded-2xl bg-brand-border/60" />
+        <div key={i} className="h-48 rounded-2xl bg-border/60" />
       ))}
     </div>
     <div className="grid gap-6 lg:grid-cols-3">
-      <div className="h-64 rounded-2xl bg-brand-border/60 lg:col-span-2" />
-      <div className="h-64 rounded-2xl bg-brand-border/60" />
+      <div className="h-64 rounded-2xl bg-border/60 lg:col-span-2" />
+      <div className="h-64 rounded-2xl bg-border/60" />
     </div>
     <div className="grid gap-6 lg:grid-cols-3">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-52 rounded-2xl bg-brand-border/60" />
+        <div key={i} className="h-52 rounded-2xl bg-border/60" />
       ))}
     </div>
   </div>
@@ -115,11 +115,11 @@ export const DashboardIndex = () => {
     return (
       <div className="rounded-2xl border border-rose-200 bg-rose-5/50 p-8 text-center shadow-soft">
         <AlertTriangle size={24} className="mx-auto mb-4 text-rose-500" aria-hidden="true" />
-        <p className="mb-4 text-sm font-medium text-brand-text">{error}</p>
+        <p className="mb-4 text-sm font-medium text-neutral-900">{error}</p>
         <button
           type="button"
           onClick={load}
-          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-brand-accentHover active:scale-[0.98]"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-brand-600 active:scale-[0.98]"
         >
           <RefreshCwIcon size={16} /> Reintentar
         </button>
@@ -136,7 +136,7 @@ export const DashboardIndex = () => {
 
       {/* Progreso de activación */}
       <section
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-accent via-[#7d0f2e] to-[#3f0617] p-6 text-white shadow-[0_24px_60px_-24px_rgba(159,18,57,0.55)] sm:p-8"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-[#7d0f2e] to-[#3f0617] p-6 text-white shadow-[0_24px_60px_-24px_rgba(159,18,57,0.55)] sm:p-8"
         aria-labelledby="progress-title"
       >
         <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
@@ -156,7 +156,7 @@ export const DashboardIndex = () => {
             {ready && next && (
               <Link
                 to={next.to}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-accent transition-transform hover:-translate-y-0.5"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-500 transition-transform hover:-translate-y-0.5"
               >
                 Continuar con {next.label} <ArrowRight size={16} aria-hidden="true" />
               </Link>
@@ -175,9 +175,9 @@ export const DashboardIndex = () => {
       </section>
 
       {/* Pasos */}
-      <section className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-5 sm:p-6" aria-labelledby="steps-title">
+      <section className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-5 sm:p-6" aria-labelledby="steps-title">
         <div className="flex items-center justify-between mb-4">
-          <h2 id="steps-title" className="text-base font-semibold text-brand-text">Pasos para activar tu QR</h2>
+          <h2 id="steps-title" className="text-base font-semibold text-neutral-900">Pasos para activar tu QR</h2>
         </div>
         <StepIndicator steps={STEPS.map((s) => ({ label: s.label }))} current={doneCount} />
         <ol className="mt-6 space-y-2">
@@ -190,25 +190,25 @@ export const DashboardIndex = () => {
                 className="group flex items-center gap-3 rounded-xl border p-3 transition-colors sm:p-4 ${
                   done
                     ? 'border-emerald-100 bg-emerald-5/50'
-                    : 'border-brand-border hover:border-brand-accent/30 hover:bg-brand-dark/60'
+                    : 'border-border hover:border-brand-500/30 hover:bg-brand-50/60'
                 }"
               >
                 <span
                   className={`flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold ${
                     done
                       ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
-                      : 'bg-brand-dark text-brand-textMuted ring-1 ring-brand-border'
+                      : 'bg-brand-50 text-text-secondary ring-1 ring-border'
                   }`}
                 >
                   {done ? <CheckCircle2 size={18} aria-hidden="true" /> : i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-brand-text">{step.label}</p>
-                  <p className="truncate text-xs text-brand-textMuted">
+                  <p className="text-sm font-semibold text-neutral-900">{step.label}</p>
+                  <p className="truncate text-xs text-text-secondary">
                     {done ? 'Completado' : 'Pendiente'}
                   </p>
                 </div>
-                <ChevronRight size={16} className="flex-none text-brand-textMuted transition-transform group-hover:translate-x-0.5 group-hover:text-brand-accent" aria-hidden="true" />
+                <ChevronRight size={16} className="flex-none text-text-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-brand-500" aria-hidden="true" />
               </Link>
             );
           })}
@@ -216,9 +216,9 @@ export const DashboardIndex = () => {
 
         {stepsState.qr === false && (
           <div className="mt-6 flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-relaxed text-brand-textMuted">
+            <p className="text-sm leading-relaxed text-text-secondary">
               Tu página pública de emergencia solo se habilita tras activar el QR con el pago único de{' '}
-              <span className="font-bold text-brand-text">$30.000 COP</span>. Sin suscripción.
+              <span className="font-bold text-neutral-900">$30.000 COP</span>. Sin suscripción.
             </p>
             <Link to={routes.dashboardQr} className="btn-primary flex-none !px-5 !py-2.5 text-sm">
               Ir a Mi QR <ArrowRight size={16} aria-hidden="true" />
@@ -229,7 +229,7 @@ export const DashboardIndex = () => {
 
       {/* Accesos rápidos */}
       <section>
-        <h2 className="mb-4 text-base font-semibold text-brand-text">Accesos rápidos</h2>
+        <h2 className="mb-4 text-base font-semibold text-neutral-900">Accesos rápidos</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {QUICK_ACTIONS.map((action, idx) => {
             const { to, label, desc, icon: Icon, tone } = action;
@@ -242,16 +242,16 @@ export const DashboardIndex = () => {
               >
                 <Link
                   to={to}
-                  className="group relative rounded-2xl border border-brand-border/50 bg-white/90 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brand-accent/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1"
+                  className="group relative rounded-2xl border border-border/50 bg-white/90 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brand-500/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1"
                 >
                   <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone} shadow-lg`}>
                     <Icon size={20} strokeWidth={2.2} aria-hidden="true" />
                   </span>
                   <div className="mt-4">
-                    <p className="text-sm font-semibold text-brand-text">{label}</p>
-                    <p className="mt-1 text-xs text-brand-textMuted">{desc}</p>
+                    <p className="text-sm font-semibold text-neutral-900">{label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{desc}</p>
                   </div>
-                  <ArrowRight size={14} className="absolute right-5 top-5 text-brand-textMuted transition-transform group-hover:translate-x-1 group-hover:text-brand-accent" aria-hidden="true" />
+                  <ArrowRight size={14} className="absolute right-5 top-5 text-text-secondary transition-transform group-hover:translate-x-1 group-hover:text-brand-500" aria-hidden="true" />
                 </Link>
               </motion.div>
             );
@@ -261,9 +261,9 @@ export const DashboardIndex = () => {
 
       {stats && (
         <section>
-          <h2 className="mb-4 text-base font-semibold text-brand-text">Resumen de tu cuenta</h2>
+          <h2 className="mb-4 text-base font-semibold text-neutral-900">Resumen de tu cuenta</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Perfil de emergencia" value={fmt(stepsState.profile ? 1 : 0)} icon={User} tone="bg-brand-accent/10 text-brand-accent" hint="Datos personales y médicos" />
+            <StatCard label="Perfil de emergencia" value={fmt(stepsState.profile ? 1 : 0)} icon={User} tone="bg-brand-500/10 text-brand-500" hint="Datos personales y médicos" />
             <StatCard label="Contactos" value={fmt(stepsState.contacts ? 1 : 0)} icon={Users} tone="bg-emerald-50 text-emerald-700" hint="Personas de confianza" />
             <StatCard label="Privacidad" value={fmt(stepsState.privacy ? 1 : 0)} icon={ShieldCheck} tone="bg-sky-50 text-sky-700" hint="Campos configurados" />
             <StatCard label="QR" value={fmt(stepsState.qr ? 1 : 0)} icon={QrCode} tone="bg-amber-50 text-amber-700" hint="Código de activación" />
@@ -285,3 +285,6 @@ function RefreshCwIcon({ size }) {
 }
 
 export default DashboardIndex;
+
+
+

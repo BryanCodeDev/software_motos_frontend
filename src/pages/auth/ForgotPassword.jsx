@@ -23,8 +23,8 @@ const ASIDE = {
 };
 
 const Shell = ({ aside, children }) => (
-  <main className="grid min-h-screen bg-brand-dark lg:grid-cols-[1.05fr_1fr]">
-    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-accent via-[#7d0f2e] to-[#3f0617] p-12 text-white lg:flex xl:p-16">
+  <main className="grid min-h-screen bg-brand-50 lg:grid-cols-[1.05fr_1fr]">
+    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-[#7d0f2e] to-[#3f0617] p-12 text-white lg:flex xl:p-16">
       <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
 
@@ -66,12 +66,12 @@ const Shell = ({ aside, children }) => (
     <section className="flex items-center justify-center px-4 py-10 sm:px-8">
       <div className="w-full max-w-md animate-slide-up">
         <div className="mb-6 flex items-center justify-center gap-2 lg:hidden">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-accent text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
             <HeartPulse size={18} />
           </span>
-          <span className="text-base font-bold tracking-tight text-brand-text">Perfil de emergencia</span>
+          <span className="text-base font-bold tracking-tight text-neutral-900">Perfil de emergencia</span>
         </div>
-        <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.28)] sm:p-10">
+        <div className="rounded-2xl border border-border bg-white p-6 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.28)] sm:p-10">
           {children}
         </div>
       </div>
@@ -80,7 +80,7 @@ const Shell = ({ aside, children }) => (
 );
 
 const backLink =
-  'inline-flex items-center gap-2 text-sm font-medium text-brand-textMuted transition-colors hover:text-brand-text';
+  'inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-neutral-900';
 
 export const ForgotPassword = () => {
   const toast = useToast();
@@ -114,12 +114,12 @@ export const ForgotPassword = () => {
           <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600 ring-8 ring-green-50">
             <MailCheck size={26} />
           </span>
-          <h1 className="text-2xl font-bold text-brand-text">Revisa tu correo</h1>
-          <p className="mt-3 text-sm leading-relaxed text-brand-textMuted">
-            Si <span className="break-all font-semibold text-brand-text">{email}</span> está registrado,
+          <h1 className="text-2xl font-bold text-neutral-900">Revisa tu correo</h1>
+          <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+            Si <span className="break-all font-semibold text-neutral-900">{email}</span> está registrado,
             recibirás un enlace para restablecer tu contraseña. Expira en 1 hora.
           </p>
-          <p className="mt-2 text-xs text-brand-textMuted">¿No llega? Revisa tu carpeta de spam.</p>
+          <p className="mt-2 text-xs text-text-secondary">¿No llega? Revisa tu carpeta de spam.</p>
 
           <div className="mt-8 grid gap-3">
             <Link to={routes.login} className="btn-primary w-full">
@@ -143,11 +143,11 @@ export const ForgotPassword = () => {
       </Link>
 
       <div className="mb-8 mt-6 text-center">
-        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
+        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
           <KeyRound size={22} />
         </span>
-        <h1 className="text-2xl font-bold text-brand-text">Restablecer contraseña</h1>
-        <p className="mt-2 text-sm text-brand-textMuted">
+        <h1 className="text-2xl font-bold text-neutral-900">Restablecer contraseña</h1>
+        <p className="mt-2 text-sm text-text-secondary">
           Ingresa tu correo y te enviaremos un enlace seguro para crear una nueva contraseña.
         </p>
       </div>
@@ -156,7 +156,7 @@ export const ForgotPassword = () => {
         <div>
           <Label htmlFor="email">Correo electrónico</Label>
           <div className="relative">
-            <Mail size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted" />
+            <Mail size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
             <Input
               id="email"
               type="email"
@@ -185,3 +185,4 @@ export const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+

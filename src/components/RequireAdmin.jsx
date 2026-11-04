@@ -9,7 +9,7 @@ export const RequireAdmin = ({ children }) => {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
-        <Loader2 className="h-7 w-7 animate-spin text-brand-accent" aria-hidden="true" />
+        <Loader2 className="h-7 w-7 animate-spin text-brand-500" aria-hidden="true" />
         <span className="sr-only">Verificando permisos…</span>
       </div>
     );

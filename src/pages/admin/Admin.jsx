@@ -33,34 +33,34 @@ const Sidebar = ({ open, setOpen, user, onLogout }) => {
       )}
       <aside
         aria-label="Panel administrativo"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white p-4 shadow-2xl transition-transform duration-300 lg:sticky lg:top-24 lg:z-auto lg:max-h-[calc(100vh-7rem)] lg:w-60 lg:flex-none lg:translate-x-0 lg:self-start lg:rounded-2xl lg:border lg:border-brand-border lg:shadow-card ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white p-4 shadow-2xl transition-transform duration-300 lg:sticky lg:top-24 lg:z-auto lg:max-h-[calc(100vh-7rem)] lg:w-60 lg:flex-none lg:translate-x-0 lg:self-start lg:rounded-2xl lg:border lg:border-border lg:shadow-card ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="mb-4 flex items-center justify-between lg:hidden">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-accent text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
               <ShieldCheck size={16} aria-hidden="true" />
             </span>
-            <span className="text-sm font-bold text-brand-text">Administración</span>
+            <span className="text-sm font-bold text-neutral-900">Administración</span>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-brand-textMuted hover:bg-black/5 hover:text-brand-text"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary hover:bg-black/5 hover:text-neutral-900"
             aria-label="Cerrar menú"
           >
             <XIcon size={18} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl bg-brand-dark p-3">
-          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent text-sm font-bold text-white">
+        <div className="flex items-center gap-3 rounded-xl bg-brand-50 p-3">
+          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
             {initial}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-brand-text">{display}</p>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-accent">Administrador</p>
+            <p className="truncate text-sm font-semibold text-neutral-900">{display}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-500">Administrador</p>
           </div>
         </div>
 
@@ -74,8 +74,8 @@ const Sidebar = ({ open, setOpen, user, onLogout }) => {
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-brand-accent text-white shadow-soft'
-                    : 'text-brand-textMuted hover:bg-brand-dark hover:text-brand-text'
+                    ? 'bg-brand-500 text-white shadow-soft'
+                    : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
                 }`
               }
             >
@@ -85,7 +85,7 @@ const Sidebar = ({ open, setOpen, user, onLogout }) => {
           ))}
         </nav>
 
-        <div className="mt-4 border-t border-brand-border pt-4">
+        <div className="mt-4 border-t border-border pt-4">
           <button
             type="button"
             onClick={onLogout}
@@ -128,18 +128,18 @@ const Admin = () => {
       {/* Barra superior móvil */}
       <div className="card-static flex items-center justify-between p-3 lg:hidden">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-accent/10 text-brand-accent">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
             <current.icon size={18} aria-hidden="true" />
           </span>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Administración</p>
-            <p className="text-sm font-bold text-brand-text">{current.label}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Administración</p>
+            <p className="text-sm font-bold text-neutral-900">{current.label}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-border text-brand-text hover:bg-brand-dark"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-neutral-900 hover:bg-brand-50"
           aria-label="Abrir menú"
         >
           <Menu size={20} aria-hidden="true" />

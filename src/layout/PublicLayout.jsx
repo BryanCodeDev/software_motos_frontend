@@ -12,10 +12,10 @@ export const PublicLayout = () => {
   }, [pathname, hash]);
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-brand-dark">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-brand-50">
       <a
         href="#contenido"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-accent focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-500 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
       >
         Saltar al contenido
       </a>

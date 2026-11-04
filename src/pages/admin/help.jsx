@@ -140,8 +140,8 @@ const Section = ({ id, icon: Icon, title, lead, children }) => (
       <div className="mb-5 flex items-start gap-3">
         <span className="icon-box shrink-0"><Icon size={20} aria-hidden="true" /></span>
         <div>
-          <h3 className="text-xl font-semibold text-brand-text">{title}</h3>
-          {lead && <p className="mt-1 text-sm text-brand-textMuted">{lead}</p>}
+          <h3 className="text-xl font-semibold text-neutral-900">{title}</h3>
+          {lead && <p className="mt-1 text-sm text-text-secondary">{lead}</p>}
         </div>
       </div>
       {children}
@@ -195,9 +195,9 @@ const Help = () => {
       {/* Encabezado */}
       <header className="space-y-3">
         <span className="eyebrow">Documentación</span>
-        <h2 className="text-3xl lg:text-4xl font-bold text-brand-text">Tu QR te Cuida</h2>
+        <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900">Tu QR te Cuida</h2>
         <p className="prose-doc max-w-3xl">
-          Plataforma de <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="text-brand-text hover:text-brand-accent transition-colors">MasterCode Company</a> pensada para
+          Plataforma de <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="text-neutral-900 hover:text-brand-500 transition-colors">MasterCode Company</a> pensada para
           motociclistas en Colombia. Conecta un QR físico (calcomanía en la moto, el casco u otro lugar
           visible) con una página web de emergencia que muestra únicamente la información que el propietario
           autorizó compartir.
@@ -219,8 +219,8 @@ const Help = () => {
                 href={`#${id}`}
                 className={`block whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   active === id
-                    ? 'border-brand-accent/40 bg-brand-accent/10 text-brand-accent'
-                    : 'border-brand-border text-brand-textMuted hover:text-brand-text'
+                    ? 'border-brand-500/40 bg-brand-500/10 text-brand-500'
+                    : 'border-border text-text-secondary hover:text-neutral-900'
                 }`}
               >
                 {label}
@@ -241,8 +241,8 @@ const Help = () => {
                   aria-current={active === id ? 'true' : undefined}
                   className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
                     active === id
-                      ? 'border-brand-accent/30 bg-brand-accent/10 text-brand-accent'
-                      : 'border-transparent text-brand-textMuted hover:bg-white/5 hover:text-brand-text'
+                      ? 'border-brand-500/30 bg-brand-500/10 text-brand-500'
+                      : 'border-transparent text-text-secondary hover:bg-white/5 hover:text-neutral-900'
                   }`}
                 >
                   <Icon size={16} aria-hidden="true" />
@@ -258,14 +258,14 @@ const Help = () => {
           <Section id="resumen" icon={Info} title="Resumen" lead="Qué problema resuelve y cuáles son sus límites.">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="card-static p-5">
-                <h4 className="mb-2 text-sm font-semibold text-brand-text">Problema</h4>
+                <h4 className="mb-2 text-sm font-semibold text-neutral-900">Problema</h4>
                 <p className="prose-doc">
                   En un accidente la persona puede estar inconsciente y no poder indicar a quién contactar.
                   El QR permite a quienes auxilian consultar los datos que ella decidió compartir.
                 </p>
               </div>
               <div className="card-static p-5">
-                <h4 className="mb-2 text-sm font-semibold text-brand-text">Propuesta de valor</h4>
+                <h4 className="mb-2 text-sm font-semibold text-neutral-900">Propuesta de valor</h4>
                 <ul className="prose-doc list-disc space-y-1 pl-5">
                   <li>Acceso inmediato, sin cuenta ni app.</li>
                   <li>Privacidad configurable por campo.</li>
@@ -275,7 +275,7 @@ const Help = () => {
             </div>
             <div className="mt-4">
               <Callout tone="warning" icon={AlertTriangle}>
-                <strong className="text-brand-text">Herramienta de apoyo.</strong> No reemplaza los servicios
+                <strong className="text-neutral-900">Herramienta de apoyo.</strong> No reemplaza los servicios
                 de emergencia, no garantiza que alguien escanee el código ni asegura una respuesta inmediata.
               </Callout>
             </div>
@@ -286,11 +286,11 @@ const Help = () => {
             <ol className="space-y-3">
               {STEPS.map((s, i) => (
                 <li key={s.title} className="card-static flex gap-4 p-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-accent/10 text-sm font-bold text-brand-accent ring-1 ring-brand-accent/30">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-sm font-bold text-brand-500 ring-1 ring-brand-500/30">
                     {i + 1}
                   </span>
                   <div>
-                    <p className="font-medium text-brand-text">{s.title}</p>
+                    <p className="font-medium text-neutral-900">{s.title}</p>
                     <p className="prose-doc mt-0.5">{s.text}</p>
                   </div>
                 </li>
@@ -312,8 +312,8 @@ const Help = () => {
                     <span className="icon-box"><Icon size={20} aria-hidden="true" /></span>
                     <span className="badge-neutral">{host}</span>
                   </div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-textFaint">{name}</p>
-                  <h4 className="mt-0.5 text-base font-semibold text-brand-text">{tech}</h4>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-900Faint">{name}</p>
+                  <h4 className="mt-0.5 text-base font-semibold text-neutral-900">{tech}</h4>
                   <p className="prose-doc mt-2">{detail}</p>
                 </article>
               ))}
@@ -384,8 +384,8 @@ const Help = () => {
           <Section id="seguridad" icon={ShieldCheck} title="Seguridad y privacidad" lead="El sistema maneja datos personales y relacionados con emergencias.">
             <ul className="grid gap-3 sm:grid-cols-2">
               {SECURITY.map((item) => (
-                <li key={item} className="card-static flex items-start gap-3 p-4 text-sm text-brand-textMuted">
-                  <Lock size={16} className="mt-0.5 shrink-0 text-brand-accent" aria-hidden="true" />
+                <li key={item} className="card-static flex items-start gap-3 p-4 text-sm text-text-secondary">
+                  <Lock size={16} className="mt-0.5 shrink-0 text-brand-500" aria-hidden="true" />
                   {item}
                 </li>
               ))}
@@ -404,7 +404,7 @@ const Help = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               {ENV_GROUPS.map(({ group, vars }) => (
                 <div key={group} className="card-static p-4">
-                  <h4 className="mb-2 text-sm font-semibold text-brand-text">{group}</h4>
+                  <h4 className="mb-2 text-sm font-semibold text-neutral-900">{group}</h4>
                   <ul className="space-y-1.5">
                     {vars.map((v) => (
                       <li key={v}><code className="code-inline">{v}</code></li>
@@ -419,11 +419,11 @@ const Help = () => {
           <Section id="estado" icon={ListChecks} title="Estado actual y próximos pasos">
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="card-static p-5">
-                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-text">
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-900">
                   <CheckCircle2 size={16} className="text-status-success" aria-hidden="true" />
                   Verificaciones reportadas
                 </h4>
-                <ul className="space-y-2 text-sm text-brand-textMuted">
+                <ul className="space-y-2 text-sm text-text-secondary">
                   {CHECKS.map((c) => (
                     <li key={c} className="flex items-start gap-2">
                       <CheckCircle2 size={14} className="mt-1 shrink-0 text-status-success" aria-hidden="true" />
@@ -437,14 +437,14 @@ const Help = () => {
                 </p>
               </div>
               <div className="card-static p-5">
-                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-text">
-                  <Rocket size={16} className="text-brand-accent" aria-hidden="true" />
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-900">
+                  <Rocket size={16} className="text-brand-500" aria-hidden="true" />
                   Pendiente antes del lanzamiento
                 </h4>
-                <ul className="space-y-2 text-sm text-brand-textMuted">
+                <ul className="space-y-2 text-sm text-text-secondary">
                   {PENDING.map((p) => (
                     <li key={p} className="flex items-start gap-2">
-                      <Circle size={14} className="mt-1 shrink-0 text-brand-textFaint" aria-hidden="true" />
+                      <Circle size={14} className="mt-1 shrink-0 text-neutral-900Faint" aria-hidden="true" />
                       {p}
                     </li>
                   ))}
@@ -459,3 +459,4 @@ const Help = () => {
 };
 
 export default Help;
+

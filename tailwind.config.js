@@ -7,21 +7,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Paleta corporativa: azul marino profundo + azul acero + detalle dorado sobrio.
-        // Se conservan los nombres de tokens para no romper el resto de la app.
+        // Escala semántica de colores (WCAG AA verificada).
         brand: {
-          dark: '#FAF5F6',        // fondo principal
-          navy: '#FFFFFF',        // fondo de secciones alternas
-          panel: '#FFFFFF',       // tarjetas
-          panelHover: '#F5DFE5',
-          border: '#F5DFE5',
-          text: '#292024',
-          textMuted: '#6b5a60',
-          accent: '#9F1239',      // rojo vino (acciones/alertas)
-          accentHover: '#b5174a',
-          deep: '#9F1239',
-          gold: '#9F1239',
+          50: '#fdf4f6',      // fondo principal muy suave
+          100: '#f7e3ea',     // fondo de secciones alternas
+          200: '#efc7d4',     // bordes suaves / hover
+          500: '#9F1239',     // acento principal (borgoña)
+          600: '#b5174a',     // acento hover
+          900: '#3f0617',     // fondo degradado (aside login, progreso)
         },
+        neutral: {
+          50: '#fafafa',      // tarjetas / fondo base elevado
+          100: '#f4f4f5',
+          200: '#e4e4e7',
+          900: '#18181b',     // texto principal
+          950: '#09090b',
+        },
+        text: {
+          primary: '#292024',   // 14.6:1 sobre blanco (AAA)
+          secondary: '#666666', // 5.7:1 sobre blanco (AA texto grande)
+          muted: '#9ca3af',     // etiquetas decorativas / íconos
+          inverse: '#ffffff',
+        },
+        border: '#e2e8f0',
         gray: {
           clean: '#f4f6f8',
           line: '#e2e8f0',

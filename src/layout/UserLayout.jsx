@@ -24,19 +24,24 @@ const userNav = [
 ];
 
 export const UserLayout = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, loading } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // Evita redirecciones mientras se carga el estado de autenticación.
+    if (loading) return;
     if (!isAuthenticated) {
       navigate(routes.home, { replace: true });
     }
     if (user?.role === 'admin') {
       navigate('/admin', { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+    if (isAuthenticated && user && !user.email_verified && pathname !== routes.verifyEmail) {
+      navigate(routes.verifyEmail, { replace: true });
+    }
+  }, [isAuthenticated, user, loading, navigate, pathname]);
 
   const displayName = user?.name || user?.email?.split('@')[0] || 'Usuario';
   const initial = displayName.charAt(0).toUpperCase();
@@ -72,7 +77,7 @@ export const UserLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-dark">
+    <div className="flex min-h-screen flex-col bg-brand-50">
       <Navbar />
 
       {isAuthenticated ? (
@@ -108,9 +113,9 @@ export const UserLayout = () => {
         </div>
       ) : (
         <main className="flex flex-1 items-center justify-center p-10">
-          <div className="flex items-center gap-3 text-sm text-brand-textMuted" role="status">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white ring-1 ring-brand-border shadow-soft">
-              <svg className="h-6 w-6 animate-spin text-brand-accent" aria-hidden="true">
+          <div className="flex items-center gap-3 text-sm text-text-secondary" role="status">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white ring-1 ring-border shadow-soft">
+              <svg className="h-6 w-6 animate-spin text-brand-500" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
@@ -124,3 +129,5 @@ export const UserLayout = () => {
 };
 
 export default UserLayout;
+
+

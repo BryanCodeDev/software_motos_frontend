@@ -20,9 +20,9 @@ export const NotFound = () => {
       >
         <Card className="p-10 max-w-md mx-auto">
           <div className="text-7xl font-extrabold text-gradient mb-4">404</div>
-          <Compass className="w-8 h-8 mx-auto mb-4 text-brand-accent" />
-          <h1 className="text-2xl font-bold text-brand-text mb-2">Página no encontrada</h1>
-          <p className="text-brand-textMuted mb-8 leading-relaxed">
+          <Compass className="w-8 h-8 mx-auto mb-4 text-brand-500" />
+          <h1 className="text-2xl font-bold text-neutral-900 mb-2">Página no encontrada</h1>
+          <p className="text-text-secondary mb-8 leading-relaxed">
             La dirección que buscas no existe o fue movida. Verifica el enlace o regresa al inicio.
           </p>
           <Link to={routes.home} className="btn-primary">
@@ -35,3 +35,4 @@ export const NotFound = () => {
 };
 
 export default NotFound;
+

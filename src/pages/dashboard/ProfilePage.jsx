@@ -13,7 +13,7 @@ import { FormSection, FieldRow, Badge, EmptyState } from '../../components/ui-ki
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 const fields = [
   {
@@ -87,8 +87,8 @@ const VisBadge = ({ pub }) => (
 );
 
 const VisSwitch = ({ id, label, checked, onChange }) => (
-  <div className="flex items-center justify-between gap-3 rounded-lg border border-brand-border bg-brand-dark/60 px-3 py-2.5">
-    <label htmlFor={id} className="cursor-pointer text-xs text-brand-textMuted leading-tight">
+  <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-brand-50/60 px-3 py-2.5">
+    <label htmlFor={id} className="cursor-pointer text-xs text-text-secondary leading-tight">
       {checked ? 'Público' : 'Privado'}
     </label>
     <button
@@ -98,8 +98,8 @@ const VisSwitch = ({ id, label, checked, onChange }) => (
       aria-checked={checked}
       aria-label={`${label}: ${checked ? 'público' : 'privado'}`}
       onClick={onChange}
-      className={`relative h-6 w-11 flex-none rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 ${
-        checked ? 'bg-brand-accent' : 'bg-slate-300'
+      className={`relative h-6 w-11 flex-none rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+        checked ? 'bg-brand-500' : 'bg-slate-300'
       }`}
     >
       <span
@@ -114,8 +114,8 @@ const VisSwitch = ({ id, label, checked, onChange }) => (
 const Section = ({ title, description, children }) => (
   <section className="space-y-5">
     <div>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted">{title}</h2>
-      {description && <p className="mt-1 max-w-md text-xs text-brand-textMuted">{description}</p>}
+      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary">{title}</h2>
+      {description && <p className="mt-1 max-w-md text-xs text-text-secondary">{description}</p>}
     </div>
     {children}
   </section>
@@ -127,10 +127,10 @@ const FieldBlock = ({ f, value, isPublic, onChange, onToggle }) => {
     <FieldRow icon={Icon} label={f.label} hint={f.hint} className="space-y-3">
       {f.input === 'textarea' ? (
         <div className="relative">
-          <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="border-brand-border text-base sm:text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent" />
+          <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="border-border text-base sm:text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
         </div>
       ) : (
-        <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm border-brand-border focus:border-brand-accent focus:ring-1 focus:ring-brand-accent" />
+        <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm border-border focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
       )}
       <div className="flex items-center justify-between gap-2 sm:flex-wrap">
         <VisBadge pub={isPublic} />
@@ -312,7 +312,7 @@ export const ProfilePage = () => {
     }
   };
 
-  if (loading) return <div className="flex h-64 items-center justify-center"><div className="animate-pulse rounded-full h-12 w-12 bg-brand-border/60" /></div>;
+  if (loading) return <div className="flex h-64 items-center justify-center"><div className="animate-pulse rounded-full h-12 w-12 bg-border/60" /></div>;
 
   const filled =
     fields.filter((f) => String(form[f.key] || '').trim()).length + (photoPreview ? 1 : 0);
@@ -344,16 +344,16 @@ export const ProfilePage = () => {
             <Section title="Identificación">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <ImageOff size={15} className="text-brand-accent" aria-hidden="true" />
+                  <ImageOff size={15} className="text-brand-500" aria-hidden="true" />
                   <Label htmlFor="photo_file" className="!mb-0">Fotografía</Label>
                   <VisBadge pub={privacyPublic('photo_url')} />
                 </div>
                 <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
-                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 flex-none items-center justify-center overflow-hidden rounded-full bg-brand-dark ring-2 ring-brand-border">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 flex-none items-center justify-center overflow-hidden rounded-full bg-brand-50 ring-2 ring-border">
                     {photoPreview ? (
                       <img src={photoPreview} alt="Vista previa de la fotografía" className="h-full w-full object-cover" />
                     ) : (
-                      <User size={28} className="text-brand-textMuted/60" aria-hidden="true" />
+                      <User size={28} className="text-text-secondary/60" aria-hidden="true" />
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -375,7 +375,7 @@ export const ProfilePage = () => {
                     onChange={handlePhotoChange}
                   />
                 </div>
-                <p className="text-xs text-brand-textMuted">
+                <p className="text-xs text-text-secondary">
                   JPG, PNG o WebP, máximo 2 MB. Se almacena de forma privada y solo es pública si así lo autorizas.
                 </p>
                 <VisSwitch
@@ -406,23 +406,23 @@ export const ProfilePage = () => {
             </Section>
 
             {/* Consentimiento */}
-            <section className="rounded-xl border border-brand-border bg-brand-dark/60 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-brand-text">Privacidad y consentimiento</h3>
-              <p className="mb-4 text-xs leading-relaxed text-brand-textMuted">
+            <section className="rounded-xl border border-border bg-brand-50/60 p-5">
+              <h3 className="mb-2 text-sm font-semibold text-neutral-900">Privacidad y consentimiento</h3>
+              <p className="mb-4 text-xs leading-relaxed text-text-secondary">
                 Cada control define si ese campo se publica en tu página de emergencia. Cualquier persona con
                 acceso al enlace del QR podrá consultar solo lo que marques como Público. Los campos Privados
                 solo se consultan desde tu panel autenticado.
               </p>
-              <div className="flex items-start gap-3 rounded-lg border border-brand-border bg-white p-4">
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-white p-4">
                 <input
                   id="consent"
                   type="checkbox"
                   checked
                   readOnly
                   disabled
-                  className="mt-0.5 h-4 w-4 flex-none rounded border-brand-border accent-brand-accent"
+                  className="mt-0.5 h-4 w-4 flex-none rounded border-border accent-brand-500"
                 />
-                <label htmlFor="consent" className="text-sm leading-relaxed text-brand-text">
+                <label htmlFor="consent" className="text-sm leading-relaxed text-neutral-900">
                   Autorizo que la información que marque como Público sea accesible a través de mi página de
                   emergencia. Puedes cambiar la visibilidad o eliminar tus datos en cualquier momento desde
                   este panel. No incluyas contraseñas, datos financieros ni información innecesaria.
@@ -432,8 +432,8 @@ export const ProfilePage = () => {
           </div>
 
           {/* Barra de guardado */}
-          <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-b-2xl border-t border-brand-border bg-white/90 px-5 py-4 backdrop-blur sm:px-6 lg:px-8">
-            <p className={`text-xs ${dirty ? 'font-medium text-amber-700' : 'text-brand-textMuted'}`}>
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-b-2xl border-t border-border bg-white/90 px-5 py-4 backdrop-blur sm:px-6 lg:px-8">
+            <p className={`text-xs ${dirty ? 'font-medium text-amber-700' : 'text-text-secondary'}`}>
               {dirty ? 'Tienes cambios sin guardar' : 'Todo guardado'}
             </p>
             <Button type="submit" variant="primary" disabled={saving || !dirty}>
@@ -444,38 +444,38 @@ export const ProfilePage = () => {
 
         <aside className="h-fit space-y-4 lg:sticky lg:top-24">
           <div className={`${panel} p-5`}>
-            <h2 className="mb-4 text-sm font-semibold text-brand-text">Cuenta</h2>
+            <h2 className="mb-4 text-sm font-semibold text-neutral-900">Cuenta</h2>
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-accent/10 text-brand-accent">
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
                 <Mail size={16} aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Correo</p>
-                <p className="break-all text-sm text-brand-text">{user?.email || '—'}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Correo</p>
+                <p className="break-all text-sm text-neutral-900">{user?.email || '—'}</p>
               </div>
             </div>
           </div>
 
           <div className={`${panel} p-5`}>
             <div className="flex items-end justify-between">
-              <h2 className="text-sm font-semibold text-brand-text">Perfil completado</h2>
-              <span className="text-2xl font-extrabold tracking-tight text-brand-accent">{completion}%</span>
+              <h2 className="text-sm font-semibold text-neutral-900">Perfil completado</h2>
+              <span className="text-2xl font-extrabold tracking-tight text-brand-500">{completion}%</span>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-brand-border/70">
-              <div className="h-full rounded-full bg-brand-accent transition-all duration-500" style={{ width: `${completion}%` }} />
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border/70">
+              <div className="h-full rounded-full bg-brand-500 transition-all duration-500" style={{ width: `${completion}%` }} />
             </div>
-            <p className="mt-2 text-xs text-brand-textMuted">{filled} de {totalFields} campos con información</p>
+            <p className="mt-2 text-xs text-text-secondary">{filled} de {totalFields} campos con información</p>
           </div>
 
           <div className={`${panel} p-5`}>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-brand-text">Visibilidad actual</h2>
-              <span className="text-xs text-brand-textMuted">{publicCount} públicos</span>
+              <h2 className="text-sm font-semibold text-neutral-900">Visibilidad actual</h2>
+              <span className="text-xs text-text-secondary">{publicCount} públicos</span>
             </div>
             <ul className="space-y-2.5">
               {PRIVACY_KEYS.map((k) => (
                 <li key={k} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="truncate text-brand-textMuted">{labelFor[k]}</span>
+                  <span className="truncate text-text-secondary">{labelFor[k]}</span>
                   <VisBadge pub={privacyPublic(k)} />
                 </li>
               ))}
@@ -484,7 +484,7 @@ export const ProfilePage = () => {
 
           <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4">
             <Lock size={16} className="mt-0.5 flex-none text-rose-700" aria-hidden="true" />
-            <p className="text-xs leading-relaxed text-brand-textMuted">
+            <p className="text-xs leading-relaxed text-text-secondary">
               Ningún dato sensible es público por defecto. Tú decides qué compartir y puedes cambiarlo en
               cualquier momento.
             </p>
@@ -496,3 +496,5 @@ export const ProfilePage = () => {
 };
 
 export default ProfilePage;
+
+

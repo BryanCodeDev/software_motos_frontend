@@ -7,7 +7,7 @@ import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import { Package } from 'lucide-react';
 import { Badge } from '../../components/ui-kit';
 
-const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 const commercialLabels = {
   draft: 'Borrador',
@@ -123,7 +123,7 @@ export const OrdersPage = () => {
         </div>
       ) : (
         <>
-          <p className="text-xs text-brand-textMuted">
+          <p className="text-xs text-text-secondary">
             {orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}
           </p>
 
@@ -131,7 +131,7 @@ export const OrdersPage = () => {
           <div className={`${panel} hidden overflow-hidden md:block`}>
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-left text-sm">
-                <thead className="bg-brand-dark/70 text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
+                <thead className="bg-brand-50/70 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
                   <tr>
                     <th scope="col" className="px-5 py-3">Número</th>
                     <th scope="col" className="px-5 py-3">Producto</th>
@@ -141,11 +141,11 @@ export const OrdersPage = () => {
                     <th scope="col" className="px-5 py-3">Fecha</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-brand-border">
+                <tbody className="divide-y divide-border">
                   {orders.map((o) => (
-                    <tr key={o.id} className="transition-colors hover:bg-brand-dark/60">
-                      <td className="whitespace-nowrap px-5 py-4 font-mono text-xs font-semibold text-brand-text">{o.order_number}</td>
-                      <td className="px-5 py-4 text-brand-text">{o.product_name}</td>
+                    <tr key={o.id} className="transition-colors hover:bg-brand-50/60">
+                      <td className="whitespace-nowrap px-5 py-4 font-mono text-xs font-semibold text-neutral-900">{o.order_number}</td>
+                      <td className="px-5 py-4 text-neutral-900">{o.product_name}</td>
                       <td className="px-5 py-4">
                         <Badge tone={commercialTone[o.commercial_status]}>
                           {commercialLabels[o.commercial_status] || o.commercial_status}
@@ -156,10 +156,10 @@ export const OrdersPage = () => {
                           {paymentLabels[o.payment_status] || o.payment_status || '—'}
                         </Badge>
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-brand-text">
+                      <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-neutral-900">
                         {formatAmount(o.total_amount, o.currency)}
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-brand-textMuted">{formatDate(o.created_at)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-text-secondary">{formatDate(o.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -173,15 +173,15 @@ export const OrdersPage = () => {
               <li key={o.id} className={`${panel} p-4`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-mono text-xs font-semibold text-brand-text">{o.order_number}</p>
-                    <p className="mt-1 text-sm font-semibold text-brand-text">{o.product_name}</p>
-                    <p className="mt-0.5 text-xs text-brand-textMuted">{formatDate(o.created_at)}</p>
+                    <p className="font-mono text-xs font-semibold text-neutral-900">{o.order_number}</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{o.product_name}</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">{formatDate(o.created_at)}</p>
                   </div>
-                  <p className="whitespace-nowrap text-sm font-bold text-brand-text">
+                  <p className="whitespace-nowrap text-sm font-bold text-neutral-900">
                     {formatAmount(o.total_amount, o.currency)}
                   </p>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-1.5 border-t border-brand-border pt-3">
+                <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
                   <Badge tone={commercialTone[o.commercial_status]}>
                     {commercialLabels[o.commercial_status] || o.commercial_status}
                   </Badge>
@@ -199,3 +199,5 @@ export const OrdersPage = () => {
 };
 
 export default OrdersPage;
+
+

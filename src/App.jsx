@@ -11,6 +11,7 @@ import { AdminHome } from './pages/admin/AdminHome';
 import { AdminUsers } from './pages/admin/Users';
 import { AdminOrders } from './pages/admin/Orders';
 import { AdminAudit } from './pages/admin/Audit';
+import { RouteTransition } from './components/RouteTransition';
 
 // Lazy pages
 const Home = lazy(() => import('./pages/Home'));
@@ -21,6 +22,8 @@ const FAQ = lazy(() => import('./pages/FAQ'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
+const ResendVerification = lazy(() => import('./pages/auth/ResendVerification'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const PublicEmergency = lazy(() => import('./pages/public/PublicEmergency'));
@@ -42,8 +45,13 @@ const App = () => (
     <AuthProvider>
       <ToastProvider>
         <Router>
-          <Suspense fallback={<div>...</div>}>
-            <Routes>
+          <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center bg-brand-50">
+              <div className="animate-pulse rounded-full h-12 w-12 bg-brand-500" />
+            </div>
+          }>
+            <RouteTransition>
+              <Routes>
               {/* Rutas públicas: solo Navbar (sin sidebar) */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Home />} />
@@ -55,6 +63,8 @@ const App = () => (
                 <Route path="/e/:identifier" element={<PublicEmergency />} />
                 <Route path="/auth/login" element={<Login />} />
                 <Route path="/auth/registro" element={<Register />} />
+                <Route path="/auth/verificar-email" element={<VerifyEmail />} />
+                <Route path="/auth/reenviar-codigo" element={<ResendVerification />} />
                 <Route path="/auth/olvido-contrasena" element={<ForgotPassword />} />
                 <Route path="/auth/restablecer-contrasena" element={<ResetPassword />} />
               </Route>
@@ -85,6 +95,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </RouteTransition>
           </Suspense>
         </Router>
       </ToastProvider>
@@ -93,3 +104,4 @@ const App = () => (
 );
 
 export default App;
+

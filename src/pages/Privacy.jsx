@@ -73,15 +73,15 @@ export const Privacy = () => (
             <Reveal key={title} delay={(i % 2) * 0.1}>
               <Card className="p-7 h-full">
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="w-10 h-10 rounded-lg bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent">
+                  <span className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500">
                     <Icon className="w-5 h-5" />
                   </span>
-                  <h2 className="font-semibold text-brand-text">{title}</h2>
+                  <h2 className="font-semibold text-neutral-900">{title}</h2>
                 </div>
-                <ul className="space-y-3 text-brand-textMuted text-sm leading-relaxed">
+                <ul className="space-y-3 text-text-secondary text-sm leading-relaxed">
                   {items.map((item) => (
                     <li key={item} className="flex gap-3">
-                      <span className="mt-2 h-1 w-1 rounded-full bg-brand-accent flex-shrink-0" aria-hidden="true" />
+                      <span className="mt-2 h-1 w-1 rounded-full bg-brand-500 flex-shrink-0" aria-hidden="true" />
                       {item}
                     </li>
                   ))}
@@ -91,14 +91,14 @@ export const Privacy = () => (
           ))}
 
           <Reveal delay={0.1}>
-            <Card className="p-7 h-full border-brand-gold/30">
+            <Card className="p-7 h-full border-brand-500/30">
               <div className="flex items-center gap-3 mb-5">
-                <span className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold">
+                <span className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500">
                   <Lock className="w-5 h-5" />
                 </span>
-                <h2 className="font-semibold text-brand-text">Datos sensibles en registros</h2>
+                <h2 className="font-semibold text-neutral-900">Datos sensibles en registros</h2>
               </div>
-              <p className="text-brand-textMuted text-sm leading-relaxed">
+              <p className="text-text-secondary text-sm leading-relaxed">
                 Los registros de auditoría no almacenan copias innecesarias de datos médicos ni información
                 privada sensible.
               </p>
@@ -117,3 +117,4 @@ export const Privacy = () => (
 );
 
 export default Privacy;
+
