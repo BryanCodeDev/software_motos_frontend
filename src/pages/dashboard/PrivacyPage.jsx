@@ -403,7 +403,7 @@ export const PrivacyPage = () => {
             const allOn = count === list.length;
             return (
               <Reveal key={name}>
-                <section className={`${panel} p-5 sm:p-6`} aria-labelledby={`cat-${name}`}>
+                <section className={`${panel} p-4 sm:p-5 lg:p-6`} aria-labelledby={`cat-${name}`}>
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
@@ -427,7 +427,7 @@ export const PrivacyPage = () => {
                       </button>
                     </div>
                   </div>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-2">
                     {list.map((f) => (
                       <PrivacyRow key={f.key} field={f} pub={isPublic(f.key)} onToggle={() => toggle(f.key)} reduce={reduce} />
                     ))}

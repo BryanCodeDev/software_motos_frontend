@@ -614,7 +614,7 @@ export const QrPage = () => {
 
               {/* ───── QR activo ───── */}
               {state === 'active' && identifier && (
-                <div className="grid items-start gap-6 lg:grid-cols-5">
+                <div className="grid items-start gap-4 lg:grid-cols-5 lg:gap-5">
                   <section className={`${panel} overflow-hidden lg:col-span-3`} aria-label="Tu código QR">
                     <div className="gradient-brand flex items-center justify-between gap-3 px-5 py-4 text-white sm:px-6">
                       <div className="flex items-center gap-3">
@@ -635,7 +635,7 @@ export const QrPage = () => {
                       </span>
                     </div>
 
-                    <div className="relative px-5 py-8 sm:px-8 sm:py-10">
+                    <div className="relative px-5 py-6 sm:px-8 sm:py-8">
                       <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0" />
                       <div className="relative mx-auto w-fit">
                         <motion.div

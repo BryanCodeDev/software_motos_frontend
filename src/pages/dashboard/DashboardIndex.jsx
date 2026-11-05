@@ -221,22 +221,22 @@ export const DashboardIndex = () => {
         <motion.section
           variants={item}
           aria-labelledby="progress-title"
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-6 text-white shadow-glow sm:p-8"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-5 text-white shadow-glow sm:p-6 lg:p-7"
         >
           <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
           <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-400/30 blur-3xl" />
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
 
-          <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="max-w-lg">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
                 {allDone ? <CheckCircle2 size={13} aria-hidden="true" /> : <Sparkles size={13} aria-hidden="true" />}
                 {allDone ? 'Activación completa' : 'Estado de activación'}
               </span>
-              <h2 id="progress-title" className="mt-4 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+              <h2 id="progress-title" className="mt-3 text-xl font-bold leading-tight tracking-tight sm:text-2xl">
                 {allDone ? 'Tu perfil está listo para protegerte' : 'Termina de configurar tu perfil'}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/75">
+              <p className="mt-1.5 text-sm leading-relaxed text-white/75">
                 {allDone
                   ? 'Todo completado. Tu página pública de emergencia está habilitada.'
                   : `Te ${missing === 1 ? 'falta 1 paso' : `faltan ${missing} pasos`}. Sigue con ${next.label.toLowerCase()}: ${next.desc.toLowerCase()}.`}
@@ -260,14 +260,14 @@ export const DashboardIndex = () => {
         </motion.section>
 
         {/* ───── Pasos + estado del QR ───── */}
-        <div className="grid items-start gap-6 lg:grid-cols-3">
-          <motion.section variants={item} className={`${panel} p-5 sm:p-6 lg:col-span-2`} aria-labelledby="steps-title">
-            <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="grid items-start gap-4 lg:grid-cols-3 lg:gap-5">
+          <motion.section variants={item} className={`${panel} p-5 sm:p-6 lg:col-span-2 lg:p-7`} aria-labelledby="steps-title">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <h2 id="steps-title" className="text-base font-semibold text-neutral-900">Pasos para activar tu QR</h2>
               <Badge tone={allDone ? 'success' : 'neutral'} size="md">{doneCount}/{STEPS.length}</Badge>
             </div>
 
-            <ol className="space-y-2.5">
+            <ol className="space-y-2">
               {STEPS.map((step, i) => {
                 const done = steps[step.key];
                 const isNext = !done && next?.key === step.key;
@@ -327,7 +327,7 @@ export const DashboardIndex = () => {
 
           <motion.aside variants={item} aria-label="Estado de tu QR">
             {steps.qr ? (
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-soft">
+              <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-soft sm:p-6">
                 <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 ring-1 ring-emerald-600/15">
                   <QrCode size={22} aria-hidden="true" />
                 </span>
@@ -340,7 +340,7 @@ export const DashboardIndex = () => {
                 </Link>
               </div>
             ) : (
-              <div className="relative overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft">
+              <div className="relative overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-br from-brand-50 to-white p-5 shadow-soft sm:p-6">
                 <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
                   <Lock size={22} aria-hidden="true" />
                 </span>
@@ -360,21 +360,21 @@ export const DashboardIndex = () => {
         {/* ───── Accesos rápidos ───── */}
         <motion.section variants={item} aria-labelledby="quick-title">
           <h2 id="quick-title" className="mb-4 text-base font-semibold text-neutral-900">Accesos rápidos</h2>
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
             {QUICK_ACTIONS.map(({ to, label, desc, icon: Icon, tone }) => (
               <Link
                 key={to}
                 to={to}
-                className="group relative block h-full rounded-2xl border border-border/60 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)]"
+                className="group relative block h-full rounded-2xl border border-border/60 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)] lg:p-5"
               >
-                <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${tone} transition-transform duration-300 group-hover:scale-105`}>
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone} transition-transform duration-300 group-hover:scale-105 lg:h-12 lg:w-12`}>
                   <Icon size={20} strokeWidth={2.2} aria-hidden="true" />
                 </span>
-                <p className="mt-4 text-sm font-semibold text-neutral-900">{label}</p>
+                <p className="mt-3 text-sm font-semibold text-neutral-900 lg:mt-4">{label}</p>
                 <p className="mt-1 text-xs leading-relaxed text-text-secondary">{desc}</p>
                 <ArrowRight
                   size={14}
-                  className="absolute right-5 top-5 text-text-muted transition-all duration-300 group-hover:translate-x-1 group-hover:text-brand-500"
+                  className="absolute right-4 top-4 text-text-muted transition-all duration-300 group-hover:translate-x-1 group-hover:text-brand-500 lg:right-5 lg:top-5"
                   aria-hidden="true"
                 />
               </Link>
@@ -384,8 +384,8 @@ export const DashboardIndex = () => {
 
         {/* ───── Resumen ───── */}
         <motion.section variants={item} aria-labelledby="summary-title">
-          <h2 id="summary-title" className="mb-4 text-base font-semibold text-neutral-900">Resumen de tu cuenta</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 id="summary-title" className="mb-3 text-base font-semibold text-neutral-900 lg:mb-4">Resumen de tu cuenta</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
             <StatCard
               label="Perfil de emergencia"
               value={steps.profile ? 'Completo' : 'Pendiente'}

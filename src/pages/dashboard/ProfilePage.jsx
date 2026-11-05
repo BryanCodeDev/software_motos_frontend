@@ -546,7 +546,7 @@ export const ProfilePage = () => {
   const displayName = String(form.display_name || '').trim();
 
   return (
-    <div className="space-y-5 pb-28 lg:space-y-6">
+    <div className="space-y-4 pb-28 lg:space-y-5">
       <PageTitle
         title="Tu perfil de emergencia"
         description="Completa lo que quieras que sepan en una emergencia. En cada dato, tú eliges si se muestra o no al escanear tu QR."
@@ -554,7 +554,7 @@ export const ProfilePage = () => {
 
       {/* RESUMEN: foto, progreso y siguiente paso */}
       <Reveal>
-        <section className={`${panel} relative overflow-hidden p-5 sm:p-6`} aria-label="Resumen de tu perfil">
+        <section className={`${panel} relative overflow-hidden p-4 sm:p-5 lg:p-6`} aria-label="Resumen de tu perfil">
           <div
             className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl"
             aria-hidden="true"
@@ -678,8 +678,8 @@ export const ProfilePage = () => {
         })}
       </nav>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-6 lg:col-span-2">
+      <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4 lg:col-span-2">
           <Reveal>
             <p className="flex items-start gap-2.5 rounded-xl bg-brand-50/70 p-4 text-sm leading-relaxed text-text-secondary">
               <Eye size={16} className="mt-0.5 flex-none text-brand-500" aria-hidden="true" />
