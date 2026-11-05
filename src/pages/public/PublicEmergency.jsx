@@ -36,7 +36,7 @@ const Notice = ({ icon: Icon, tone = 'muted', title, text, extra }) => (
   </Shell>
 );
 
-const ContactCard = ({ c }) => {
+const ContactCard = ({ c, displayName }) => {
   const phone = cleanPhone(c.phone);
   const hasPhone = Boolean(c.phone);
   const hasEmail = Boolean(c.email);
@@ -77,7 +77,7 @@ const ContactCard = ({ c }) => {
         )}
         {hasPhone && (
           <a
-            href={'https://wa.me/' + phone.replace('+', '') + '?text=' + encodeURIComponent('Hola, soy un contacto de emergencia de Tu QR te Cuida.')}
+            href={'https://wa.me/' + phone.replace('+', '') + '?text=' + encodeURIComponent(`Hola, te escribo de parte de ${displayName} y estas como contacto de emergencia, atiende lo antes posible.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold text-sm py-3 hover:bg-emerald-100 hover:-translate-y-0.5 transition-all"
@@ -333,7 +333,7 @@ export const PublicEmergency = () => {
               </div>
               <div className="space-y-3">
                 {contacts.map((c, i) => (
-                  <ContactCard key={c.id ?? i} c={c} />
+                  <ContactCard key={c.id ?? i} c={c} displayName={displayName} />
                 ))}
               </div>
             </div>
