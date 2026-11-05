@@ -3,92 +3,155 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../api/client';
 import {
-  Phone, Mail, ShieldAlert, AlertCircle, Droplet, AlertTriangle,
-  FileText, Bell, Stethoscope, Pill, MessageCircle, User, CheckCircle2,
-  Share2, Send, PhoneCall, Edit3, QrCode, ArrowUpRight,
-  Calendar, Ruler, Scale, Baby, Settings, Shield, IdCard, Heart,
+  Phone, Mail, ShieldAlert, ShieldCheck, AlertCircle, Droplet, AlertTriangle,
+  FileText, Bell, Stethoscope, Pill, MessageCircle, User, Users,
+  Share2, Check, PhoneCall, Calendar, Ruler, Scale, Baby, Settings, Shield, IdCard, Heart,
 } from 'lucide-react';
 import Seo from '../../components/Seo';
-import { Button } from '../../components/ui';
-import { Badge } from '../../components/ui-kit';
+
+const EMERGENCY_NUMBER = '123';
 
 const cleanPhone = (phone) => String(phone).replace(/[^\d+]/g, '');
 
+/* Clases estáticas: Tailwind no compila nombres armados dinámicamente (text-${x}). */
+const TONES = {
+  rose: 'bg-rose-50 text-rose-600 border-rose-200',
+  amber: 'bg-amber-50 text-amber-600 border-amber-200',
+  sky: 'bg-sky-50 text-sky-600 border-sky-200',
+  emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+  blue: 'bg-blue-50 text-blue-600 border-blue-200',
+  indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+  pink: 'bg-pink-50 text-pink-600 border-pink-200',
+  gray: 'bg-neutral-100 text-neutral-600 border-neutral-200',
+};
+
 const Shell = ({ children, title = 'Perfil de emergencia' }) => (
-  <main className="min-h-screen bg-brand-50 py-8 px-4 sm:py-12">
+  <main className="min-h-screen bg-brand-50 px-4 py-6 sm:py-10">
     <Seo title={title} description="Información de contacto de emergencia" noindex />
-    <div className="max-w-4xl mx-auto animate-slide-up">{children}</div>
-    <p className="max-w-4xl mx-auto mt-12 text-center text-[11px] text-text-secondary leading-relaxed">
-      Tu QR te Cuida by · <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-500 transition-colors font-medium">MasterCode Company</a>
+    <div className="mx-auto max-w-3xl animate-slide-up">
+      <div className="mb-5 flex items-center justify-between">
+        <span className="flex items-center gap-2 text-sm font-bold tracking-tight text-neutral-900">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
+            <ShieldCheck size={16} strokeWidth={2.4} aria-hidden="true" />
+          </span>
+          Tu QR te Cuida
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-600">
+          <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" /> Perfil de emergencia
+        </span>
+      </div>
+      {children}
+    </div>
+    <p className="mx-auto mt-10 max-w-3xl text-center text-[11px] leading-relaxed text-text-secondary">
+      Tu QR te Cuida · Desarrollado por{' '}
+      <a
+        href="https://mastercodecompany.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium transition-colors hover:text-brand-500"
+      >
+        MasterCode Company
+      </a>
     </p>
   </main>
 );
 
 const Notice = ({ icon: Icon, tone = 'muted', title, text, extra }) => (
   <Shell title={title}>
-    <div className="card-static p-8 sm:p-10 text-center rounded-2xl border border-border bg-brand-50 shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full mx-auto mb-5 text-text-secondary">
-        <Icon className="w-7 h-7" aria-hidden="true" />
+    <div className="rounded-2xl border border-border bg-white p-8 text-center shadow-glow sm:p-10">
+      <div
+        className={`mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full ${
+          tone === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-neutral-100 text-text-secondary'
+        }`}
+      >
+        <Icon className="h-7 w-7" aria-hidden="true" />
       </div>
-      <h1 className="text-2xl font-bold text-neutral-900 mb-3">{title}</h1>
-      {text && <p className="text-text-secondary leading-relaxed">{text}</p>}
-      {extra && <p className="mt-4 text-xs text-text-secondary leading-relaxed">{extra}</p>}
+      <h1 className="mb-3 text-2xl font-bold text-neutral-900">{title}</h1>
+      {text && <p className="leading-relaxed text-text-secondary">{text}</p>}
+      {extra && <p className="mt-4 text-xs leading-relaxed text-text-secondary">{extra}</p>}
+      <a
+        href={`tel:${EMERGENCY_NUMBER}`}
+        className="btn mt-8 border border-rose-500/40 bg-rose-50 px-5 py-2.5 text-sm text-rose-700 hover:bg-rose-100"
+      >
+        <PhoneCall className="h-4 w-4" aria-hidden="true" /> Llamar al {EMERGENCY_NUMBER}
+      </a>
     </div>
   </Shell>
 );
 
+/* Dato vital (grande) o secundario (compacto) */
+const StatItem = ({ icon: Icon, label, value, tone = 'gray', wide = false }) => (
+  <div
+    className={`flex items-start gap-3 rounded-xl border border-border bg-white p-3.5 ${wide ? 'sm:col-span-2' : ''}`}
+  >
+    <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border ${TONES[tone]}`}>
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </span>
+    <div className="min-w-0">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">{label}</div>
+      <div className="break-words text-sm font-semibold leading-snug text-neutral-900">{value}</div>
+    </div>
+  </div>
+);
+
+const SectionTitle = ({ icon: Icon, children, aside }) => (
+  <div className="mb-4 flex items-center justify-between gap-3">
+    <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-secondary">
+      <Icon className="h-3.5 w-3.5 text-brand-500" aria-hidden="true" />
+      {children}
+    </h2>
+    {aside}
+  </div>
+);
+
 const ContactCard = ({ c, displayName }) => {
-  const phone = cleanPhone(c.phone);
-  const hasPhone = Boolean(c.phone);
+  const phone = c.phone ? cleanPhone(c.phone) : '';
+  const hasPhone = Boolean(phone);
   const hasEmail = Boolean(c.email);
+  const message = `Hola ${c.name}, te escribo de parte de ${displayName}. Estás registrado como contacto de emergencia en Tu QR te Cuida (${window.location.origin}). Por favor, atiende lo antes posible. Gracias.`;
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl border border-border bg-white shadow-[0_8px_24px_-12px_rgba(159,18,57,0.25)] hover:border-brand-500/50 hover:shadow-brand transition-all duration-300">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-neutral-900 truncate">{c.name}</span>
-            <Badge tone={c.is_public ? 'success' : 'neutral'} size="sm">
-              {c.is_public ? <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-600"></span> Público</span> : <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-slate-400"></span> Privado</span>}
-            </Badge>
-          </div>
-          {c.relationship && <div className="text-[11px] font-medium text-text-secondary">{c.relationship}</div>}
-        </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/20">
-          <User className="w-5 h-5" aria-hidden="true" />
+    <div className="rounded-2xl border border-border bg-white p-5 transition-all duration-300 hover:border-brand-500/50 hover:shadow-card">
+      <div className="mb-4 flex items-center gap-3">
+        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/20">
+          <User className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-neutral-900">{c.name}</p>
+          {c.relationship && <p className="text-xs font-medium text-text-secondary">{c.relationship}</p>}
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         {hasPhone && (
           <a
             href={`tel:${phone}`}
-            className="flex items-center justify-center gap-2 rounded-xl border border-brand-500 bg-brand-500 text-white font-semibold text-sm py-3 hover:bg-brand-600 hover:-translate-y-0.5 transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-600"
           >
-            <Phone className="w-4 h-4" aria-hidden="true" /> Llamar
+            <Phone className="h-4 w-4" aria-hidden="true" /> Llamar
           </a>
         )}
         {hasPhone && (
           <a
-            href={'https://wa.me/' + phone.replace('+', '') + '?text=' + encodeURIComponent(`Hola ${c.name}, te escribo de parte de ${displayName}. Estas registrado como contacto de emergencia en Tu QR te Cuida (https://software-motos.netlify.app). Por favor, atiende lo antes posible. Gracias.`)}
+            href={`https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold text-sm py-3 hover:bg-emerald-100 hover:-translate-y-0.5 transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-100"
           >
-            <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp
+            <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
           </a>
         )}
         {hasEmail && (
           <a
             href={`mailto:${c.email}`}
-            className="flex items-center justify-center gap-1 rounded-xl border border-border bg-white text-neutral-900 text-xs font-medium py-2 hover:bg-brand-50/50 hover:border-brand-500/50 transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl border border-border bg-white py-2.5 text-xs font-medium text-neutral-900 transition-all hover:border-brand-500/50 hover:bg-brand-50 sm:col-span-2"
           >
-            <Mail className="w-3 h-3" aria-hidden="true" /> Correo
+            <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Enviar correo
           </a>
         )}
         {!hasPhone && !hasEmail && (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 text-text-secondary text-xs font-medium py-3">
-            <AlertCircle className="w-4 h-4" aria-hidden="true" /> Sin datos de contacto
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 py-3 text-xs font-medium text-text-secondary sm:col-span-2">
+            <AlertCircle className="h-4 w-4" aria-hidden="true" /> Sin datos de contacto
           </div>
         )}
       </div>
@@ -101,6 +164,7 @@ export const PublicEmergency = () => {
   const [profile, setProfile] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -129,14 +193,14 @@ export const PublicEmergency = () => {
             setError('Este identificador ya no está activo.');
           } else if (err.response.status === 404) {
             setStatus('notfound');
-            setError('Perfil de emergencia no encontrado.');
+            setError('No encontramos este perfil de emergencia. Revisa que el QR esté completo.');
           } else {
             setStatus('error');
-            setError('No se pudo cargar el perfil. Intenta nuevamente.');
+            setError('No pudimos cargar el perfil. Intenta de nuevo.');
           }
         } else {
           setStatus('error');
-          setError('No se pudo conectar con el servidor.');
+          setError('No hay conexión con el servidor. Revisa tu internet e intenta de nuevo.');
         }
       }
     })();
@@ -149,11 +213,11 @@ export const PublicEmergency = () => {
 
   if (status === 'loading') {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-brand-50 py-20 px-4" role="status">
+      <main className="flex min-h-screen items-center justify-center bg-brand-50 px-4 py-20" role="status">
         <Seo title="Perfil de emergencia" noindex />
         <div className="text-center">
-          <div className="w-10 h-10 border-[3px] border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-secondary text-sm">Cargando información de emergencia…</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-[3px] border-brand-500 border-t-transparent" />
+          <p className="text-sm text-text-secondary">Cargando información de emergencia…</p>
         </div>
       </main>
     );
@@ -164,9 +228,9 @@ export const PublicEmergency = () => {
       <Notice
         icon={AlertCircle}
         tone="danger"
-        title="Identificador inactivo"
+        title="Este QR ya no está activo"
         text={error}
-        extra="Esta página ya no muestra información personal. El propietario desactivó o reemplazó este identificador."
+        extra="Esta página ya no muestra información personal: el propietario desactivó o reemplazó este identificador."
       />
     );
   }
@@ -185,228 +249,236 @@ export const PublicEmergency = () => {
 
   const medical = profile.medical || {};
   const contacts = profile.contacts || [];
-  const hasMedicalData = Boolean(
-    profile.blood_type || medical.allergies || medical.medical_conditions || medical.medications
-  );
-  const hasAdditionalData = Boolean(profile.additional_info || profile.emergency_note);
-  const hasContacts = contacts.length > 0;
   const displayName = profile.display_name || 'Titular';
 
+  const hasCritical = Boolean(
+    profile.blood_type ||
+      medical.allergies ||
+      medical.medical_conditions ||
+      medical.medications ||
+      medical.medical_devices ||
+      medical.is_pregnant ||
+      profile.is_organ_donor
+  );
+  const hasOther = Boolean(
+    profile.date_of_birth ||
+      profile.document_number ||
+      profile.insurance_company ||
+      profile.insurance_policy_number ||
+      profile.primary_doctor_name ||
+      profile.primary_doctor_phone ||
+      medical.height_cm ||
+      medical.weight_kg
+  );
+  const hasNotes = Boolean(profile.additional_info || profile.emergency_note);
+  const hasContacts = contacts.length > 0;
+  const isEmpty = !hasCritical && !hasOther && !hasNotes && !hasContacts;
+
   const primaryPhone = contacts.find((c) => c.phone && c.display_phone)?.phone;
-  const primaryEmail = contacts.find((c) => c.email && c.display_email)?.email;
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: displayName, text: 'Perfil de emergencia de Tu QR te Cuida', url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      /* El usuario canceló o el navegador lo bloqueó: no hay nada que mostrar. */
+    }
+  };
 
   return (
     <Shell>
-      <div className="mb-6">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-bold tracking-[0.14em] uppercase">
-          <ShieldAlert className="w-4 h-4" aria-hidden="true" />
-          Perfil de emergencia
-        </div>
-        <p className="mt-2 text-sm text-text-secondary text-center">
-          Información compartida por el titular a través de su código QR
-        </p>
-      </div>
-
+      {/* LLAMADA A EMERGENCIAS */}
       <a
-        href="tel:123"
-        className="flex items-center justify-between gap-4 mb-8 p-5 rounded-2xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/15 transition-all"
+        href={`tel:${EMERGENCY_NUMBER}`}
+        className="mb-5 flex items-center justify-between gap-4 rounded-2xl bg-rose-600 p-4 text-white shadow-[0_16px_40px_-16px_rgba(225,29,72,0.7)] transition-all hover:bg-rose-700 sm:p-5"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/30">
-            <PhoneCall className="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div className="text-left">
-            <strong className="block text-base font-extrabold text-neutral-900">Haz clic para llamar a la línea de emergencias</strong>
+          <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
+            <PhoneCall className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <strong className="block text-base font-extrabold leading-tight">Llamar a la línea de emergencias</strong>
+            <span className="text-xs text-white/85">Toca para marcar el {EMERGENCY_NUMBER}</span>
           </div>
         </div>
+        <span className="text-3xl font-extrabold tabular-nums" aria-hidden="true">{EMERGENCY_NUMBER}</span>
       </a>
 
-      <div className="rounded-2xl border border-border bg-white shadow-[0_20px_50px_-20px_rgba(159,18,57,0.35)] overflow-hidden">
-        <div className="p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-1">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 leading-tight break-words">
-                {displayName}
-              </h1>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-white ring-1 ring-brand-500/20 ml-2 mt-2 sm:ml-0 sm:mt-0">
-                <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
-              </span>
-            </div>
-            <div className="flex gap-2 sm:ml-4">
-              {primaryPhone && (
-                <a
-                  href={`tel:${cleanPhone(primaryPhone)}`}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-brand-500 bg-brand-500 text-white font-semibold text-sm py-3 px-4 hover:bg-brand-600 hover:-translate-y-0.5 transition-all"
-                  aria-label="Llamar al titular"
-                >
-                  <PhoneCall className="w-4 h-4" aria-hidden="true" /> Llamar
-                </a>
-              )}
-              <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: displayName, text: 'Perfil de emergencia de Tu QR te Cuida', url: window.location.href });
-                  } else {
-                    navigator.clipboard.writeText(window.location.href);
-                  }
-                }}
-                className="rounded-xl p-3 text-text-secondary hover:bg-brand-50 hover:text-neutral-900 transition-all"
-                aria-label="Compartir perfil"
-                title="Compartir"
-              >
-                <Share2 className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          {profile.photo_url && (
-            <div className="mt-6 flex justify-center">
+      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-glow">
+        {/* IDENTIDAD */}
+        <div className="bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-6 text-white sm:p-8">
+          <div className="flex items-center gap-4">
+            {profile.photo_url ? (
               <img
                 src={profile.photo_url}
                 alt="Fotografía del titular"
-                className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg ring-4 ring-brand-500/20"
+                className="h-20 w-20 flex-shrink-0 rounded-full border-4 border-white/90 object-cover shadow-lg sm:h-24 sm:w-24"
               />
+            ) : (
+              <span className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-white/15 ring-4 ring-white/25 sm:h-24 sm:w-24">
+                <User className="h-9 w-9" aria-hidden="true" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/75">Titular</p>
+              <h1 className="break-words text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+                {displayName}
+              </h1>
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm text-white/80">
+            Información compartida por el titular a través de su código QR.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {primaryPhone && (
+              <a
+                href={`tel:${cleanPhone(primaryPhone)}`}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-500 transition-all hover:-translate-y-0.5 hover:bg-brand-50"
+                aria-label="Llamar al contacto principal"
+              >
+                <PhoneCall className="h-4 w-4" aria-hidden="true" /> Llamar contacto principal
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/40 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/10"
+              aria-label="Compartir perfil"
+            >
+              {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
+              {copied ? 'Enlace copiado' : 'Compartir'}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-8 p-6 sm:p-8">
+          {/* NOTA DE EMERGENCIA: lo primero que debe leerse */}
+          {profile.emergency_note && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50 p-4">
+              <Bell className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" aria-hidden="true" />
+              <div>
+                <p className="mb-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-700">Nota importante</p>
+                <p className="text-sm leading-relaxed text-neutral-900">{profile.emergency_note}</p>
+              </div>
             </div>
           )}
 
-          {hasMedicalData && (
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
-                  <Droplet className="w-3 h-3 text-brand-500" aria-hidden="true" />
-                  Información médica
-                </h2>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Datos de salud</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* DATOS VITALES */}
+          {hasCritical && (
+            <section>
+              <SectionTitle icon={Droplet}>Datos vitales</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2">
                 {profile.blood_type && (
-                  <StatItem icon={Droplet} label="Grupo sanguíneo" value={profile.blood_type} accent="rose-500" />
-                )}
-                {profile.date_of_birth && (
-                  <StatItem icon={Calendar} label="Fecha de nacimiento" value={profile.date_of_birth} accent="gray-500" />
-                )}
-                {profile.document_number && (
-                  <StatItem icon={IdCard} label="Documento" value={profile.document_number} accent="gray-500" />
-                )}
-                {profile.is_organ_donor && (
-                  <StatItem icon={Heart} label="Donante de órganos" value="Sí" accent="rose-500" />
-                )}
-                {profile.insurance_company && (
-                  <StatItem icon={Shield} label="Seguro médico" value={profile.insurance_company} accent="blue-500" />
-                )}
-                {profile.insurance_policy_number && (
-                  <StatItem icon={IdCard} label="Póliza de seguro" value={profile.insurance_policy_number} accent="blue-500" />
-                )}
-                {profile.primary_doctor_name && (
-                  <StatItem icon={User} label="Médico tratante" value={profile.primary_doctor_name} accent="green-500" />
-                )}
-                {profile.primary_doctor_phone && (
-                  <StatItem icon={Phone} label="Teléfono médico" value={profile.primary_doctor_phone} accent="green-500" />
+                  <StatItem icon={Droplet} label="Grupo sanguíneo" value={profile.blood_type} tone="rose" />
                 )}
                 {medical.allergies && (
-                  <StatItem icon={AlertTriangle} label="Alergias" value={medical.allergies} accent="amber-500" />
+                  <StatItem icon={AlertTriangle} label="Alergias" value={medical.allergies} tone="amber" />
                 )}
                 {medical.medical_conditions && (
-                  <StatItem icon={Stethoscope} label="Condiciones médicas" value={medical.medical_conditions} accent="sky-500" />
+                  <StatItem icon={Stethoscope} label="Condiciones médicas" value={medical.medical_conditions} tone="sky" />
                 )}
                 {medical.medications && (
-                  <StatItem icon={Pill} label="Medicamentos" value={medical.medications} accent="emerald-500" />
-                )}
-                {medical.height_cm && (
-                  <StatItem icon={Ruler} label="Estatura" value={`${medical.height_cm} cm`} accent="blue-500" />
-                )}
-                {medical.weight_kg && (
-                  <StatItem icon={Scale} label="Peso" value={`${medical.weight_kg} kg`} accent="indigo-500" />
-                )}
-                {medical.is_pregnant && (
-                  <StatItem icon={Baby} label="Embarazo" value="Sí" accent="pink-500" />
+                  <StatItem icon={Pill} label="Medicamentos" value={medical.medications} tone="emerald" />
                 )}
                 {medical.medical_devices && (
-                  <StatItem icon={Settings} label="Dispositivos médicos" value={medical.medical_devices} accent="gray-500" />
+                  <StatItem icon={Settings} label="Dispositivos médicos" value={medical.medical_devices} tone="gray" />
+                )}
+                {medical.is_pregnant && <StatItem icon={Baby} label="Embarazo" value="Sí" tone="pink" />}
+                {profile.is_organ_donor && (
+                  <StatItem icon={Heart} label="Donante de órganos" value="Sí" tone="rose" />
                 )}
               </div>
-            </div>
+            </section>
           )}
 
-          {hasAdditionalData && (
-            <div className="mt-8">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-2">
-                <FileText className="w-3 h-3 text-brand-500" aria-hidden="true" />
-                Información adicional
-              </h2>
-              {profile.additional_info && (
-                <div className="p-4 rounded-xl border border-border bg-brand-50/50 mb-3">
-                  <div className="flex items-start gap-2 mb-1">
-                    <FileText className="w-4 h-4 shrink-0 text-brand-500" aria-hidden="true" />
-                    <span className="text-sm text-neutral-900 leading-relaxed">{profile.additional_info}</span>
-                  </div>
-                </div>
-              )}
-              {profile.emergency_note && (
-                <div className="p-4 rounded-xl border border-border bg-brand-50/50">
-                  <div className="flex items-start gap-2 mb-1">
-                    <Bell className="w-4 h-4 shrink-0 text-brand-500" aria-hidden="true" />
-                    <span className="text-sm text-neutral-900 leading-relaxed">{profile.emergency_note}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* CONTACTOS */}
           {hasContacts && (
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                  <UsersIcon className="w-4 h-4 text-brand-500" aria-hidden="true" />
-                  Contactos de emergencia
-                </h2>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary bg-brand-50/10 px-2 py-0.5 rounded">
-                  {contacts.length} contacto{contacts.length === 1 ? '' : 's'}
-                </span>
-              </div>
+            <section>
+              <SectionTitle
+                icon={Users}
+                aside={
+                  <span className="rounded bg-brand-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-500">
+                    {contacts.length} contacto{contacts.length === 1 ? '' : 's'}
+                  </span>
+                }
+              >
+                Contactos de emergencia
+              </SectionTitle>
               <div className="space-y-3">
                 {contacts.map((c, i) => (
                   <ContactCard key={c.id ?? i} c={c} displayName={displayName} />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {!hasMedicalData && !hasAdditionalData && !hasContacts && (
-            <div className="mt-8 p-8 rounded-2xl border border-border/50 bg-brand-50/50 text-center text-text-secondary text-sm">
-              <AlertCircle className="w-6 h-6 mx-auto mb-3 opacity-50" aria-hidden="true" />
-              <p>No hay información adicional registrada públicamente.</p>
-              <p className="mt-2 text-xs">El titular puede completar sus datos desde su panel.</p>
+          {/* INFORMACIÓN ADICIONAL */}
+          {profile.additional_info && (
+            <section>
+              <SectionTitle icon={FileText}>Información adicional</SectionTitle>
+              <div className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm leading-relaxed text-neutral-900">
+                {profile.additional_info}
+              </div>
+            </section>
+          )}
+
+          {/* OTROS DATOS */}
+          {hasOther && (
+            <section>
+              <SectionTitle icon={IdCard}>Otros datos del titular</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {profile.date_of_birth && (
+                  <StatItem icon={Calendar} label="Fecha de nacimiento" value={profile.date_of_birth} />
+                )}
+                {profile.document_number && (
+                  <StatItem icon={IdCard} label="Documento" value={profile.document_number} />
+                )}
+                {profile.insurance_company && (
+                  <StatItem icon={Shield} label="Seguro médico" value={profile.insurance_company} tone="blue" />
+                )}
+                {profile.insurance_policy_number && (
+                  <StatItem icon={IdCard} label="Póliza de seguro" value={profile.insurance_policy_number} tone="blue" />
+                )}
+                {profile.primary_doctor_name && (
+                  <StatItem icon={User} label="Médico tratante" value={profile.primary_doctor_name} tone="emerald" />
+                )}
+                {profile.primary_doctor_phone && (
+                  <StatItem icon={Phone} label="Teléfono del médico" value={profile.primary_doctor_phone} tone="emerald" />
+                )}
+                {medical.height_cm && (
+                  <StatItem icon={Ruler} label="Estatura" value={`${medical.height_cm} cm`} tone="blue" />
+                )}
+                {medical.weight_kg && (
+                  <StatItem icon={Scale} label="Peso" value={`${medical.weight_kg} kg`} tone="indigo" />
+                )}
+              </div>
+            </section>
+          )}
+
+          {isEmpty && (
+            <div className="rounded-2xl border border-border/50 bg-brand-50/50 p-8 text-center text-sm text-text-secondary">
+              <AlertCircle className="mx-auto mb-3 h-6 w-6 opacity-50" aria-hidden="true" />
+              <p>El titular no ha compartido información pública.</p>
+              <p className="mt-2 text-xs">Si es una emergencia, llama al {EMERGENCY_NUMBER}.</p>
             </div>
           )}
         </div>
       </div>
 
-      <p className="mt-10 text-center text-[11px] text-text-secondary leading-relaxed">
-        Información proporcionada por el propietario. Esta página no sustituye a los servicios oficiales de emergencia.
+      <p className="mt-8 text-center text-[11px] leading-relaxed text-text-secondary">
+        Información proporcionada por el propietario. Esta página no sustituye a los servicios oficiales de
+        emergencia.
       </p>
     </Shell>
   );
 };
-
-const StatItem = ({ icon: Icon, label, value, accent = 'brand-accent' }) => (
-  <div className="flex items-center gap-3 p-3 rounded-xl bg-brand-50/50 border border-border/50">
-    <span className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-${accent} bg-${accent}/10 border border-${accent}/20`}>
-      <Icon className="w-5 h-5" aria-hidden="true" />
-    </span>
-    <div className="min-w-0">
-      <div className="text-[10px] uppercase tracking-wider text-text-secondary font-bold">{label}</div>
-      <div className="text-sm font-semibold text-neutral-900 leading-tight break-words">{value}</div>
-    </div>
-  </div>
-);
-
-const UsersIcon = ({ className = '' }) => (
-  <svg className={`w-4 h-4 ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-    <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M23 21v-2a4 4 0 00-3-3.87M7 11V7a4 4 0 014-4h4a4 4 0 014 4v10" />
-  </svg>
-);
 
 export default PublicEmergency;
