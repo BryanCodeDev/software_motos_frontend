@@ -303,7 +303,6 @@ export const AdminOrders = () => {
                 </table>
               </div>
             </div>
-            </div>
 
             {/* Móvil */}
             <ul className="space-y-3 md:hidden">
