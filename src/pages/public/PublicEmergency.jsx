@@ -57,7 +57,7 @@ const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) =>
   <MotionConfig reducedMotion="user">
     <main className={`min-h-screen bg-brand-50 px-4 pt-5 sm:pt-8 ${withBar ? 'pb-28 sm:pb-10' : 'pb-8 sm:pb-10'}`}>
       <Seo title={title} description="Información de contacto de emergencia" noindex />
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-sm font-bold tracking-tight text-neutral-900">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
@@ -71,7 +71,7 @@ const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) =>
         </div>
         {children}
       </div>
-      <p className="mx-auto mt-10 max-w-3xl text-center text-[11px] leading-relaxed text-text-secondary">
+      <p className="mx-auto mt-10 max-w-5xl text-center text-[11px] leading-relaxed text-text-secondary">
         Tu QR te Cuida · Desarrollado por{' '}
         <a
           href="https://mastercodecompany.com/"
@@ -158,7 +158,7 @@ const StatItem = ({ icon: Icon, label, value, tone = 'gray', wide = false }) => 
 );
 
 const SectionCard = ({ icon: Icon, title, aside, children, className = '' }) => (
-  <motion.section variants={item} className={`${panel} p-5 sm:p-6 ${className}`} aria-label={title}>
+  <motion.section variants={item} className={`${panel} p-5 sm:p-6 lg:p-7 ${className}`} aria-label={title}>
     <div className="mb-4 flex items-center justify-between gap-3">
       <h2 className="flex items-center gap-2.5 text-base font-semibold text-neutral-900">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
@@ -385,12 +385,12 @@ export const PublicEmergency = () => {
 
   return (
     <Shell withBar>
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-4 sm:space-y-5">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-3 sm:space-y-4 lg:space-y-4">
         {/* IDENTIDAD */}
         <motion.section
           variants={item}
           aria-label="Titular del perfil"
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-5 text-white shadow-glow sm:p-8"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-5 text-white shadow-glow sm:p-6 lg:p-7"
         >
           <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
           <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl animate-float" />
@@ -427,9 +427,9 @@ export const PublicEmergency = () => {
           </div>
 
           {(profile.blood_type || profile.is_organ_donor) && (
-            <div className="relative mt-5 flex flex-wrap gap-2.5">
+            <div className="relative mt-4 flex flex-wrap gap-2.5">
               {profile.blood_type && (
-                <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-2.5 text-brand-500 shadow-soft">
+                <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-2 text-brand-500 shadow-soft">
                   <Droplet className="h-5 w-5" aria-hidden="true" />
                   <div className="leading-none">
                     <p className="text-[11px] font-medium text-text-secondary">Grupo sanguíneo</p>
@@ -438,20 +438,20 @@ export const PublicEmergency = () => {
                 </div>
               )}
               {profile.is_organ_donor && (
-                <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold backdrop-blur-sm">
+                <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur-sm">
                   <Heart className="h-4 w-4" aria-hidden="true" /> Donante de órganos
                 </div>
               )}
             </div>
           )}
 
-          <p className="relative mt-4 text-xs text-white/70">
+          <p className="relative mt-3 text-xs text-white/70">
             Información compartida por el titular a través de su código QR.
           </p>
         </motion.section>
 
         {/* ACCIONES RÁPIDAS */}
-        <motion.div variants={item} ref={quickRef} className="grid gap-3 sm:grid-cols-2">
+        <motion.div variants={item} ref={quickRef} className="grid gap-3 sm:grid-cols-2 lg:gap-4">
           <a
             href={`tel:${EMERGENCY_NUMBER}`}
             className={`focus-ring group flex items-center justify-between gap-3 rounded-2xl bg-rose-600 p-4 text-white shadow-[0_16px_40px_-16px_rgba(225,29,72,0.7)] transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-[0.99] ${
@@ -538,7 +538,7 @@ export const PublicEmergency = () => {
               </span>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-3 lg:space-y-4">
               {contacts.map((c, i) => (
                 <ContactCard key={c.id ?? i} c={c} displayName={displayName} isPrimary={c === primaryContact} />
               ))}

@@ -186,7 +186,7 @@ export const AdminHome = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5 lg:space-y-6">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-4 lg:space-y-5">
         <motion.div variants={item} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <PageTitle title="Resumen administrativo" description="Métricas operativas de la plataforma." />
           <div className="flex flex-none items-center gap-3">
@@ -203,15 +203,15 @@ export const AdminHome = () => {
         </motion.div>
 
         {/* KPIs */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
           {KPI_CARDS.map((card) => (
             <KpiCard key={card.key} card={card} value={getNested(stats, card.valueKey)} reduce={reduce} />
           ))}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
           {/* Pipeline de pedidos */}
-          <motion.section variants={item} className={`${panel} p-5 sm:p-6 lg:col-span-2`} aria-labelledby="pipeline-title">
+          <motion.section variants={item} className={`${panel} p-4 sm:p-5 lg:col-span-2 lg:p-6`} aria-labelledby="pipeline-title">
             <div className="mb-6 flex items-center justify-between gap-3">
               <h2 id="pipeline-title" className="text-base font-semibold text-neutral-900">Estado de los pedidos</h2>
               <p className="text-xs text-text-secondary">{fmt(pipelineTotal)} en seguimiento</p>
@@ -236,23 +236,23 @@ export const AdminHome = () => {
               })}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3 lg:gap-4">
               {PIPELINE.map((p) => {
                 const v = Number(getNested(stats, p.valueKey)) || 0;
                 const share = pipelineTotal > 0 ? Math.round((v / pipelineTotal) * 100) : 0;
                 return (
-                  <div key={p.key} className="rounded-xl border border-border bg-brand-50/40 p-4">
+                  <div key={p.key} className="rounded-xl border border-border bg-brand-50/40 p-3 lg:p-4">
                     <div className="flex items-center gap-2 text-xs font-medium text-text-secondary">
                       <span className={`h-2.5 w-2.5 rounded-full ${p.color}`} aria-hidden="true" /> {p.label}
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-neutral-900">{fmt(v)}</p>
+                    <p className="mt-1.5 text-xl font-bold text-neutral-900">{fmt(v)}</p>
                     <p className="mt-0.5 text-xs text-text-secondary">{share}% del total</p>
                   </div>
                 );
               })}
             </div>
             {pipelineTotal === 0 && (
-              <p className="mt-4 text-center text-xs text-text-secondary">Aún no hay pedidos en seguimiento.</p>
+              <p className="mt-3 text-center text-xs text-text-secondary">Aún no hay pedidos en seguimiento.</p>
             )}
           </motion.section>
 
@@ -260,7 +260,7 @@ export const AdminHome = () => {
           <motion.section
             variants={item}
             aria-labelledby="coverage-title"
-            className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-5 text-white shadow-glow sm:p-6"
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-4 text-white shadow-glow sm:p-5 lg:p-6"
           >
             <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
             <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand-400/30 blur-3xl" />
@@ -269,7 +269,7 @@ export const AdminHome = () => {
               <p className="mt-1 text-xs leading-relaxed text-white/70">
                 Usuarios que ya completaron su perfil de emergencia.
               </p>
-              <div className="my-6 flex items-center gap-5">
+              <div className="my-5 flex items-center gap-4 lg:my-6">
                 <CoverageRing pct={coverage} reduce={reduce} />
                 <p className="text-sm text-white/75">
                   <span className="block text-lg font-bold text-white">{fmt(profiles)}</span>
@@ -282,22 +282,22 @@ export const AdminHome = () => {
 
         {/* Accesos rápidos */}
         <motion.section variants={item} aria-labelledby="quick-title">
-          <h2 id="quick-title" className="mb-4 text-base font-semibold text-neutral-900">Accesos rápidos</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 id="quick-title" className="mb-3 text-base font-semibold text-neutral-900 lg:mb-4">Accesos rápidos</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
             {QUICK_ACTIONS.map(({ to, label, desc, icon: Icon, tone }) => (
               <Link
                 key={to}
                 to={to}
-                className="group relative block h-full rounded-2xl border border-border/60 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)]"
+                className="group relative block h-full rounded-2xl border border-border/60 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)] lg:p-5"
               >
-                <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${tone} transition-transform duration-300 group-hover:scale-105`}>
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone} transition-transform duration-300 group-hover:scale-105 lg:h-12 lg:w-12`}>
                   <Icon size={20} strokeWidth={2.2} aria-hidden="true" />
                 </span>
-                <p className="mt-4 text-sm font-semibold text-neutral-900">{label}</p>
+                <p className="mt-3 text-sm font-semibold text-neutral-900 lg:mt-4">{label}</p>
                 <p className="mt-1 text-xs leading-relaxed text-text-secondary">{desc}</p>
                 <ArrowRight
                   size={14}
-                  className="absolute right-5 top-5 text-text-muted transition-all duration-300 group-hover:translate-x-1 group-hover:text-brand-500"
+                  className="absolute right-4 top-4 text-text-muted transition-all duration-300 group-hover:translate-x-1 group-hover:text-brand-500 lg:right-5 lg:top-5"
                   aria-hidden="true"
                 />
               </Link>
