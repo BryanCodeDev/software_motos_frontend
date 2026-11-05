@@ -75,29 +75,36 @@ export const HeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden pt-16 pb-20 lg:pt-28 lg:pb-32"
+      className="relative isolate flex w-full items-center overflow-hidden min-h-[640px] lg:min-h-0 lg:aspect-video lg:max-h-[100svh] pt-24 pb-16 lg:pt-20 lg:pb-0"
       style={{
         backgroundImage: "url('/herosection.webp')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-50/40 via-white/20 to-white/60" aria-hidden="true" />
-      <div className="bg-grid absolute inset-0 -z-10 pointer-events-none" aria-hidden="true" />
-      <div className="container-page relative z-10">
+      {/* Degradado superior: asegura legibilidad del navbar transparente */}
+      <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-black/60 to-transparent" aria-hidden="true" />
+      {/* Degradado lateral: legibilidad del texto sin tapar la moto/QR a la derecha */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/75 via-black/45 to-black/10" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 -z-10 h-32 bg-gradient-to-t from-black/40 to-transparent" aria-hidden="true" />
+      <div className="container-page relative z-10 w-full">
         <div className="grid lg:grid-cols-2 gap-14 lg:gap-16 items-center">
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-20"
           >
-            <span className="eyebrow mb-5">Identificación de emergencia</span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] mb-6">
-              <span className="text-brand-500">Si tú no puedes hablar,</span>
+            <span className="mb-5 inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/90">
+              <span className="h-px w-8 bg-brand-400" aria-hidden="true" />
+              Identificación de emergencia
+            </span>
+            <h1 className="text-4xl sm:text-5xl xl:text-6xl font-extrabold leading-[1.08] mb-6 text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.45)]">
+              <span className="text-brand-400">Si tú no puedes hablar,</span>
               <br />
-              <span className="text-neutral-900">tu información lo hará por ti.</span>
+              <span>tu información lo hará por ti.</span>
             </h1>
-            <p className="text-text-secondary text-lg lg:text-xl mb-9 max-w-xl leading-relaxed">
+            <p className="text-white/90 text-base lg:text-lg xl:text-xl mb-8 max-w-xl leading-relaxed [text-shadow:0_1px_12px_rgba(0,0,0,0.5)]">
               Crea un perfil digital de emergencia, decide qué datos compartir y vincúlalo a un código
               QR que cualquier persona puede escanear, sin instalar aplicaciones.
             </p>
@@ -105,14 +112,14 @@ export const HeroSection = () => {
               <Button onClick={() => navigate(routes.register)}>
                 Crear perfil gratuito <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button variant="outline" onClick={() => navigate(routes.products)}>
+              <Button variant="outline" className="!bg-white/10 !text-white !border-white/50 backdrop-blur-sm hover:!bg-white hover:!text-neutral-900" onClick={() => navigate(routes.products)}>
                 Conocer el sticker
               </Button>
             </div>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-text-secondary">
+            <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-white/90 text-sm [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
               {['Sin costo por escaneo', 'Sin aplicaciones', 'Privacidad bajo tu control'].map((t) => (
                 <li key={t} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-brand-500" /> {t}
+                  <Check className="w-4 h-4 text-brand-400" /> {t}
                 </li>
               ))}
             </ul>

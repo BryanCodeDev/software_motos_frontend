@@ -73,8 +73,8 @@
   /* Rejilla técnica sutil para fondos de héroe */
   .bg-grid {
     background-image:
-      linear-gradient(to right, rgba(157, 176, 204, 0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(157, 176, 204, 0.06) 1px, transparent 1px);
+      linear-gradient(to right, rgba(159, 18, 57, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(159, 18, 57, 0.06) 1px, transparent 1px);
     background-size: 44px 44px;
     -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
     mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
@@ -92,7 +92,7 @@
     opacity: 0.7;
   }
   .text-gradient {
-    background: linear-gradient(120deg, #eef3fa 20%, #82b4f5 100%);
+    background: linear-gradient(120deg, #9F1239 10%, #f0698f 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -141,7 +141,7 @@
 
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(91, 156, 240, 0.35) transparent;
+    scrollbar-color: rgba(159, 18, 57, 0.35) transparent;
   }
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
@@ -151,11 +151,11 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(91, 156, 240, 0.35);
+    background: rgba(159, 18, 57, 0.35);
     border-radius: 999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(91, 156, 240, 0.55);
+    background: rgba(159, 18, 57, 0.55);
   }
 
   .gradient-brand {

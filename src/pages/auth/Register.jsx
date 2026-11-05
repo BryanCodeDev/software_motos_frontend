@@ -3,22 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
 import {
-  UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, HeartPulse, ShieldCheck, QrCode, ClipboardList,
+  UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, QrCode, ClipboardList, ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
 import { showApiError } from '../../utils/errors';
 import Seo from '../../components/Seo';
+import AuthShell from '../../components/AuthShell';
 
 const ASIDE = {
   badge: 'Gratis y en minutos',
   line1: 'Crea tu cuenta y',
-  accent: 'protege lo que más importa.',
+  accent: 'prepárate para lo inesperado.',
   text: 'Configura tu perfil una sola vez y tenlo disponible en cualquier emergencia.',
   items: [
     { icon: UserPlus, title: '1. Crea tu cuenta', desc: 'Solo necesitas tu correo' },
-    { icon: ClipboardList, title: '2. Completa tu perfil', desc: 'Datos médicos y contactos clave' },
-    { icon: QrCode, title: '3. Comparte tu QR', desc: 'Listo para usarse al instante' },
+    { icon: ClipboardList, title: '2. Completa tu perfil', desc: 'Contactos y datos médicos, si quieres' },
+    { icon: QrCode, title: '3. Descarga tu QR', desc: 'Ponlo a la vista y listo' },
   ],
 };
 
@@ -40,63 +41,6 @@ const getStrength = (p) => {
   return Math.max(s, 1);
 };
 
-const Shell = ({ aside, children }) => (
-  <main className="grid min-h-screen bg-brand-50 lg:grid-cols-[1.05fr_1fr]">
-    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-[#7d0f2e] to-[#3f0617] p-12 text-white lg:flex xl:p-16">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
-
-      <div className="relative flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur">
-          <HeartPulse size={20} />
-        </span>
-        <span className="text-lg font-bold tracking-tight">Perfil de emergencia</span>
-      </div>
-
-      <div className="relative max-w-md">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ring-1 ring-white/20">
-          <ShieldCheck size={14} /> {aside.badge}
-        </span>
-        <p className="mt-6 text-4xl font-extrabold leading-tight tracking-tight xl:text-5xl">
-          {aside.line1} <span className="text-white/65">{aside.accent}</span>
-        </p>
-        <p className="mt-5 text-base leading-relaxed text-white/75">{aside.text}</p>
-        <ul className="mt-10 grid gap-3">
-          {aside.items.map(({ icon: Icon, title, desc }) => (
-            <li key={title} className="flex items-center gap-4 rounded-xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/15">
-                <Icon size={20} />
-              </span>
-              <div>
-                <p className="text-sm font-semibold">{title}</p>
-                <p className="text-sm text-white/70">{desc}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="relative text-xs text-white/55">
-        © {new Date().getFullYear()} Perfil de emergencia. Todos los derechos reservados.
-      </p>
-    </aside>
-
-    <section className="flex items-center justify-center px-4 py-10 sm:px-8">
-      <div className="w-full max-w-md animate-slide-up">
-        <div className="mb-6 flex items-center justify-center gap-2 lg:hidden">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
-            <HeartPulse size={18} />
-          </span>
-          <span className="text-base font-bold tracking-tight text-neutral-900">Perfil de emergencia</span>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.28)] sm:p-10">
-          {children}
-        </div>
-      </div>
-    </section>
-  </main>
-);
-
 const fieldIcon = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary';
 const inputCls = 'h-11 pl-10 text-base sm:text-sm';
 
@@ -116,13 +60,13 @@ export const Register = () => {
     setLoading(true);
     try {
       await register({ ...form, role: 'user' });
-      toast.success('Cuenta creada');
+      toast.success('¡Cuenta creada! Ahora completa tu perfil');
       navigate(routes.home);
     } catch (error) {
       try {
         showApiError(error);
       } catch (err) {
-        toast.error(err.message || 'No se pudo crear la cuenta');
+        toast.error(err.message || 'No pudimos crear tu cuenta. Intenta de nuevo.');
       }
     } finally {
       setLoading(false);
@@ -130,15 +74,15 @@ export const Register = () => {
   };
 
   return (
-    <Shell aside={ASIDE}>
+    <AuthShell aside={ASIDE}>
       <Seo title="Crear cuenta" noindex />
 
       <div className="mb-8 text-center">
         <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
           <UserPlus size={22} />
         </span>
-        <h1 className="text-2xl font-bold text-neutral-900">Crear cuenta gratuita</h1>
-        <p className="mt-2 text-sm text-text-secondary">Tu perfil de emergencia empieza aquí</p>
+        <h1 className="text-2xl font-bold text-neutral-900">Crea tu cuenta gratis</h1>
+        <p className="mt-2 text-sm text-text-secondary">Tu perfil de emergencia empieza aquí. Toma menos de dos minutos.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -152,7 +96,7 @@ export const Register = () => {
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Juan Pérez"
+              placeholder="Tu nombre"
               className={inputCls}
             />
           </div>
@@ -169,7 +113,7 @@ export const Register = () => {
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="juan@example.com"
+              placeholder="tucorreo@ejemplo.com"
               className={inputCls}
             />
           </div>
@@ -187,7 +131,7 @@ export const Register = () => {
               minLength={8}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="••••••••"
+              placeholder="Mínimo 8 caracteres"
               className={`${inputCls} pr-11`}
             />
             <button
@@ -211,9 +155,9 @@ export const Register = () => {
                 />
               ))}
             </div>
-            <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-text-secondary">Mínimo 8 caracteres.</span>
-              {level && <span className={`font-semibold ${level.text}`}>{level.label}</span>}
+            <div className="mt-1.5 flex items-center justify-between gap-3 text-xs">
+              <span className="text-text-secondary">Usa mayúsculas, números y símbolos para reforzarla.</span>
+              {level && <span className={`flex-shrink-0 font-semibold ${level.text}`}>{level.label}</span>}
             </div>
           </div>
         </div>
@@ -221,12 +165,22 @@ export const Register = () => {
         <Button type="submit" variant="primary" disabled={loading} className="h-11 w-full">
           {loading ? (
             <>
-              <Loader2 size={18} className="animate-spin" /> Creando cuenta...
+              <Loader2 size={18} className="animate-spin" /> Creando tu cuenta...
             </>
           ) : (
-            'Crear cuenta'
+            'Crear mi cuenta'
           )}
         </Button>
+
+        <p className="flex items-start justify-center gap-2 text-center text-xs leading-relaxed text-text-secondary">
+          <ShieldCheck size={14} className="mt-0.5 flex-shrink-0 text-brand-500" />
+          <span>
+            Tú decides qué datos se muestran.{' '}
+            <Link to={routes.privacy} className="font-medium text-brand-500 hover:underline">
+              Cómo protegemos tu información
+            </Link>
+          </span>
+        </p>
       </form>
 
       <p className="mt-6 text-center text-sm text-text-secondary">
@@ -235,9 +189,8 @@ export const Register = () => {
           Inicia sesión
         </Link>
       </p>
-    </Shell>
+    </AuthShell>
   );
 };
 
 export default Register;
-

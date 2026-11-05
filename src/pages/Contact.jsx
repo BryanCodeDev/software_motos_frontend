@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { routes } from '../utils/routes';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Mail, Phone, Send, MapPin, ArrowRight } from 'lucide-react';
+import { Mail, Phone, Send, MapPin, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button, Input, Label, Card } from '../components/ui';
 import { useToast } from '../components/useToast';
 import api from '../api/client';
@@ -20,6 +20,8 @@ const channels = [
   { icon: Phone, label: 'Teléfono', value: SUPPORT_PHONE, href: SUPPORT_PHONE && `tel:${SUPPORT_PHONE.replace(/\s/g, '')}` },
   { icon: MapPin, label: 'Oficina', value: SUPPORT_OFFICE },
 ];
+
+const topics = ['Mi cuenta', 'Mi QR o sticker', 'Un pedido', 'Privacidad de mis datos', 'Otro tema'];
 
 export const Contact = () => {
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export const Contact = () => {
       try {
         showApiError(error);
       } catch (err) {
-        toast.error(err.message || 'No se pudo enviar el mensaje');
+        toast.error(err.message || 'No pudimos enviar tu mensaje. Intenta de nuevo.');
       }
     } finally {
       setLoading(false);
@@ -49,7 +51,7 @@ export const Contact = () => {
 
   if (sent) {
     return (
-      <main className="relative min-h-screen flex items-center py-20">
+      <main className="relative flex min-h-screen items-center py-20">
         <Seo title="Contacto" />
         <div className="container-page text-center">
           <motion.div
@@ -57,17 +59,19 @@ export const Contact = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Card className="p-10 max-w-md mx-auto">
-              <div className="w-14 h-14 rounded-full bg-brand-500/10 border border-brand-500/40 flex items-center justify-center mx-auto mb-5 text-brand-500">
-                <Send size={24} />
+            <Card className="mx-auto max-w-md p-10">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-brand-500/40 bg-brand-500/10 text-brand-500">
+                <CheckCircle2 size={26} />
               </div>
-              <h1 className="text-2xl font-bold text-neutral-900 mb-3">Mensaje enviado</h1>
-              <p className="text-text-secondary mb-8 leading-relaxed">
-                Gracias por escribirnos. Nuestro equipo revisará tu mensaje y te responderá a la brevedad.
+              <h1 className="mb-3 text-2xl font-bold text-neutral-900">¡Mensaje enviado!</h1>
+              <p className="mb-8 leading-relaxed text-text-secondary">
+                Gracias por escribirnos. Revisaremos tu mensaje y te responderemos al correo que nos
+                dejaste.
               </p>
-              <Link to={routes.home} className="btn-outline">
-                Volver al inicio
-              </Link>
+              <div className="flex flex-col justify-center gap-3 sm:flex-row">
+                <Link to={routes.home} className="btn-primary">Volver al inicio</Link>
+                <Link to={routes.faq} className="btn-outline">Ver preguntas frecuentes</Link>
+              </div>
             </Card>
           </motion.div>
         </div>
@@ -79,61 +83,82 @@ export const Contact = () => {
     <main className="min-h-screen">
       <Seo
         title="Contacto"
-        description="Formulario de contacto y canales de soporte de Tu QR te Cuida."
+        description="Escríbenos para resolver dudas sobre tu cuenta, tu QR, tus pedidos o la privacidad de tus datos."
       />
       <PageHeader
         eyebrow="Contacto"
         title="Estamos para ayudarte"
-        subtitle="¿Tienes preguntas sobre la plataforma, tus pedidos o tu cuenta? Escríbenos y te responderemos."
+        subtitle="¿Dudas sobre tu cuenta, tu QR o tus pedidos? Escríbenos y te respondemos."
       />
 
       <section className="pb-20">
         <div className="container-page">
-          <div className="grid lg:grid-cols-5 gap-8">
+          <Reveal>
+            <div
+              role="note"
+              className="mb-8 flex items-start gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <p className="leading-relaxed">
+                <strong>¿Es una emergencia?</strong> Este canal es solo para soporte de la plataforma.
+                Llama de inmediato a los servicios oficiales de emergencia.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="grid gap-8 lg:grid-cols-5">
             <Reveal className="lg:col-span-2">
-              <Card className="p-7 h-full">
-                <h2 className="font-semibold text-neutral-900 mb-6">Canales de soporte</h2>
+              <Card className="h-full p-7">
+                <h2 className="mb-6 font-semibold text-neutral-900">Otros canales de soporte</h2>
                 <div className="space-y-6">
                   {channels.map(({ icon: Icon, label, value, href }) => (
                     <div key={label} className="flex items-start gap-4">
-                      <span className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500 flex-shrink-0">
-                        <Icon className="w-5 h-5" />
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
+                        <Icon className="h-5 w-5" />
                       </span>
                       <div>
-                        <div className="text-text-secondary text-xs uppercase tracking-wider mb-0.5">{label}</div>
+                        <div className="mb-0.5 text-xs uppercase tracking-wider text-text-secondary">{label}</div>
                         {value ? (
                           href ? (
-                            <a href={href} className="text-neutral-900 text-sm hover:text-brand-500 transition-colors">
+                            <a href={href} className="text-sm text-neutral-900 transition-colors hover:text-brand-500">
                               {value}
                             </a>
                           ) : (
-                            <div className="text-neutral-900 text-sm">{value}</div>
+                            <div className="text-sm text-neutral-900">{value}</div>
                           )
                         ) : (
-                          <div className="text-text-secondary text-sm">Disponible próximamente</div>
+                          <div className="text-sm text-text-secondary">Disponible próximamente</div>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="mt-8 pt-6 border-t border-border text-xs text-text-secondary leading-relaxed">
-                  Este canal es para soporte de la plataforma. Ante una emergencia, comunícate con los
-                  servicios oficiales de emergencia.
-                </p>
+                <div className="mt-8 border-t border-border pt-6">
+                  <p className="mb-3 text-sm text-text-secondary">¿Quieres una respuesta inmediata?</p>
+                  <Link
+                    to={routes.faq}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-brand-500 transition-colors hover:text-brand-600"
+                  >
+                    Revisa las preguntas frecuentes <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
               </Card>
             </Reveal>
 
             <Reveal className="lg:col-span-3" delay={0.1}>
               <Card className="p-7">
+                <h2 className="mb-1 text-lg font-semibold text-neutral-900">Envíanos un mensaje</h2>
+                <p className="mb-6 text-sm text-text-secondary">Todos los campos son obligatorios.</p>
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid sm:grid-cols-2 gap-5">
+                  <div className="grid gap-5 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Nombre completo</Label>
                       <Input
                         required
+                        autoComplete="name"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="Juan Pérez"
+                        placeholder="Tu nombre"
                       />
                     </div>
                     <div className="space-y-2">
@@ -141,9 +166,10 @@ export const Contact = () => {
                       <Input
                         type="email"
                         required
+                        autoComplete="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        placeholder="juan@ejemplo.com"
+                        placeholder="tucorreo@ejemplo.com"
                       />
                     </div>
                   </div>
@@ -151,10 +177,16 @@ export const Contact = () => {
                     <Label>Asunto</Label>
                     <Input
                       required
+                      list="contact-topics"
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      placeholder="Consulta sobre mi pedido"
+                      placeholder="Elige un tema o escribe el tuyo"
                     />
+                    <datalist id="contact-topics">
+                      {topics.map((t) => (
+                        <option key={t} value={t} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-2">
                     <Label>Mensaje</Label>
@@ -164,22 +196,16 @@ export const Contact = () => {
                       rows={5}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="Cuéntanos en qué podemos ayudarte"
+                      placeholder="Cuéntanos con detalle en qué podemos ayudarte"
                     />
                   </div>
                   <Button type="submit" variant="primary" disabled={loading}>
-                    {loading ? 'Enviando...' : 'Enviar mensaje'}
+                    {loading ? 'Enviando...' : 'Enviar mensaje'} {!loading && <Send className="h-4 w-4" />}
                   </Button>
                 </form>
               </Card>
             </Reveal>
           </div>
-
-          <Reveal className="mt-12">
-            <Link to={routes.faq} className="btn-outline">
-              Ver preguntas frecuentes <ArrowRight className="w-4 h-4" />
-            </Link>
-          </Reveal>
         </div>
       </section>
     </main>
@@ -187,4 +213,3 @@ export const Contact = () => {
 };
 
 export default Contact;
-

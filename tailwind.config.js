@@ -12,8 +12,12 @@ export default {
           50: '#fdf4f6',      // fondo principal muy suave
           100: '#f7e3ea',     // fondo de secciones alternas
           200: '#efc7d4',     // bordes suaves / hover
+          300: '#f7a1b8',     // acento claro sobre fondos oscuros
+          400: '#f0698f',     // acento vivo sobre fondos oscuros (hero)
           500: '#9F1239',     // acento principal (borgoña)
           600: '#b5174a',     // acento hover
+          700: '#7d0f2e',     // borgoña profundo
+          800: '#5c0b22',     // secciones oscuras
           900: '#3f0617',     // fondo degradado (aside login, progreso)
         },
         neutral: {
@@ -43,9 +47,9 @@ export default {
         lg: '10px',
       },
       boxShadow: {
-        soft: '0 4px 20px rgba(0, 0, 0, 0.18)',
-        card: '0 10px 30px rgba(2, 8, 20, 0.35)',
-        glow: '0 0 0 1px rgba(91, 156, 240, 0.25), 0 12px 40px rgba(47, 111, 214, 0.18)',
+        soft: '0 4px 20px rgba(0, 0, 0, 0.12)',
+        card: '0 10px 30px rgba(63, 6, 23, 0.18)',
+        glow: '0 0 0 1px rgba(159, 18, 57, 0.18), 0 16px 48px rgba(159, 18, 57, 0.18)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease forwards',

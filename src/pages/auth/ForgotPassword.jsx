@@ -2,82 +2,24 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
-import {
-  Mail, MailCheck, ArrowLeft, KeyRound, Loader2, HeartPulse, ShieldCheck, Clock, Send,
-} from 'lucide-react';
+import { Mail, MailCheck, ArrowLeft, KeyRound, Loader2, ShieldCheck, Clock, Send } from 'lucide-react';
 import api from '../../api/client';
 import { useToast } from '../../components/useToast';
 import { showApiError } from '../../utils/errors';
 import Seo from '../../components/Seo';
+import AuthShell from '../../components/AuthShell';
 
 const ASIDE = {
   badge: 'Recuperación de acceso',
-  line1: 'Recupera el acceso a',
-  accent: 'tu cuenta en un momento.',
+  line1: 'Recupera tu cuenta',
+  accent: 'en un par de minutos.',
   text: 'Te enviaremos un enlace seguro para que crees una contraseña nueva.',
   items: [
     { icon: Send, title: 'Enlace por correo', desc: 'Llega directo a tu bandeja de entrada' },
     { icon: Clock, title: 'Válido por 1 hora', desc: 'Caduca por tu seguridad' },
-    { icon: ShieldCheck, title: 'Proceso protegido', desc: 'Nunca revelamos si un correo existe' },
+    { icon: ShieldCheck, title: 'Proceso protegido', desc: 'Nunca revelamos si un correo está registrado' },
   ],
 };
-
-const Shell = ({ aside, children }) => (
-  <main className="grid min-h-screen bg-brand-50 lg:grid-cols-[1.05fr_1fr]">
-    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-[#7d0f2e] to-[#3f0617] p-12 text-white lg:flex xl:p-16">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
-
-      <div className="relative flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur">
-          <HeartPulse size={20} />
-        </span>
-        <span className="text-lg font-bold tracking-tight">Perfil de emergencia</span>
-      </div>
-
-      <div className="relative max-w-md">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ring-1 ring-white/20">
-          <ShieldCheck size={14} /> {aside.badge}
-        </span>
-        <p className="mt-6 text-4xl font-extrabold leading-tight tracking-tight xl:text-5xl">
-          {aside.line1} <span className="text-white/65">{aside.accent}</span>
-        </p>
-        <p className="mt-5 text-base leading-relaxed text-white/75">{aside.text}</p>
-        <ul className="mt-10 grid gap-3">
-          {aside.items.map(({ icon: Icon, title, desc }) => (
-            <li key={title} className="flex items-center gap-4 rounded-xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/15">
-                <Icon size={20} />
-              </span>
-              <div>
-                <p className="text-sm font-semibold">{title}</p>
-                <p className="text-sm text-white/70">{desc}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="relative text-xs text-white/55">
-        © {new Date().getFullYear()} Perfil de emergencia. Todos los derechos reservados.
-      </p>
-    </aside>
-
-    <section className="flex items-center justify-center px-4 py-10 sm:px-8">
-      <div className="w-full max-w-md animate-slide-up">
-        <div className="mb-6 flex items-center justify-center gap-2 lg:hidden">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
-            <HeartPulse size={18} />
-          </span>
-          <span className="text-base font-bold tracking-tight text-neutral-900">Perfil de emergencia</span>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.28)] sm:p-10">
-          {children}
-        </div>
-      </div>
-    </section>
-  </main>
-);
 
 const backLink =
   'inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-neutral-900';
@@ -99,7 +41,7 @@ export const ForgotPassword = () => {
       try {
         showApiError(error);
       } catch (err) {
-        toast.error(err.message || 'No se pudo procesar la solicitud');
+        toast.error(err.message || 'No pudimos procesar la solicitud. Intenta de nuevo.');
       }
     } finally {
       setLoading(false);
@@ -108,7 +50,7 @@ export const ForgotPassword = () => {
 
   if (sent) {
     return (
-      <Shell aside={ASIDE}>
+      <AuthShell aside={ASIDE}>
         <Seo title="Restablecer contraseña" noindex />
         <div className="text-center">
           <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600 ring-8 ring-green-50">
@@ -117,38 +59,38 @@ export const ForgotPassword = () => {
           <h1 className="text-2xl font-bold text-neutral-900">Revisa tu correo</h1>
           <p className="mt-3 text-sm leading-relaxed text-text-secondary">
             Si <span className="break-all font-semibold text-neutral-900">{email}</span> está registrado,
-            recibirás un enlace para restablecer tu contraseña. Expira en 1 hora.
+            te enviamos un enlace para crear una contraseña nueva. Es válido por 1 hora.
           </p>
           <p className="mt-2 text-xs text-text-secondary">¿No llega? Revisa tu carpeta de spam.</p>
 
           <div className="mt-8 grid gap-3">
             <Link to={routes.login} className="btn-primary w-full">
-              Volver al inicio de sesión
+              Volver a iniciar sesión
             </Link>
             <button type="button" onClick={() => setSent(false)} className="btn-ghost w-full">
               Usar otro correo
             </button>
           </div>
         </div>
-      </Shell>
+      </AuthShell>
     );
   }
 
   return (
-    <Shell aside={ASIDE}>
+    <AuthShell aside={ASIDE}>
       <Seo title="Olvidé mi contraseña" noindex />
 
       <Link to={routes.login} className={backLink}>
-        <ArrowLeft size={16} /> Volver al inicio de sesión
+        <ArrowLeft size={16} /> Volver a iniciar sesión
       </Link>
 
       <div className="mb-8 mt-6 text-center">
         <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
           <KeyRound size={22} />
         </span>
-        <h1 className="text-2xl font-bold text-neutral-900">Restablecer contraseña</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">¿Olvidaste tu contraseña?</h1>
         <p className="mt-2 text-sm text-text-secondary">
-          Ingresa tu correo y te enviaremos un enlace seguro para crear una nueva contraseña.
+          Escribe tu correo y te enviaremos un enlace para crear una nueva.
         </p>
       </div>
 
@@ -164,7 +106,7 @@ export const ForgotPassword = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="juan@example.com"
+              placeholder="tucorreo@ejemplo.com"
               className="h-11 pl-10 text-base sm:text-sm"
             />
           </div>
@@ -176,13 +118,12 @@ export const ForgotPassword = () => {
               <Loader2 size={18} className="animate-spin" /> Enviando...
             </>
           ) : (
-            'Enviar enlace de restablecimiento'
+            'Enviarme el enlace'
           )}
         </Button>
       </form>
-    </Shell>
+    </AuthShell>
   );
 };
 
 export default ForgotPassword;
-
