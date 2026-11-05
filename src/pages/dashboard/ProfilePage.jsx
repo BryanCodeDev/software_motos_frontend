@@ -7,7 +7,7 @@ import { Button, Input, Label, Textarea } from '../../components/ui';
 import { PageTitle, PageLoader } from '../../components/DashPage';
 import {
   Save, ImageOff, AlertTriangle, Stethoscope, Pill, FileText, Upload, Trash2, Mail, Lock, User, Eye, EyeOff,
-  Calendar, Ruler, Scale, Baby, Settings, Phone, Shield, IdCard, Heart, Droplet,
+  Calendar, Ruler, Scale, Baby, Settings, Phone, Shield, IdCard, Heart, Droplet, Bell,
 } from 'lucide-react';
 import { FieldRow } from '../../components/ui-kit';
 import { Badge } from '../../components/ui-kit';
@@ -18,12 +18,50 @@ const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 /**
- * Campos que el backend guarda HOY al pulsar "Guardar".
- * Si tu API ya acepta más campos (blood_type, date_of_birth, etc.), agrégalos aquí
- * y en SAVED_PRIVACY_KEYS. El formulario ya los muestra; solo falta enviarlos.
+ * Campos que el backend guarda al pulsar "Guardar".
+ * Coinciden con PUBLIC_FIELDS del backend (profile.service.js).
  */
-const SAVED_KEYS = ['display_name', 'allergies', 'medical_conditions', 'medications', 'additional_info'];
-const SAVED_PRIVACY_KEYS = ['display_name', 'photo_url', 'allergies', 'medical_conditions', 'medications', 'additional_info'];
+const SAVED_KEYS = [
+  'display_name',
+  'blood_type',
+  'date_of_birth',
+  'document_number',
+  'is_organ_donor',
+  'allergies',
+  'medical_conditions',
+  'medications',
+  'height_cm',
+  'weight_kg',
+  'is_pregnant',
+  'medical_devices',
+  'primary_doctor_name',
+  'primary_doctor_phone',
+  'insurance_company',
+  'insurance_policy_number',
+  'additional_info',
+  'emergency_note',
+];
+const SAVED_PRIVACY_KEYS = [
+  'photo_url',
+  'display_name',
+  'blood_type',
+  'date_of_birth',
+  'document_number',
+  'is_organ_donor',
+  'allergies',
+  'medical_conditions',
+  'medications',
+  'height_cm',
+  'weight_kg',
+  'is_pregnant',
+  'medical_devices',
+  'primary_doctor_name',
+  'primary_doctor_phone',
+  'insurance_company',
+  'insurance_policy_number',
+  'additional_info',
+  'emergency_note',
+];
 
 const fields = [
   { key: 'display_name', label: 'Nombre completo', category: 'Identificación', icon: User, input: 'text', placeholder: 'Tu nombre y apellido', hint: 'El nombre que verá quien escanee tu QR.' },
@@ -43,12 +81,13 @@ const fields = [
   { key: 'insurance_company', label: 'EPS o aseguradora', category: 'Seguro', icon: Shield, input: 'text', placeholder: 'Nombre de tu EPS o seguro', hint: 'Dónde estás afiliado.' },
   { key: 'insurance_policy_number', label: 'Número de afiliación o póliza', category: 'Seguro', icon: IdCard, input: 'text', placeholder: 'Número de carnet o póliza', hint: 'Agiliza la atención en un centro de salud.' },
   { key: 'additional_info', label: 'Algo más que deban saber', category: 'Adicional', icon: FileText, input: 'textarea', placeholder: 'Cualquier dato que pueda ayudarte en una emergencia', hint: 'Escribe lo que consideres importante.' },
+  { key: 'emergency_note', label: 'Nota de emergencia', category: 'Adicional', icon: Bell, input: 'textarea', placeholder: 'Nota crítica para el personal de salud', hint: 'Lo primero que se leerá al escanear el QR.' },
 ];
 
 const PRIVACY_KEYS = [
   'display_name', 'photo_url', 'blood_type', 'date_of_birth', 'document_number', 'is_organ_donor', 'allergies',
   'medical_conditions', 'medications', 'height_cm', 'weight_kg', 'is_pregnant', 'medical_devices',
-  'primary_doctor_name', 'primary_doctor_phone', 'insurance_company', 'insurance_policy_number', 'additional_info',
+  'primary_doctor_name', 'primary_doctor_phone', 'insurance_company', 'insurance_policy_number', 'additional_info', 'emergency_note',
 ];
 
 const labelFor = { photo_url: 'Fotografía', ...Object.fromEntries(fields.map((f) => [f.key, f.label])) };
