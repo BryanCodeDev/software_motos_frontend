@@ -36,11 +36,14 @@ export const ContactsPage = () => {
   const [deleting, setDeleting] = useState(false);
 
   const loadContacts = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await api.get('/contacts');
       setContacts(res.data.contacts || res.data || []);
     } catch {
       // se conserva la lista actual
+    } finally {
+      setLoading(false);
     }
   }, []);
 

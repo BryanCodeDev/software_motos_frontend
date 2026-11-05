@@ -57,7 +57,6 @@ export const DashboardIndex = () => {
   const reduce = useReducedMotion();
   const name = user?.name || user?.email?.split('@')[0];
 
-  const [stats, setStats] = useState(null);
   const [stepsState, setStepsState] = useState({
     profile: null,
     contacts: null,
@@ -109,7 +108,7 @@ export const DashboardIndex = () => {
   const pct = ready ? Math.round((doneCount / STEPS.length) * 100) : 0;
   const next = ready ? STEPS.find((s, i) => !Object.values(stepsState)[i]) : null;
 
-  if (loading && !stats) return <Skeleton />;
+  if (loading && !ready) return <Skeleton />;
 
   if (error) {
     return (
@@ -259,7 +258,7 @@ export const DashboardIndex = () => {
         </div>
       </section>
 
-      {stats && (
+      {ready && (
         <section>
           <h2 className="mb-4 text-base font-semibold text-neutral-900">Resumen de tu cuenta</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
