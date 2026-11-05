@@ -8,23 +8,38 @@ import { Button } from '../../components/ui';
 import { PageTitle, PageLoader } from '../../components/DashPage';
 import {
   User, Image, AlertTriangle, Stethoscope, Pill, FileText, Save, Power, Lock, EyeOff, Eye,
+  Calendar, Ruler, Scale, Baby, Settings, Phone, Shield, IdCard, Heart, Droplet, Bell,
 } from 'lucide-react';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 const fieldDefs = [
-  { key: 'display_name', label: 'Nombre', icon: User, category: 'Identificación' },
   { key: 'photo_url', label: 'Fotografía', icon: Image, category: 'Identificación' },
+  { key: 'display_name', label: 'Nombre', icon: User, category: 'Identificación' },
+  { key: 'blood_type', label: 'Tipo de sangre', icon: Droplet, category: 'Identificación' },
+  { key: 'date_of_birth', label: 'Fecha de nacimiento', icon: Calendar, category: 'Identificación' },
+  { key: 'document_number', label: 'Número de documento', icon: IdCard, category: 'Identificación' },
+  { key: 'is_organ_donor', label: 'Donante de órganos', icon: Heart, category: 'Identificación' },
   { key: 'allergies', label: 'Alergias', icon: AlertTriangle, category: 'Médico' },
   { key: 'medical_conditions', label: 'Condiciones médicas', icon: Stethoscope, category: 'Médico' },
   { key: 'medications', label: 'Medicamentos', icon: Pill, category: 'Médico' },
-  { key: 'additional_info', label: 'Información adicional', icon: FileText, category: 'Otros' },
+  { key: 'height_cm', label: 'Estatura (cm)', icon: Ruler, category: 'Médico' },
+  { key: 'weight_kg', label: 'Peso (kg)', icon: Scale, category: 'Médico' },
+  { key: 'is_pregnant', label: 'Embarazo', icon: Baby, category: 'Médico' },
+  { key: 'medical_devices', label: 'Dispositivos médicos', icon: Settings, category: 'Médico' },
+  { key: 'primary_doctor_name', label: 'Médico tratante', icon: User, category: 'Médico' },
+  { key: 'primary_doctor_phone', label: 'Teléfono del médico', icon: Phone, category: 'Médico' },
+  { key: 'insurance_company', label: 'Seguro médico', icon: Shield, category: 'Seguro' },
+  { key: 'insurance_policy_number', label: 'Póliza de seguro', icon: IdCard, category: 'Seguro' },
+  { key: 'additional_info', label: 'Información adicional', icon: FileText, category: 'Adicional' },
+  { key: 'emergency_note', label: 'Nota de emergencia', icon: Bell, category: 'Adicional' },
 ];
 
 const categories = [
   { name: 'Identificación', hint: 'Quién eres' },
   { name: 'Médico', hint: 'Lo que el personal de salud necesita saber' },
-  { name: 'Otros', hint: 'Notas extra' },
+  { name: 'Seguro', hint: 'Cobertura médica y afiliación' },
+  { name: 'Adicional', hint: 'Notas extra' },
 ];
 
 export const PrivacyPage = () => {
