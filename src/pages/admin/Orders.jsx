@@ -129,7 +129,7 @@ export const AdminOrders = () => {
           <option key={s} value={s}>{COMMERCIAL[s][0]}</option>
         ))}
       </select>
-      {busyId === o.id && <Loader2 size={14} className="absolute right-8 top-1/2 -translate-y-1/2 animate-spin text-brand-textMuted" />}
+      {busyId === o.id && <Loader2 size={14} className="absolute right-8 top-1/2 -translate-y-1/2 animate-spin text-text-secondary" />}
     </div>
   );
 
@@ -139,9 +139,9 @@ export const AdminOrders = () => {
     <div className="space-y-5">
       <PageTitle title="Pedidos" description="Gestiona pedidos comerciales." />
 
-      <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] space-y-3 p-4">
+      <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] space-y-3 p-4">
         <div className="relative">
-          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted" />
+          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -160,12 +160,12 @@ export const AdminOrders = () => {
                 onClick={() => setFilter(s)}
                 className={`flex-none rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                   active
-                    ? 'border-brand-accent bg-brand-accent text-white'
-                    : 'border-brand-border bg-white text-brand-textMuted hover:border-brand-accent/40 hover:text-brand-text'
+                    ? 'border-brand-500 bg-brand-500 text-white'
+                    : 'border-border bg-white text-text-secondary hover:border-brand-500/40 hover:text-neutral-900'
                 }`}
               >
                 {s === 'all' ? 'Todos' : COMMERCIAL[s][0]}
-                <span className={`ml-1.5 ${active ? 'text-white/80' : 'text-brand-textMuted/70'}`}>{counts[s] || 0}</span>
+                <span className={`ml-1.5 ${active ? 'text-white/80' : 'text-text-secondary/70'}`}>{counts[s] || 0}</span>
               </button>
             );
           })}
@@ -180,27 +180,27 @@ export const AdminOrders = () => {
       )}
 
       {loading && !error && (
-        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
-          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-lg bg-brand-border/60" />)}
+        <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-lg bg-border/60" />)}
         </div>
       )}
 
       {!loading && !error && visible.length === 0 && (
-        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col items-center gap-2 p-10 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
+        <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col items-center gap-2 p-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
             <PackageOpen size={22} />
           </span>
-          <p className="text-sm font-semibold text-brand-text">No hay pedidos para mostrar</p>
-          <p className="text-xs text-brand-textMuted">Ajusta la búsqueda o el filtro de estado.</p>
+          <p className="text-sm font-semibold text-neutral-900">No hay pedidos para mostrar</p>
+          <p className="text-xs text-text-secondary">Ajusta la búsqueda o el filtro de estado.</p>
         </div>
       )}
 
       {!loading && !error && visible.length > 0 && (
         <>
-          <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden hidden md:block">
+          <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden hidden md:block">
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-sm">
-                <thead className="bg-brand-dark/70 text-left text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
+                <thead className="bg-brand-50/70 text-left text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
                   <tr>
                     <th scope="col" className="px-4 py-3">Pedido</th>
                     <th scope="col" className="px-4 py-3">Cliente</th>
@@ -211,13 +211,13 @@ export const AdminOrders = () => {
                     <th scope="col" className="px-4 py-3">Acción</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-brand-border">
+                <tbody className="divide-y divide-border">
                   {visible.map((o) => (
-                    <tr key={o.id} className="transition-colors hover:bg-brand-dark/60">
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-brand-text">{o.order_number}</td>
-                      <td className="max-w-[200px] truncate px-4 py-3 text-brand-textMuted" title={o.customer_email}>{o.customer_email}</td>
-                      <td className="px-4 py-3 text-brand-text">{o.product_name}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-brand-text">{money(o.total_amount, o.currency)}</td>
+                    <tr key={o.id} className="transition-colors hover:bg-brand-50/60">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-neutral-900">{o.order_number}</td>
+                      <td className="max-w-[200px] truncate px-4 py-3 text-text-secondary" title={o.customer_email}>{o.customer_email}</td>
+                      <td className="px-4 py-3 text-neutral-900">{o.product_name}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-neutral-900">{money(o.total_amount, o.currency)}</td>
                       <td className="px-4 py-3"><BadgeStatus map={COMMERCIAL} value={o.commercial_status} /></td>
                       <td className="px-4 py-3"><BadgeStatus map={PAYMENT} value={o.payment_status} /></td>
                       <td className="min-w-[170px] px-4 py-3"><StatusSelect o={o} /></td>
@@ -230,27 +230,27 @@ export const AdminOrders = () => {
 
           <ul className="space-y-3 md:hidden">
             {visible.map((o) => (
-              <li key={o.id} className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-4">
+              <li key={o.id} className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-mono text-xs font-semibold text-brand-text">{o.order_number}</p>
-                    <p className="mt-1 text-sm font-semibold text-brand-text">{o.product_name}</p>
-                    <p className="break-all text-xs text-brand-textMuted">{o.customer_email}</p>
+                    <p className="font-mono text-xs font-semibold text-neutral-900">{o.order_number}</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{o.product_name}</p>
+                    <p className="break-all text-xs text-text-secondary">{o.customer_email}</p>
                   </div>
-                  <p className="whitespace-nowrap text-sm font-bold text-brand-text">{money(o.total_amount, o.currency)}</p>
+                  <p className="whitespace-nowrap text-sm font-bold text-neutral-900">{money(o.total_amount, o.currency)}</p>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <BadgeStatus map={COMMERCIAL} value={o.commercial_status} />
                   <BadgeStatus map={PAYMENT} value={o.payment_status} />
                 </div>
-                <div className="mt-3 border-t border-brand-border pt-3">
+                <div className="mt-3 border-t border-border pt-3">
                   <StatusSelect o={o} />
                 </div>
               </li>
             ))}
           </ul>
 
-          <p className="text-center text-xs text-brand-textMuted">
+          <p className="text-center text-xs text-text-secondary">
             Mostrando {visible.length} de {orders.length} pedidos
           </p>
         </>
@@ -260,3 +260,5 @@ export const AdminOrders = () => {
 };
 
 export default AdminOrders;
+
+

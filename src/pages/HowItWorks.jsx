@@ -60,16 +60,16 @@ export const HowItWorks = () => (
     <section className="pb-20">
       <div className="container-page">
         <ol className="relative max-w-3xl">
-          <span className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-brand-accent/60 via-brand-border to-transparent" aria-hidden="true" />
+          <span className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-brand-500/60 via-border to-transparent" aria-hidden="true" />
           {steps.map((step, i) => (
             <li key={step.n} className="relative pl-20 pb-10 last:pb-0">
               <Reveal delay={0.05}>
-                <div className="absolute left-0 top-0 w-12 h-12 rounded-full bg-brand-dark border border-brand-accent/60 flex items-center justify-center text-brand-accent font-bold shadow-glow">
+                <div className="absolute left-0 top-0 w-12 h-12 rounded-full bg-brand-50 border border-brand-500/60 flex items-center justify-center text-brand-500 font-bold shadow-glow">
                   {step.n}
                 </div>
                 <Card className="p-6">
-                  <h3 className="font-semibold text-lg text-brand-text mb-1.5">{step.title}</h3>
-                  <p className="text-brand-textMuted text-sm leading-relaxed">{step.text}</p>
+                  <h3 className="font-semibold text-lg text-neutral-900 mb-1.5">{step.title}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{step.text}</p>
                 </Card>
               </Reveal>
             </li>
@@ -78,11 +78,11 @@ export const HowItWorks = () => (
 
         <Reveal className="mt-16 max-w-3xl">
           <Card className="p-8 lg:p-10">
-            <h3 className="font-semibold text-brand-text mb-5">Es importante que sepas</h3>
-            <ul className="space-y-3 text-brand-textMuted text-sm">
+            <h3 className="font-semibold text-neutral-900 mb-5">Es importante que sepas</h3>
+            <ul className="space-y-3 text-text-secondary text-sm">
               {notes.map((n) => (
                 <li key={n} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 mt-0.5 text-brand-accent flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 text-brand-500 flex-shrink-0" />
                   {n}
                 </li>
               ))}
@@ -104,3 +104,6 @@ export const HowItWorks = () => (
 );
 
 export default HowItWorks;
+
+
+

@@ -10,7 +10,7 @@
     overflow-x: hidden;
   }
   body {
-    @apply bg-brand-dark text-brand-text antialiased;
+    @apply bg-brand-50 text-neutral-900 antialiased;
     overflow-x: hidden;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
@@ -67,7 +67,7 @@
     @apply py-16 lg:py-24;
   }
   .section-alt {
-    @apply bg-brand-navy/70 border-y border-brand-border/60;
+    @apply bg-brand-100/70 border-y border-border/60;
   }
 
   /* Rejilla técnica sutil para fondos de héroe */
@@ -81,7 +81,7 @@
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-accent;
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-500;
   }
   .eyebrow::before {
     content: '';
@@ -98,29 +98,45 @@
     color: transparent;
   }
 
+  /* Layout y utilidades compartidas (no duplican ui.jsx) */
+  .page-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-50;
+  }
+
+  /* Botones (mantenidos para compatibilidad con enlaces <Link> que se ven como botón) */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+    text-decoration: none;
   }
   .btn-primary {
-    @apply btn bg-brand-accent text-brand-dark px-6 py-3 text-sm lg:text-base shadow-soft hover:bg-brand-accentHover hover:-translate-y-0.5 hover:shadow-glow active:scale-[0.98];
+    @apply btn bg-brand-500 text-white shadow-soft hover:bg-brand-600 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-10px_rgba(159,18,57,0.55)] active:scale-[0.98];
   }
   .btn-outline {
-    @apply btn border border-brand-border bg-transparent text-brand-text px-6 py-3 text-sm lg:text-base hover:border-brand-accent/60 hover:bg-brand-panel active:scale-[0.98];
+    @apply btn border border-border bg-white text-neutral-900 hover:border-brand-500/50 hover:bg-brand-50 active:scale-[0.98];
   }
   .btn-ghost {
-    @apply btn text-brand-textMuted hover:text-brand-text hover:bg-black/5 px-4 py-2 text-sm;
+    @apply btn text-text-secondary hover:text-neutral-900 hover:bg-brand-500/5 active:scale-[0.98];
   }
-  .card {
-    @apply bg-brand-panel/80 border border-brand-border rounded-xl shadow-card backdrop-blur-sm transition-all duration-300 hover:border-brand-accent/40 hover:shadow-glow hover:-translate-y-0.5;
+  .btn-secondary {
+    @apply btn border border-border bg-neutral-100/60 text-neutral-900 hover:bg-neutral-100 hover:border-brand-500/40 active:scale-[0.98];
   }
-  .card-static {
-    @apply bg-brand-panel/80 border border-brand-border rounded-xl shadow-card backdrop-blur-sm;
+  .btn-danger {
+    @apply btn bg-rose-700 text-white shadow-soft hover:bg-rose-600 active:scale-[0.98];
   }
+
+  /* Inputs y selects nativos (compatibilidad con archivos que aún usan className="input") */
   .input {
-    @apply block w-full rounded-lg border border-brand-border bg-brand-dark text-brand-text placeholder-brand-textMuted/60 px-4 py-2.5 text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent focus:outline-none transition-colors;
+    @apply block w-full rounded-lg border border-border bg-brand-50 text-neutral-900 px-4 py-2.5 text-base sm:text-sm transition-colors hover:border-brand-500/40 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed;
   }
-  .label {
-    @apply block text-sm font-medium text-brand-textMuted mb-1.5;
+  .input::placeholder {
+    color: #9ca3af;
+    opacity: 0.6;
+  }
+  .textarea {
+    @apply input resize-y;
   }
 
   .custom-scrollbar {
@@ -142,74 +158,6 @@
     background: rgba(91, 156, 240, 0.55);
   }
 
-  .gradient-text {
-    background: linear-gradient(to bottom right, #9F1239, #9F1239);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .glass-card {
-    @apply bg-white/90 backdrop-blur-sm border border-brand-border/50 shadow-soft;
-  }
-
-  .sidebar-link-active {
-    @apply bg-brand-accent text-white shadow-[0_8px_24px_-6px_rgba(159,18,57,0.25)];
-  }
-
-  .sidebar-link {
-    @apply text-brand-textMuted hover:bg-brand-accent/5 hover:text-brand-text;
-  }
-
-  .page-card {
-    @apply rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)];
-  }
-
-  .form-card {
-    @apply page-card p-5 sm:p-6 lg:p-8;
-  }
-
-  .table-wrap {
-    @apply overflow-x-auto;
-  }
-
-  .table thead {
-    @apply bg-brand-dark/70;
-  }
-
-  .table th {
-    @apply px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted text-left;
-  }
-
-  .table td {
-    @apply px-4 py-3 text-brand-text;
-  }
-
-  .table tbody tr {
-    @apply transition-colors hover:bg-brand-dark/60;
-  }
-
-  .badge-pill {
-    @apply inline-flex items-center whitespace-nowrap rounded-full font-semibold ring-1 ring-inset;
-  }
-
-  .input-field {
-    @apply block w-full rounded-lg border border-brand-border bg-brand-dark text-brand-text placeholder-brand-textMuted/60 px-4 py-2.5 text-base sm:text-sm focus:border-brand-accent focus:ring-1 focus:ring-brand-accent focus:outline-none transition-colors;
-  }
-
-  .form-label {
-    @apply block text-sm font-medium text-brand-text/90 mb-1.5;
-  }
-
-  .form-hint {
-    @apply text-xs text-brand-textMuted;
-  }
-
-  .glass-panel {
-    @apply bg-white/90 backdrop-blur-sm border border-brand-border/50 shadow-soft;
-  }
-
   .gradient-brand {
     background: linear-gradient(to bottom right, #9F1239, #7d0f2e);
   }
@@ -218,12 +166,20 @@
     box-shadow: 0 24px 60px -24px rgba(159, 18, 57, 0.55);
   }
 
-  .page-transition {
-    @apply transition-all duration-300 ease-in-out;
+  .glass-panel {
+    @apply bg-neutral-50/90 backdrop-blur-sm border border-border/50 shadow-soft;
   }
 
-  .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark;
+  .gradient-text {
+    background: linear-gradient(to bottom right, #9F1239, #9F1239);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Animaciones de rendimiento: will-change solo en elementos que se transforman */
+  .will-change-transform {
+    will-change: transform;
   }
 }
-

@@ -29,27 +29,27 @@ const columns = [
 ];
 
 export const Footer = () => (
-  <footer className="relative border-t border-brand-border bg-white pb-8 pt-12 lg:pt-16">
+  <footer className="relative border-t border-border bg-white pb-8 pt-12 lg:pt-16">
     <div
-      className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/50 to-transparent"
+      className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent"
       aria-hidden="true"
     />
     <div className="container-page">
       <div className="mb-10 grid gap-10 lg:mb-12 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <Link to={routes.home} className="mb-4 inline-flex items-center gap-2.5 font-bold tracking-tight text-brand-text">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent text-white shadow-soft">
+          <Link to={routes.home} className="mb-4 inline-flex items-center gap-2.5 font-bold tracking-tight text-neutral-900">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white shadow-soft">
               <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
             </span>
             Tu QR te Cuida
           </Link>
-          <p className="max-w-sm text-sm leading-relaxed text-brand-textMuted">
+          <p className="max-w-sm text-sm leading-relaxed text-text-secondary">
             Perfil digital de emergencia con código QR. Si tú no puedes hablar, tu información importante
             puede hacerlo por ti.
           </p>
           <Link
             to={routes.register}
-            className="group mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-accent"
+            className="group mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-500"
           >
             Crear mi perfil gratis
             <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
@@ -59,11 +59,11 @@ export const Footer = () => (
         <nav className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3 lg:col-span-7" aria-label="Pie de página">
           {columns.map((col, i) => (
             <div key={col.title} className={i === 0 ? 'col-span-2 sm:col-span-1' : ''}>
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-brand-text">{col.title}</h3>
-              <ul className="space-y-2.5 text-brand-textMuted">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-900">{col.title}</h3>
+              <ul className="space-y-2.5 text-text-secondary">
                 {col.links.map((l) => (
                   <li key={l.label}>
-                    <Link to={l.to} className="transition-colors hover:text-brand-accent">
+                    <Link to={l.to} className="transition-colors hover:text-brand-500">
                       {l.label}
                     </Link>
                   </li>
@@ -74,14 +74,14 @@ export const Footer = () => (
         </nav>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-brand-border pt-6 text-xs text-brand-textMuted md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-t border-border pt-6 text-xs text-text-secondary md:flex-row md:items-center md:justify-between">
         <p>
           © {new Date().getFullYear()}{' '}
           <a
             href="https://mastercodecompany.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium transition-colors hover:text-brand-accent"
+            className="font-medium transition-colors hover:text-brand-500"
           >
             MasterCode Company
           </a>
@@ -97,3 +97,4 @@ export const Footer = () => (
 );
 
 export default Footer;
+

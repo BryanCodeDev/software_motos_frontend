@@ -12,7 +12,7 @@ import { Badge, StepIndicator } from '../../components/ui-kit';
 
 const QR_PRICE_COP = 30000;
 
-const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 const formatAmount = (amount) => {
   try {
@@ -47,20 +47,20 @@ const Stepper = ({ current }) => (
             <span
               className={`flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-bold ring-1 ${
                 done
-                  ? 'bg-brand-accent text-white ring-brand-accent'
+                  ? 'bg-brand-500 text-white ring-brand-500'
                   : active
-                    ? 'bg-brand-accent/10 text-brand-accent ring-brand-accent/40'
-                    : 'bg-white text-brand-textMuted ring-brand-border'
+                    ? 'bg-brand-500/10 text-brand-500 ring-brand-500/40'
+                    : 'bg-white text-text-secondary ring-border'
               }`}
             >
               {done ? <Check size={15} aria-hidden="true" /> : i + 1}
             </span>
-            <span className={`hidden text-sm font-medium sm:inline ${done || active ? 'text-brand-text' : 'text-brand-textMuted'}`}>
+            <span className={`hidden text-sm font-medium sm:inline ${done || active ? 'text-neutral-900' : 'text-text-secondary'}`}>
               {label}
             </span>
           </div>
           {i < STEP_LABELS.length - 1 && (
-            <span className={`mx-3 h-px flex-1 ${i < current ? 'bg-brand-accent' : 'bg-brand-border'}`} aria-hidden="true" />
+            <span className={`mx-3 h-px flex-1 ${i < current ? 'bg-brand-500' : 'bg-border'}`} aria-hidden="true" />
           )}
         </li>
       );
@@ -81,8 +81,8 @@ const StateCard = ({ icon: Icon, tone = 'amber', title, children, actions }) => 
         <Icon size={24} aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold text-brand-text">{title}</h2>
-        <div className="mt-1 text-sm leading-relaxed text-brand-textMuted">{children}</div>
+        <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+        <div className="mt-1 text-sm leading-relaxed text-text-secondary">{children}</div>
       </div>
     </div>
     {actions && <div className="mt-6 flex flex-wrap items-center gap-3">{actions}</div>}
@@ -340,40 +340,40 @@ export const QrPage = () => {
               <AlertCircle size={24} aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-brand-text">Tu QR de emergencia todavía no está activado</h2>
-              <p className="mt-1 text-sm leading-relaxed text-brand-textMuted">
+              <h2 className="text-lg font-semibold text-neutral-900">Tu QR de emergencia todavía no está activado</h2>
+              <p className="mt-1 text-sm leading-relaxed text-text-secondary">
                 Completa tu perfil, revisa qué información compartirás y realiza el pago único de{' '}
-                <span className="font-bold text-brand-text">{price}</span> para habilitar tu QR.
+                <span className="font-bold text-neutral-900">{price}</span> para habilitar tu QR.
               </p>
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-brand-border bg-brand-dark/60 p-5">
+          <div className="mt-6 rounded-xl border border-border bg-brand-50/60 p-5">
             <div className="mb-4 flex items-end justify-between gap-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary">
                 Qué estás adquiriendo
               </h3>
               <p className="text-right">
-                <span className="text-2xl font-extrabold tracking-tight text-brand-accent">{price}</span>
-                <span className="block text-[11px] text-brand-textMuted">pago único</span>
+                <span className="text-2xl font-extrabold tracking-tight text-brand-500">{price}</span>
+                <span className="block text-[11px] text-text-secondary">pago único</span>
               </p>
             </div>
-            <ul className="space-y-2.5 text-sm text-brand-textMuted">
+            <ul className="space-y-2.5 text-sm text-text-secondary">
               {[
                 'Activación digital de tu código QR de emergencia (página pública autorizada).',
-                <>Pago único de <span className="font-bold text-brand-text">{price}</span>. Sin suscripción mensual ni anual.</>,
+                <>Pago único de <span className="font-bold text-neutral-900">{price}</span>. Sin suscripción mensual ni anual.</>,
                 'Sin cobros automáticos de renovación.',
                 'El QR contiene solo el enlace con tu identificador, nunca tus datos personales ni médicos.',
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
+                  <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
                     <Check size={12} aria-hidden="true" />
                   </span>
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-[11px] leading-relaxed text-brand-textMuted">
+            <p className="mt-4 text-[11px] leading-relaxed text-text-secondary">
               El sticker físico es un producto adicional con costo y envío separados; no está incluido en esta
               activación digital.
             </p>
@@ -436,22 +436,22 @@ export const QrPage = () => {
                 : `No tienes un pedido activo. Crea uno por ${price} para continuar.`}
           </p>
           {order && (
-            <dl className="mt-4 space-y-2 rounded-xl border border-brand-border bg-brand-dark/60 p-4 text-xs">
+            <dl className="mt-4 space-y-2 rounded-xl border border-border bg-brand-50/60 p-4 text-xs">
               <div className="flex justify-between gap-3">
                 <dt>Pedido</dt>
-                <dd className="font-mono font-semibold text-brand-text">{order?.order_number || '—'}</dd>
+                <dd className="font-mono font-semibold text-neutral-900">{order?.order_number || '—'}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt>Producto</dt>
-                <dd className="text-brand-text">Activación de QR digital</dd>
+                <dd className="text-neutral-900">Activación de QR digital</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt>Importe</dt>
-                <dd className="font-bold text-brand-text">{price}</dd>
+                <dd className="font-bold text-neutral-900">{price}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt>Modalidad</dt>
-                <dd className="text-brand-text">Pago único, sin suscripción</dd>
+                <dd className="text-neutral-900">Pago único, sin suscripción</dd>
               </div>
             </dl>
           )}
@@ -478,7 +478,7 @@ export const QrPage = () => {
         <div className="grid gap-6 lg:grid-cols-5">
           <section className={`${panel} p-5 sm:p-6 lg:col-span-3 lg:p-8`}>
             <div className="mb-6 flex justify-center">
-              <div className="rounded-2xl border border-brand-border bg-white p-4 shadow-[0_20px_50px_-20px_rgba(159,18,57,0.35)] sm:p-5">
+              <div className="rounded-2xl border border-border bg-white p-4 shadow-[0_20px_50px_-20px_rgba(159,18,57,0.35)] sm:p-5">
                 {qrImage ? (
                   <img src={qrImage} alt="Código QR de emergencia" className="h-56 w-56 sm:h-64 sm:w-64" />
                 ) : (
@@ -497,33 +497,33 @@ export const QrPage = () => {
                 {copied ? 'Copiado' : 'Copiar enlace'}
               </Button>
             </div>
-            <p className="break-all rounded-lg bg-brand-dark/70 px-3 py-2 text-center font-mono text-xs text-brand-textMuted">
+            <p className="break-all rounded-lg bg-brand-50/70 px-3 py-2 text-center font-mono text-xs text-text-secondary">
               {qrUrl}
             </p>
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-brand-textMuted">
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-text-secondary">
               Escanear este QR abre tu página pública de emergencia. El código solo contiene el enlace, nunca
               tus datos personales.
             </p>
           </section>
 
           <aside className={`${panel} h-fit p-5 sm:p-6 lg:col-span-2`}>
-            <h2 className="mb-4 text-base font-semibold text-brand-text">Estado del QR</h2>
+            <h2 className="mb-4 text-base font-semibold text-neutral-900">Estado del QR</h2>
             <div className="mb-5 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700">
               <CheckCircle2 size={16} className="flex-none" aria-hidden="true" />
               Activo y verificable públicamente
             </div>
             <dl className="mb-6 space-y-3 text-sm">
               <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Identificador</dt>
-                <dd className="mt-0.5 break-all font-mono text-xs text-brand-text">{identifier.value}</dd>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Identificador</dt>
+                <dd className="mt-0.5 break-all font-mono text-xs text-neutral-900">{identifier.value}</dd>
               </div>
               <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Enlace público</dt>
-                <dd className="mt-0.5 break-all font-mono text-xs text-brand-text">{qrUrl}</dd>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Enlace público</dt>
+                <dd className="mt-0.5 break-all font-mono text-xs text-neutral-900">{qrUrl}</dd>
               </div>
               <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wider text-brand-textMuted">Tipo de pago</dt>
-                <dd className="mt-0.5 text-brand-text">Pago único, sin suscripción</dd>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Tipo de pago</dt>
+                <dd className="mt-0.5 text-neutral-900">Pago único, sin suscripción</dd>
               </div>
             </dl>
             <Button variant="outline" className="w-full" onClick={() => toast.info('Desactivación: disponible desde el panel de privacidad')}>
@@ -596,3 +596,5 @@ export const QrPage = () => {
 };
 
 export default QrPage;
+
+
