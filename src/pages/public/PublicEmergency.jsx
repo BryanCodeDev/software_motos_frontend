@@ -18,7 +18,7 @@ const Shell = ({ children, title = 'Perfil de emergencia' }) => (
     <Seo title={title} description="Información de contacto de emergencia" noindex />
     <div className="max-w-4xl mx-auto animate-slide-up">{children}</div>
     <p className="max-w-4xl mx-auto mt-12 text-center text-[11px] text-text-secondary leading-relaxed">
-      Tu QR te Cuida · <a href="https://software-motos.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-500 transition-colors font-medium">software-motos.netlify.app</a>
+      Tu QR te Cuida by · <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-500 transition-colors font-medium">MasterCode Company</a>
     </p>
   </main>
 );
