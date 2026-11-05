@@ -212,14 +212,13 @@ export const PublicEmergency = () => {
       >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/30">
-            <Bell className="w-5 h-5" aria-hidden="true" />
+            <PhoneCall className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="text-left">
             <strong className="block text-sm text-neutral-900">Si requiere atención inmediata</strong>
-            <span className="text-[11px] text-text-secondary">Llama primero a la línea de emergencias</span>
+            <span className="text-[11px] text-text-secondary">Haz clic para llamar a la línea de emergencias</span>
           </div>
         </div>
-        <span className="flex-shrink-0 h-11 w-11 items-center justify-center rounded-xl bg-rose-500 text-white font-bold text-xl">123</span>
       </a>
 
       <div className="rounded-2xl border border-border bg-white shadow-[0_20px_50px_-20px_rgba(159,18,57,0.35)] overflow-hidden">
