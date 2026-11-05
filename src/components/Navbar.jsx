@@ -139,10 +139,10 @@ export const Navbar = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b backdrop-blur-md transition-all duration-300 ${
+      className={`z-40 transition-all duration-300 ${
         scrolled
-          ? 'border-border bg-white/90 shadow-soft'
-          : 'border-border/60 bg-white/70'
+          ? 'border-b border-border bg-white/95 shadow-soft'
+          : 'border-b-transparent bg-transparent'
       }`}
     >
       <div className="container-page flex h-16 items-center justify-between">

@@ -6,6 +6,7 @@ import {
   Phone, Mail, ShieldAlert, AlertCircle, Droplet, AlertTriangle,
   FileText, Bell, Stethoscope, Pill, MessageCircle, User, CheckCircle2,
   Share2, Send, PhoneCall, Edit3, QrCode, ArrowUpRight,
+  Calendar, Ruler, Scale, Baby, Settings, Shield, IdCard, Heart,
 } from 'lucide-react';
 import Seo from '../../components/Seo';
 import { Button } from '../../components/ui';
@@ -58,21 +59,13 @@ const ContactCard = ({ c, displayName }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="space-y-2">
         {hasPhone && (
           <a
             href={`tel:${phone}`}
             className="flex items-center justify-center gap-2 rounded-xl border border-brand-500 bg-brand-500 text-white font-semibold text-sm py-3 hover:bg-brand-600 hover:-translate-y-0.5 transition-all"
           >
             <Phone className="w-4 h-4" aria-hidden="true" /> Llamar
-          </a>
-        )}
-        {hasEmail && (
-          <a
-            href={`mailto:${c.email}`}
-            className="flex items-center justify-center gap-2 rounded-xl border border-border bg-white text-neutral-900 font-semibold text-sm py-3 hover:bg-brand-50/50 hover:border-brand-500/50 transition-all"
-          >
-            <Mail className="w-4 h-4" aria-hidden="true" /> Correo
           </a>
         )}
         {hasPhone && (
@@ -85,8 +78,16 @@ const ContactCard = ({ c, displayName }) => {
             <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp
           </a>
         )}
+        {hasEmail && (
+          <a
+            href={`mailto:${c.email}`}
+            className="flex items-center justify-center gap-1 rounded-xl border border-border bg-white text-neutral-900 text-xs font-medium py-2 hover:bg-brand-50/50 hover:border-brand-500/50 transition-all"
+          >
+            <Mail className="w-3 h-3" aria-hidden="true" /> Correo
+          </a>
+        )}
         {!hasPhone && !hasEmail && (
-          <div className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 text-text-secondary text-xs font-medium py-3">
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 text-text-secondary text-xs font-medium py-3">
             <AlertCircle className="w-4 h-4" aria-hidden="true" /> Sin datos de contacto
           </div>
         )}
@@ -215,8 +216,7 @@ export const PublicEmergency = () => {
             <PhoneCall className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="text-left">
-            <strong className="block text-base font-extrabold text-neutral-900">Si requiere atención inmediata</strong>
-            <span className="block mt-1 text-sm font-bold text-text-secondary">Haz clic para llamar a la línea de emergencias</span>
+            <strong className="block text-base font-extrabold text-neutral-900">Haz clic para llamar a la línea de emergencias</strong>
           </div>
         </div>
       </a>
@@ -282,6 +282,27 @@ export const PublicEmergency = () => {
                 {profile.blood_type && (
                   <StatItem icon={Droplet} label="Grupo sanguíneo" value={profile.blood_type} accent="rose-500" />
                 )}
+                {profile.date_of_birth && (
+                  <StatItem icon={Calendar} label="Fecha de nacimiento" value={profile.date_of_birth} accent="gray-500" />
+                )}
+                {profile.document_number && (
+                  <StatItem icon={IdCard} label="Documento" value={profile.document_number} accent="gray-500" />
+                )}
+                {profile.is_organ_donor && (
+                  <StatItem icon={Heart} label="Donante de órganos" value="Sí" accent="rose-500" />
+                )}
+                {profile.insurance_company && (
+                  <StatItem icon={Shield} label="Seguro médico" value={profile.insurance_company} accent="blue-500" />
+                )}
+                {profile.insurance_policy_number && (
+                  <StatItem icon={IdCard} label="Póliza de seguro" value={profile.insurance_policy_number} accent="blue-500" />
+                )}
+                {profile.primary_doctor_name && (
+                  <StatItem icon={User} label="Médico tratante" value={profile.primary_doctor_name} accent="green-500" />
+                )}
+                {profile.primary_doctor_phone && (
+                  <StatItem icon={Phone} label="Teléfono médico" value={profile.primary_doctor_phone} accent="green-500" />
+                )}
                 {medical.allergies && (
                   <StatItem icon={AlertTriangle} label="Alergias" value={medical.allergies} accent="amber-500" />
                 )}
@@ -290,6 +311,18 @@ export const PublicEmergency = () => {
                 )}
                 {medical.medications && (
                   <StatItem icon={Pill} label="Medicamentos" value={medical.medications} accent="emerald-500" />
+                )}
+                {medical.height_cm && (
+                  <StatItem icon={Ruler} label="Estatura" value={`${medical.height_cm} cm`} accent="blue-500" />
+                )}
+                {medical.weight_kg && (
+                  <StatItem icon={Scale} label="Peso" value={`${medical.weight_kg} kg`} accent="indigo-500" />
+                )}
+                {medical.is_pregnant && (
+                  <StatItem icon={Baby} label="Embarazo" value="Sí" accent="pink-500" />
+                )}
+                {medical.medical_devices && (
+                  <StatItem icon={Settings} label="Dispositivos médicos" value={medical.medical_devices} accent="gray-500" />
                 )}
               </div>
             </div>

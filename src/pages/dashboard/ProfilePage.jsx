@@ -7,6 +7,7 @@ import { Button, Input, Label, Textarea } from '../../components/ui';
 import { PageTitle } from '../../components/DashPage';
 import {
   Save, ImageOff, AlertTriangle, Stethoscope, Pill, FileText, Upload, Trash2, Mail, Lock, User, Eye, EyeOff,
+  Calendar, Ruler, Scale, Baby, Settings, Phone, Shield, IdCard, Heart, Droplet,
 } from 'lucide-react';
 import { FormSection, FieldRow, Badge, EmptyState } from '../../components/ui-kit';
 
@@ -24,6 +25,42 @@ const fields = [
     input: 'text',
     placeholder: 'Juan Pérez',
     hint: 'Nombre que se mostrará en tu página pública de emergencia.',
+  },
+  {
+    key: 'blood_type',
+    label: 'Tipo de sangre',
+    category: 'Identificación',
+    icon: Droplet,
+    input: 'text',
+    placeholder: 'O+',
+    hint: 'Tipo de sangre y factor RH.',
+  },
+  {
+    key: 'date_of_birth',
+    label: 'Fecha de nacimiento',
+    category: 'Identificación',
+    icon: Calendar,
+    input: 'date',
+    placeholder: 'AAAA-MM-DD',
+    hint: 'Fecha de nacimiento para dosificación médica.',
+  },
+  {
+    key: 'document_number',
+    label: 'Número de documento',
+    category: 'Identificación',
+    icon: IdCard,
+    input: 'text',
+    placeholder: 'Cédula o pasaporte',
+    hint: 'Número de identificación para emergencias.',
+  },
+  {
+    key: 'is_organ_donor',
+    label: 'Donante de órganos',
+    category: 'Identificación',
+    icon: Heart,
+    input: 'checkbox',
+    placeholder: '',
+    hint: 'Marca si eres donante de órganos.',
   },
   {
     key: 'allergies',
@@ -53,6 +90,78 @@ const fields = [
     hint: 'Medicamentos que tomas regularmente.',
   },
   {
+    key: 'height_cm',
+    label: 'Estatura (cm)',
+    category: 'Médico',
+    icon: Ruler,
+    input: 'number',
+    placeholder: '170',
+    hint: 'Estatura en centímetros.',
+  },
+  {
+    key: 'weight_kg',
+    label: 'Peso (kg)',
+    category: 'Médico',
+    icon: Scale,
+    input: 'number',
+    placeholder: '70',
+    hint: 'Peso en kilogramos.',
+  },
+  {
+    key: 'is_pregnant',
+    label: 'Embarazo',
+    category: 'Médico',
+    icon: Baby,
+    input: 'checkbox',
+    placeholder: '',
+    hint: 'Indica si hay un embarazo en curso.',
+  },
+  {
+    key: 'medical_devices',
+    label: 'Dispositivos/implantes médicos',
+    category: 'Médico',
+    icon: Settings,
+    input: 'textarea',
+    placeholder: 'Ejemplo: Marcapasos, bomba de insulina',
+    hint: 'Dispositivos médicos implantados o usados.',
+  },
+  {
+    key: 'primary_doctor_name',
+    label: 'Médico tratante',
+    category: 'Médico',
+    icon: User,
+    input: 'text',
+    placeholder: 'Dra. María Gómez',
+    hint: 'Nombre de tu médico de cabecera.',
+  },
+  {
+    key: 'primary_doctor_phone',
+    label: 'Teléfono del médico',
+    category: 'Médico',
+    icon: Phone,
+    input: 'tel',
+    placeholder: '+57 300 000 0000',
+    hint: 'Teléfono de contacto del médico tratante.',
+  },
+  {
+    key: 'insurance_company',
+    label: 'Compañía de seguro médico',
+    category: 'Seguro',
+    icon: Shield,
+    input: 'text',
+    placeholder: 'Nombre de la EPS o aseguradora',
+    hint: 'Empresa de tu seguro médico.',
+  },
+  {
+    key: 'insurance_policy_number',
+    label: 'Número de póliza',
+    category: 'Seguro',
+    icon: IdCard,
+    input: 'text',
+    placeholder: 'Número de póliza o carnet',
+    hint: 'Número de afiliación o póliza de seguro.',
+  },
+  {
     key: 'additional_info',
     label: 'Información adicional relevante para una emergencia',
     category: 'Adicional',
@@ -63,13 +172,25 @@ const fields = [
   },
 ];
 
-const PRIVACY_KEYS = ['display_name', 'photo_url', 'allergies', 'medical_conditions', 'medications', 'additional_info'];
+const PRIVACY_KEYS = ['display_name', 'photo_url', 'blood_type', 'date_of_birth', 'document_number', 'is_organ_donor', 'allergies', 'medical_conditions', 'medications', 'height_cm', 'weight_kg', 'is_pregnant', 'medical_devices', 'primary_doctor_name', 'primary_doctor_phone', 'insurance_company', 'insurance_policy_number', 'additional_info', 'emergency_note'];
 
 const emptyForm = {
   display_name: '',
+  blood_type: '',
+  date_of_birth: '',
+  document_number: '',
+  is_organ_donor: false,
   allergies: '',
   medical_conditions: '',
   medications: '',
+  height_cm: '',
+  weight_kg: '',
+  is_pregnant: false,
+  medical_devices: '',
+  primary_doctor_name: '',
+  primary_doctor_phone: '',
+  insurance_company: '',
+  insurance_policy_number: '',
   additional_info: '',
   photo_url: '',
   photoFile: null,
@@ -128,6 +249,17 @@ const FieldBlock = ({ f, value, isPublic, onChange, onToggle }) => {
       {f.input === 'textarea' ? (
         <div className="relative">
           <Textarea id={`f_${f.key}`} value={value} onChange={onChange} placeholder={f.placeholder} rows={3} className="border-border text-base sm:text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
+        </div>
+      ) : f.input === 'checkbox' ? (
+        <div className="flex items-center gap-2">
+          <input
+            id={`f_${f.key}`}
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(e) => onChange(e.target.checked)}
+            className="h-5 w-5 flex-none rounded border-border bg-white text-brand-500 accent-brand-500 focus:ring-brand-500 focus:ring-offset-0"
+          />
+          <span className="text-sm text-neutral-900">{f.placeholder || 'Sí'}</span>
         </div>
       ) : (
         <Input id={`f_${f.key}`} type={f.input} value={value} onChange={onChange} placeholder={f.placeholder} className="h-11 text-base sm:text-sm border-border focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />

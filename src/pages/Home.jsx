@@ -146,6 +146,12 @@ export const Home = () => {
       {/* HERO */}
       <section className="relative overflow-hidden pt-16 pb-20 lg:pt-28 lg:pb-32">
         <div className="bg-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
+        <div
+          className="absolute inset-0 -z-10 bg-cover bg-center"
+          style={{ backgroundImage: "url('/herosection.webp')" }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-50/70 via-white to-white/90" aria-hidden="true" />
         <div className="container-page relative z-10">
           <div className="grid lg:grid-cols-2 gap-14 lg:gap-16 items-center">
             <motion.div
