@@ -209,7 +209,7 @@ export const DashboardIndex = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5 lg:space-y-6">
         <motion.div variants={item}>
           <PageTitle
             title={firstName ? `${greeting()}, ${firstName}` : 'Mi panel'}

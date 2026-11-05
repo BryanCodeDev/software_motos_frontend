@@ -253,7 +253,7 @@ const Help = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="space-y-8">
+      <div className="space-y-6 lg:space-y-8">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
           <PageTitle title="Documentación" description="Guía de referencia del panel administrativo y arquitectura del sistema." />
         </motion.div>

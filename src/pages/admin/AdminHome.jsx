@@ -65,18 +65,18 @@ const AnimatedNumber = ({ value, reduce, format = fmt }) => {
 const KpiCard = ({ card, value, reduce }) => (
   <motion.div
     variants={item}
-    className={`${panel} group p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)] sm:p-6`}
+    className={`${panel} group p-4 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)] sm:p-5`}
   >
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-text-secondary">{card.label}</p>
-        <p className="mt-2 text-3xl font-extrabold tracking-tight text-neutral-900">
+        <p className="text-xs font-medium text-text-secondary">{card.label}</p>
+        <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-neutral-900">
           {value === undefined || value === null ? '—' : <AnimatedNumber value={value} reduce={reduce} />}
         </p>
-        <p className="mt-2 text-xs text-text-secondary">{card.hint}</p>
+        <p className="mt-1.5 text-xs text-text-secondary">{card.hint}</p>
       </div>
-      <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 transition-transform duration-300 group-hover:scale-105 ${card.tile}`}>
-        <card.icon size={20} strokeWidth={2.2} aria-hidden="true" />
+      <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ring-1 transition-transform duration-300 group-hover:scale-105 ${card.tile}`}>
+        <card.icon size={18} strokeWidth={2.2} aria-hidden="true" />
       </span>
     </div>
   </motion.div>
@@ -186,7 +186,7 @@ export const AdminHome = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5 lg:space-y-6">
         <motion.div variants={item} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <PageTitle title="Resumen administrativo" description="Métricas operativas de la plataforma." />
           <div className="flex flex-none items-center gap-3">

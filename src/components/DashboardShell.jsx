@@ -107,7 +107,7 @@ export const DashboardShell = ({ requiredRole, maxWidth }) => {
   };
 
   const ready = !loading && isAuthenticated && !redirectTo;
-  const contentWidth = maxWidth ?? (role === 'admin' ? 'max-w-7xl' : 'max-w-6xl');
+  const contentWidth = maxWidth ?? (role === 'admin' ? 'max-w-[1400px]' : 'max-w-6xl');
 
   const sidebarProps = {
     items,
@@ -157,7 +157,7 @@ export const DashboardShell = ({ requiredRole, maxWidth }) => {
             <main
               id="contenido-panel"
               tabIndex={-1}
-              className="flex-1 p-4 focus:outline-none sm:p-6 lg:p-10"
+              className="flex-1 p-4 focus:outline-none sm:p-6 lg:px-10 lg:py-8 xl:px-14"
             >
               <div className={`mx-auto ${contentWidth}`}>
                 <nav

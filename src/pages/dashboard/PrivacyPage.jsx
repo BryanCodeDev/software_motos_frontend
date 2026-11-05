@@ -304,7 +304,7 @@ export const PrivacyPage = () => {
   const activePreset = presets.find((p) => sameSet(p.keys, publicKeys));
 
   return (
-    <div className="space-y-6 pb-28">
+    <div className="space-y-5 pb-28 lg:space-y-6">
       <PageTitle
         title="Privacidad de tu perfil"
         description="Elige qué información verá quien escanee tu QR. Todo lo que dejes oculto solo lo ves tú."

@@ -171,7 +171,7 @@ export const AdminOrders = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-4 lg:space-y-5">
         <motion.div variants={item}>
           <PageTitle title="Pedidos" description="Gestiona pedidos comerciales." />
         </motion.div>
@@ -187,7 +187,7 @@ export const AdminOrders = () => {
         )}
 
         {/* Búsqueda y filtros */}
-        <motion.div variants={item} className={`${panel} space-y-3 p-4`}>
+        <motion.div variants={item} className={`${panel} space-y-3 p-3 lg:p-4`}>
           <div className="relative">
             <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
             <input
@@ -267,18 +267,18 @@ export const AdminOrders = () => {
         {!loading && !error && visible.length > 0 && (
           <>
             {/* Escritorio */}
-            <div className={`${panel} hidden overflow-hidden md:block`}>
+<div className={`${panel} hidden overflow-hidden md:block`}>
               <div className="custom-scrollbar overflow-x-auto">
                 <table className="table w-full text-sm">
                   <thead className="bg-brand-50/70 text-left text-xs font-semibold text-text-secondary">
                     <tr>
-                      <th scope="col" className="px-4 py-3.5">Pedido</th>
-                      <th scope="col" className="px-4 py-3.5">Cliente</th>
-                      <th scope="col" className="px-4 py-3.5">Producto</th>
-                      <th scope="col" className="px-4 py-3.5 text-right">Total</th>
-                      <th scope="col" className="px-4 py-3.5">Estado</th>
-                      <th scope="col" className="px-4 py-3.5">Pago</th>
-                      <th scope="col" className="px-4 py-3.5">Acción</th>
+                      <th scope="col" className="px-6 py-4">pedido</th>
+                      <th scope="col" className="px-6 py-4">Cliente</th>
+                      <th scope="col" className="px-6 py-4">Producto</th>
+                      <th scope="col" className="px-6 py-4 text-right">Total</th>
+                      <th scope="col" className="px-6 py-4">Estado</th>
+                      <th scope="col" className="px-6 py-4">Pago</th>
+                      <th scope="col" className="px-6 py-4">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -290,18 +290,19 @@ export const AdminOrders = () => {
                         transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 10) * 0.03 }}
                         className="transition-colors hover:bg-brand-50/50"
                       >
-                        <td className="whitespace-nowrap px-4 py-3.5 font-mono text-xs font-semibold text-neutral-900">{o.order_number}</td>
-                        <td className="max-w-[200px] truncate px-4 py-3.5 text-text-secondary" title={o.customer_email}>{o.customer_email}</td>
-                        <td className="px-4 py-3.5 text-neutral-900">{o.product_name}</td>
-                        <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-neutral-900">{money(o.total_amount, o.currency)}</td>
-                        <td className="px-4 py-3.5"><BadgeStatus map={COMMERCIAL} value={o.commercial_status} /></td>
-                        <td className="px-4 py-3.5"><BadgeStatus map={PAYMENT} value={o.payment_status} /></td>
-                        <td className="min-w-[170px] px-4 py-3.5"><StatusSelect o={o} busy={busyId === o.id} onPick={askStatus} /></td>
+                        <td className="whitespace-nowrap px-6 py-4 font-mono text-xs font-semibold text-neutral-900">{o.order_number}</td>
+                        <td className="max-w-[220px] truncate px-6 py-4 text-text-secondary" title={o.customer_email}>{o.customer_email}</td>
+                        <td className="px-6 py-4 text-neutral-900">{o.product_name}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-right font-semibold text-neutral-900">{money(o.total_amount, o.currency)}</td>
+                        <td className="px-6 py-4"><BadgeStatus map={COMMERCIAL} value={o.commercial_status} /></td>
+                        <td className="px-6 py-4"><BadgeStatus map={PAYMENT} value={o.payment_status} /></td>
+                        <td className="min-w-[180px] px-6 py-4"><StatusSelect o={o} busy={busyId === o.id} onPick={askStatus} /></td>
                       </motion.tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            </div>
             </div>
 
             {/* Móvil */}

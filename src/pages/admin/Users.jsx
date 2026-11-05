@@ -154,7 +154,7 @@ export const AdminUsers = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-4 lg:space-y-5">
         <motion.div variants={item}>
           <PageTitle title="Gestión de usuarios" description="Administra cuentas y roles." />
         </motion.div>
@@ -163,7 +163,7 @@ export const AdminUsers = () => {
         <motion.form
           variants={item}
           onSubmit={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, q: input.trim() })); setPage(1); }}
-          className={`${panel} flex flex-col gap-3 p-4 lg:flex-row lg:items-center`}
+          className={`${panel} flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:p-4`}
           role="search"
         >
           <div className="relative min-w-0 flex-1">
@@ -258,10 +258,10 @@ export const AdminUsers = () => {
                 <table className="table w-full text-sm">
                   <thead className="bg-brand-50/70 text-left text-xs font-semibold text-text-secondary">
                     <tr>
-                      <th scope="col" className="px-5 py-3.5">Usuario</th>
-                      <th scope="col" className="px-5 py-3.5">Rol</th>
-                      <th scope="col" className="px-5 py-3.5">Registrado</th>
-                      <th scope="col" className="px-5 py-3.5 text-right">Acciones</th>
+                      <th scope="col" className="px-6 py-4">Usuario</th>
+                      <th scope="col" className="px-6 py-4">Rol</th>
+                      <th scope="col" className="px-6 py-4">Registrado</th>
+                      <th scope="col" className="px-6 py-4 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -273,15 +273,15 @@ export const AdminUsers = () => {
                         transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 10) * 0.03 }}
                         className="transition-colors hover:bg-brand-50/50"
                       >
-                        <td className="px-5 py-3.5">
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <Avatar email={u.email} admin={u.role === 'admin'} />
                             <p className="min-w-0 truncate font-medium text-neutral-900">{u.email}</p>
                           </div>
                         </td>
-                        <td className="px-5 py-3.5"><RoleBadge role={u.role} /></td>
-                        <td className="whitespace-nowrap px-5 py-3.5 text-text-secondary">{formatDate(u.created_at)}</td>
-                        <td className="px-5 py-3.5 text-right">
+                        <td className="px-6 py-4"><RoleBadge role={u.role} /></td>
+                        <td className="whitespace-nowrap px-6 py-4 text-text-secondary">{formatDate(u.created_at)}</td>
+                        <td className="px-6 py-4 text-right">
                           <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} />
                         </td>
                       </motion.tr>

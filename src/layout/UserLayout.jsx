@@ -1,5 +1,5 @@
 import { DashboardShell } from '../components/DashboardShell';
 
-export const UserLayout = () => <DashboardShell requiredRole="user" maxWidth="max-w-5xl" />;
+export const UserLayout = () => <DashboardShell requiredRole="user" maxWidth="max-w-6xl" />;
 
 export default UserLayout;

@@ -233,7 +233,7 @@ export const ContactsPage = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5 lg:space-y-6">
         <motion.div variants={item}>
           <PageTitle
             title="Contactos de emergencia"

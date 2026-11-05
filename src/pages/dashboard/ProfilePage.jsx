@@ -546,7 +546,7 @@ export const ProfilePage = () => {
   const displayName = String(form.display_name || '').trim();
 
   return (
-    <div className="space-y-6 pb-28">
+    <div className="space-y-5 pb-28 lg:space-y-6">
       <PageTitle
         title="Tu perfil de emergencia"
         description="Completa lo que quieras que sepan en una emergencia. En cada dato, tú eliges si se muestra o no al escanear tu QR."

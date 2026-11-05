@@ -148,7 +148,7 @@ export const AdminAudit = () => {
         </motion.div>
 
         {/* Búsqueda y filtros */}
-        <motion.div variants={item} className={`${panel} space-y-3 p-4`}>
+        <motion.div variants={item} className={`${panel} space-y-3 p-3 lg:p-4`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
@@ -245,11 +245,11 @@ export const AdminAudit = () => {
                 <table className="table w-full text-sm">
                   <thead className="bg-brand-50/70 text-left text-xs font-semibold text-text-secondary">
                     <tr>
-                      <th scope="col" className="px-4 py-3.5">Fecha</th>
-                      <th scope="col" className="px-4 py-3.5">Actor</th>
-                      <th scope="col" className="px-4 py-3.5">Acción</th>
-                      <th scope="col" className="px-4 py-3.5">Entidad</th>
-                      <th scope="col" className="px-4 py-3.5">ID</th>
+                      <th scope="col" className="px-6 py-4">Fecha</th>
+                      <th scope="col" className="px-6 py-4">Actor</th>
+                      <th scope="col" className="px-6 py-4">Acción</th>
+                      <th scope="col" className="px-6 py-4">Entidad</th>
+                      <th scope="col" className="px-6 py-4">ID</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -261,14 +261,14 @@ export const AdminAudit = () => {
                         transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 10) * 0.025 }}
                         className="transition-colors hover:bg-brand-50/50"
                       >
-                        <td className="whitespace-nowrap px-4 py-3 text-text-secondary">{formatDate(l.created_at)}</td>
-                        <td className="max-w-[240px] truncate px-4 py-3 text-neutral-900" title={l.actor_email || ''}>
+                        <td className="whitespace-nowrap px-6 py-4 text-text-secondary">{formatDate(l.created_at)}</td>
+                        <td className="max-w-[240px] truncate px-6 py-4 text-neutral-900" title={l.actor_email || ''}>
                           {l.actor_email || <span className="text-text-secondary">Sistema</span>}
                           {l.ip_address && <span className="block text-[11px] text-text-secondary">{l.ip_address}</span>}
                         </td>
-                        <td className="px-4 py-3"><Badge tone={actionTone(l.action)} size="sm">{l.action}</Badge></td>
-                        <td className="px-4 py-3 text-neutral-900">{l.entity_type}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-text-secondary">{l.entity_id}</td>
+                        <td className="px-6 py-4"><Badge tone={actionTone(l.action)} size="sm">{l.action}</Badge></td>
+                        <td className="px-6 py-4 text-neutral-900">{l.entity_type}</td>
+                        <td className="px-6 py-4 font-mono text-xs text-text-secondary">{l.entity_id}</td>
                       </motion.tr>
                     ))}
                   </tbody>
