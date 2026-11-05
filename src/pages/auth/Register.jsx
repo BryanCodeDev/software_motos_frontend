@@ -41,8 +41,8 @@ const getStrength = (p) => {
 };
 
 const Shell = ({ aside, children }) => (
-  <main className="grid min-h-screen bg-brand-50 lg:grid-cols-[1.05fr_1fr]">
-    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-[#7d0f2e] to-[#3f0617] p-12 text-white lg:flex xl:p-16">
+  <main className="grid min-h-screen bg-brand-dark lg:grid-cols-[1.05fr_1fr]">
+    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-accent via-[#7d0f2e] to-[#3f0617] p-12 text-white lg:flex xl:p-16">
       <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
 
@@ -84,12 +84,12 @@ const Shell = ({ aside, children }) => (
     <section className="flex items-center justify-center px-4 py-10 sm:px-8">
       <div className="w-full max-w-md animate-slide-up">
         <div className="mb-6 flex items-center justify-center gap-2 lg:hidden">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-accent text-white">
             <HeartPulse size={18} />
           </span>
-          <span className="text-base font-bold tracking-tight text-neutral-900">Perfil de emergencia</span>
+          <span className="text-base font-bold tracking-tight text-brand-text">Perfil de emergencia</span>
         </div>
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.28)] sm:p-10">
+        <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.28)] sm:p-10">
           {children}
         </div>
       </div>
@@ -97,7 +97,7 @@ const Shell = ({ aside, children }) => (
   </main>
 );
 
-const fieldIcon = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary';
+const fieldIcon = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted';
 const inputCls = 'h-11 pl-10 text-base sm:text-sm';
 
 export const Register = () => {
@@ -116,8 +116,8 @@ export const Register = () => {
     setLoading(true);
     try {
       await register({ ...form, role: 'user' });
-      toast.success('Cuenta creada');
-      navigate(routes.home);
+      toast.success('Cuenta creada correctamente');
+      navigate(routes.dashboard);
     } catch (error) {
       try {
         showApiError(error);
@@ -134,11 +134,11 @@ export const Register = () => {
       <Seo title="Crear cuenta" noindex />
 
       <div className="mb-8 text-center">
-        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
+        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
           <UserPlus size={22} />
         </span>
-        <h1 className="text-2xl font-bold text-neutral-900">Crear cuenta gratuita</h1>
-        <p className="mt-2 text-sm text-text-secondary">Tu perfil de emergencia empieza aquí</p>
+        <h1 className="text-2xl font-bold text-brand-text">Crear cuenta gratuita</h1>
+        <p className="mt-2 text-sm text-brand-textMuted">Tu perfil de emergencia empieza aquí</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -193,7 +193,7 @@ export const Register = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary transition-colors hover:text-neutral-900"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-brand-textMuted transition-colors hover:text-brand-text"
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -206,13 +206,13 @@ export const Register = () => {
                 <span
                   key={i}
                   className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                    level && i <= strength ? level.bar : 'bg-border'
+                    level && i <= strength ? level.bar : 'bg-brand-border'
                   }`}
                 />
               ))}
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-text-secondary">Mínimo 8 caracteres.</span>
+              <span className="text-brand-textMuted">Mínimo 8 caracteres.</span>
               {level && <span className={`font-semibold ${level.text}`}>{level.label}</span>}
             </div>
           </div>
@@ -229,9 +229,9 @@ export const Register = () => {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-text-secondary">
+      <p className="mt-6 text-center text-sm text-brand-textMuted">
         ¿Ya tienes cuenta?{' '}
-        <Link to={routes.login} className="font-semibold text-brand-500 hover:underline">
+        <Link to={routes.login} className="font-semibold text-brand-accent hover:underline">
           Inicia sesión
         </Link>
       </p>
@@ -240,4 +240,3 @@ export const Register = () => {
 };
 
 export default Register;
-

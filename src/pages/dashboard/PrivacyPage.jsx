@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Badge, StepIndicator } from '../../components/ui-kit';
 
-const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 const fieldDefs = [
   { key: 'display_name', label: 'Nombre o identificación', icon: User, category: 'Identificación' },
@@ -100,22 +100,22 @@ export const PrivacyPage = () => {
       <section className={`${panel} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`} aria-label="Resumen de visibilidad">
         <div className="flex items-center gap-4">
           <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 ${
-            publicCount === 0 ? 'bg-brand-500/10 text-brand-500 ring-brand-500/15' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+            publicCount === 0 ? 'bg-brand-accent/10 text-brand-accent ring-brand-accent/15' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
           }`}>
             {publicCount === 0 ? <EyeOff size={22} aria-hidden="true" /> : <Eye size={22} aria-hidden="true" />}
           </span>
           <div>
-            <p className="text-base font-semibold text-neutral-900">
+            <p className="text-base font-semibold text-brand-text">
               {publicCount} de {fieldDefs.length} campos son públicos
             </p>
-            <p className="text-xs text-text-secondary">
+            <p className="text-xs text-brand-textMuted">
               {publicCount === 0 ? 'Tu página pública no muestra datos personales.' : 'Solo se publica lo que activaste.'}
             </p>
           </div>
         </div>
         <div className="w-full sm:w-48">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-border/70">
-            <div className="h-full rounded-full bg-brand-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+          <div className="h-2 w-full overflow-hidden rounded-full bg-brand-border/70">
+            <div className="h-full rounded-full bg-brand-accent transition-all duration-500" style={{ width: `${pct}%` }} />
           </div>
         </div>
       </section>
@@ -126,7 +126,7 @@ export const PrivacyPage = () => {
             <section key={cat} aria-labelledby={`cat-${cat}`}>
               <h2
                 id={`cat-${cat}`}
-                className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary"
+                className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted"
               >
                 {cat}
               </h2>
@@ -140,16 +140,16 @@ export const PrivacyPage = () => {
                       <li
                         key={f.key}
                         className={`flex items-center justify-between gap-4 rounded-xl border p-4 transition-colors ${
-                          pub ? 'border-brand-500/30 bg-brand-500/5' : 'border-border hover:border-brand-500/30'
+                          pub ? 'border-brand-accent/30 bg-brand-accent/5' : 'border-brand-border hover:border-brand-accent/30'
                         }`}
                       >
                         <div className="flex min-w-0 items-center gap-3">
-                          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
+                          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
                             <Icon size={18} aria-hidden="true" />
                           </span>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-neutral-900">{f.label}</p>
-                            <p className={`text-xs ${pub ? 'font-medium text-brand-500' : 'text-text-secondary'}`}>
+                            <p className="truncate text-sm font-medium text-brand-text">{f.label}</p>
+                            <p className={`text-xs ${pub ? 'font-medium text-brand-accent' : 'text-brand-textMuted'}`}>
                               {pub ? 'Público' : 'Oculto'}
                             </p>
                           </div>
@@ -160,8 +160,8 @@ export const PrivacyPage = () => {
                           aria-checked={pub}
                           aria-label={`${f.label}: ${pub ? 'público' : 'oculto'}`}
                           onClick={() => toggle(f.key)}
-                          className={`relative h-7 w-12 flex-none rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                            pub ? 'bg-brand-500' : 'bg-slate-300'
+                          className={`relative h-7 w-12 flex-none rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 ${
+                            pub ? 'bg-brand-accent' : 'bg-slate-300'
                           }`}
                         >
                           <span
@@ -178,8 +178,8 @@ export const PrivacyPage = () => {
           ))}
         </div>
 
-        <div className="mt-8 flex items-start gap-2.5 rounded-xl bg-brand-50/70 p-4 text-xs leading-relaxed text-text-secondary">
-          <Lock size={14} className="mt-0.5 flex-shrink-0 text-brand-500" aria-hidden="true" />
+        <div className="mt-8 flex items-start gap-2.5 rounded-xl bg-brand-dark/70 p-4 text-xs leading-relaxed text-brand-textMuted">
+          <Lock size={14} className="mt-0.5 flex-shrink-0 text-brand-accent" aria-hidden="true" />
           <p>
             Los cambios se aplican a tu página pública al guardar. Los datos marcados como privados nunca se
             envían en la respuesta del perfil público.
@@ -199,8 +199,8 @@ export const PrivacyPage = () => {
       <section className="rounded-2xl border border-rose-200 bg-rose-50/50 p-5 sm:p-6 lg:p-8" aria-labelledby="deactivate-title">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-2xl">
-            <h2 id="deactivate-title" className="mb-1.5 text-base font-semibold text-neutral-900">Desactivar perfil</h2>
-            <p className="text-sm leading-relaxed text-text-secondary">
+            <h2 id="deactivate-title" className="mb-1.5 text-base font-semibold text-brand-text">Desactivar perfil</h2>
+            <p className="text-sm leading-relaxed text-brand-textMuted">
               Puedes desactivar tu perfil de emergencia. Su página pública dejará de estar disponible y tu código
               QR mostrará un aviso de inactivo.
             </p>
@@ -221,4 +221,3 @@ export const PrivacyPage = () => {
 };
 
 export default PrivacyPage;
-

@@ -83,7 +83,7 @@ export const AppLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-50">
+    <div className="flex min-h-screen flex-col bg-brand-dark">
       <Navbar />
 
       {isAuthenticated ? (
@@ -119,9 +119,9 @@ export const AppLayout = () => {
         </div>
       ) : (
         <main className="flex flex-1 items-center justify-center p-10">
-          <div className="flex items-center gap-3 text-sm text-text-secondary" role="status">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white ring-1 ring-border shadow-soft">
-              <svg className="h-6 w-6 animate-spin text-brand-500" aria-hidden="true">
+          <div className="flex items-center gap-3 text-sm text-brand-textMuted" role="status">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white ring-1 ring-brand-border shadow-soft">
+              <svg className="h-6 w-6 animate-spin text-brand-accent" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
@@ -135,5 +135,3 @@ export const AppLayout = () => {
 };
 
 export default AppLayout;
-
-

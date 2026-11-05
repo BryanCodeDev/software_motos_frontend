@@ -10,7 +10,7 @@ const MAX_TOASTS = 4;
 const styles = {
   success: { icon: CheckCircle2, iconBox: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-500' },
   error: { icon: AlertCircle, iconBox: 'bg-rose-50 text-rose-600', bar: 'bg-rose-500' },
-  info: { icon: Info, iconBox: 'bg-brand-500/10 text-brand-500', bar: 'bg-brand-500' },
+  info: { icon: Info, iconBox: 'bg-brand-accent/10 text-brand-accent', bar: 'bg-brand-accent' },
 };
 
 export const ToastProvider = ({ children }) => {
@@ -61,16 +61,16 @@ export const ToastProvider = ({ children }) => {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 40, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-xl border border-border bg-white px-4 py-3.5 text-sm shadow-[0_20px_50px_-20px_rgba(41,32,36,0.35)] sm:w-96 sm:max-w-[calc(100vw-2rem)]"
+                className="pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-xl border border-brand-border bg-white px-4 py-3.5 text-sm shadow-[0_20px_50px_-20px_rgba(41,32,36,0.35)] sm:w-96 sm:max-w-[calc(100vw-2rem)]"
               >
                 <span className={`flex h-8 w-8 flex-none items-center justify-center rounded-lg ${s.iconBox}`}>
                   <Icon size={18} aria-hidden="true" />
                 </span>
-                <div className="min-w-0 flex-1 pt-1 leading-snug text-neutral-900">{t.message}</div>
+                <div className="min-w-0 flex-1 pt-1 leading-snug text-brand-text">{t.message}</div>
                 <button
                   type="button"
                   onClick={() => remove(t.id)}
-                  className="flex-shrink-0 rounded-md p-1 text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="flex-shrink-0 rounded-md p-1 text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
                   aria-label="Cerrar notificación"
                 >
                   <X size={16} />

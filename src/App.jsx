@@ -11,7 +11,6 @@ import { AdminHome } from './pages/admin/AdminHome';
 import { AdminUsers } from './pages/admin/Users';
 import { AdminOrders } from './pages/admin/Orders';
 import { AdminAudit } from './pages/admin/Audit';
-import { RouteTransition } from './components/RouteTransition';
 
 // Lazy pages
 const Home = lazy(() => import('./pages/Home'));
@@ -43,13 +42,8 @@ const App = () => (
     <AuthProvider>
       <ToastProvider>
         <Router>
-          <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center bg-brand-50">
-              <div className="animate-pulse rounded-full h-12 w-12 bg-brand-500" />
-            </div>
-          }>
-            <RouteTransition>
-              <Routes>
+          <Suspense fallback={<div>...</div>}>
+            <Routes>
               {/* Rutas públicas: solo Navbar (sin sidebar) */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Home />} />
@@ -91,7 +85,6 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </RouteTransition>
           </Suspense>
         </Router>
       </ToastProvider>
@@ -100,4 +93,3 @@ const App = () => (
 );
 
 export default App;
-

@@ -84,20 +84,20 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.98 }}
             transition={{ duration: 0.28, ease: EASE }}
-            className={`relative max-h-[90vh] w-full overflow-y-auto rounded-t-3xl border border-border bg-white shadow-2xl outline-none sm:rounded-2xl ${SIZES[size] || SIZES.md}`}
+            className={`relative max-h-[90vh] w-full overflow-y-auto rounded-t-3xl border border-brand-border bg-white shadow-2xl outline-none sm:rounded-2xl ${SIZES[size] || SIZES.md}`}
           >
-            <div className="sticky top-0 z-10 border-b border-border bg-white/95 backdrop-blur">
-              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border sm:hidden" aria-hidden="true" />
+            <div className="sticky top-0 z-10 border-b border-brand-border bg-white/95 backdrop-blur">
+              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-brand-border sm:hidden" aria-hidden="true" />
               <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6 sm:py-4">
                 {title && (
-                  <h2 id={titleId} className="text-lg font-semibold text-neutral-900">
+                  <h2 id={titleId} className="text-lg font-semibold text-brand-text">
                     {title}
                   </h2>
                 )}
                 <button
                   type="button"
                   onClick={() => onCloseRef.current()}
-                  className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
                   aria-label="Cerrar"
                 >
                   <X size={20} />
@@ -121,4 +121,3 @@ Modal.propTypes = {
 };
 
 export default Modal;
-

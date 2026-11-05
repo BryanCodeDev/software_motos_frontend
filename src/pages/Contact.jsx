@@ -32,7 +32,7 @@ export const Contact = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/contacts', form);
+      await api.post('/contact', form);
       setSent(true);
       setForm({ name: '', email: '', subject: '', message: '' });
       toast.success('Mensaje enviado correctamente');
@@ -58,11 +58,11 @@ export const Contact = () => {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
             <Card className="p-10 max-w-md mx-auto">
-              <div className="w-14 h-14 rounded-full bg-brand-500/10 border border-brand-500/40 flex items-center justify-center mx-auto mb-5 text-brand-500">
+              <div className="w-14 h-14 rounded-full bg-brand-accent/10 border border-brand-accent/40 flex items-center justify-center mx-auto mb-5 text-brand-accent">
                 <Send size={24} />
               </div>
-              <h1 className="text-2xl font-bold text-neutral-900 mb-3">Mensaje enviado</h1>
-              <p className="text-text-secondary mb-8 leading-relaxed">
+              <h1 className="text-2xl font-bold text-brand-text mb-3">Mensaje enviado</h1>
+              <p className="text-brand-textMuted mb-8 leading-relaxed">
                 Gracias por escribirnos. Nuestro equipo revisará tu mensaje y te responderá a la brevedad.
               </p>
               <Link to={routes.home} className="btn-outline">
@@ -92,31 +92,31 @@ export const Contact = () => {
           <div className="grid lg:grid-cols-5 gap-8">
             <Reveal className="lg:col-span-2">
               <Card className="p-7 h-full">
-                <h2 className="font-semibold text-neutral-900 mb-6">Canales de soporte</h2>
+                <h2 className="font-semibold text-brand-text mb-6">Canales de soporte</h2>
                 <div className="space-y-6">
                   {channels.map(({ icon: Icon, label, value, href }) => (
                     <div key={label} className="flex items-start gap-4">
-                      <span className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500 flex-shrink-0">
+                      <span className="w-10 h-10 rounded-lg bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent flex-shrink-0">
                         <Icon className="w-5 h-5" />
                       </span>
                       <div>
-                        <div className="text-text-secondary text-xs uppercase tracking-wider mb-0.5">{label}</div>
+                        <div className="text-brand-textMuted text-xs uppercase tracking-wider mb-0.5">{label}</div>
                         {value ? (
                           href ? (
-                            <a href={href} className="text-neutral-900 text-sm hover:text-brand-500 transition-colors">
+                            <a href={href} className="text-brand-text text-sm hover:text-brand-accent transition-colors">
                               {value}
                             </a>
                           ) : (
-                            <div className="text-neutral-900 text-sm">{value}</div>
+                            <div className="text-brand-text text-sm">{value}</div>
                           )
                         ) : (
-                          <div className="text-text-secondary text-sm">Disponible próximamente</div>
+                          <div className="text-brand-textMuted text-sm">Disponible próximamente</div>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="mt-8 pt-6 border-t border-border text-xs text-text-secondary leading-relaxed">
+                <p className="mt-8 pt-6 border-t border-brand-border text-xs text-brand-textMuted leading-relaxed">
                   Este canal es para soporte de la plataforma. Ante una emergencia, comunícate con los
                   servicios oficiales de emergencia.
                 </p>
@@ -187,4 +187,3 @@ export const Contact = () => {
 };
 
 export default Contact;
-

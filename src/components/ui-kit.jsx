@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import React, { useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import {
   ArrowRight, ChevronRight, Calendar, Clock, Users, User, ShieldCheck, QrCode,
   Package, AlertTriangle, CheckCircle2, AlertCircle, Loader2, Search, Filter,
@@ -16,22 +16,22 @@ export const PageHeader = ({ title, description, actions, breadcrumb }) => {
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
         {breadcrumb && (
-          <nav className="flex items-center gap-1 text-xs text-text-secondary" aria-label="Breadcrumb">
+          <nav className="flex items-center gap-1 text-xs text-brand-textMuted" aria-label="Breadcrumb">
             {breadcrumb.map((b, i) => (
               <>
-                {i > 0 && <ChevronRight size={12} className="text-text-secondary/50" aria-hidden="true" />}
+                {i > 0 && <ChevronRight size={12} className="text-brand-textMuted/50" aria-hidden="true" />}
                 {b.href ? (
-                  <Link to={b.href} className="text-neutral-900 hover:text-brand-500 transition-colors">{b.label}</Link>
+                  <Link to={b.href} className="text-brand-text hover:text-brand-accent transition-colors">{b.label}</Link>
                 ) : (
-                  <span className="text-text-secondary">{b.label}</span>
+                  <span className="text-brand-textMuted">{b.label}</span>
                 )}
               </>
             ))}
           </nav>
         )}
-        <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">{title}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-brand-text sm:text-3xl">{title}</h1>
       </div>
-      {description && <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">{description}</p>}
+      {description && <p className="max-w-2xl text-sm leading-relaxed text-brand-textMuted">{description}</p>}
       {actions && <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">{actions}</div>}
     </div>
   );
@@ -42,18 +42,18 @@ export const PageHeader = ({ title, description, actions, breadcrumb }) => {
 /* ------------------------------------------------------------------ */
 
 export const StatCard = ({ label, value, icon: Icon, tone, hint, trend }) => (
-    <div className="rounded-2xl border border-border/50 bg-neutral-50/90 backdrop-blur-sm p-6 shadow-soft will-change-transform transition-all duration-300 hover:border-brand-500/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1">
+  <div className="rounded-2xl border border-brand-border/50 bg-white/90 backdrop-blur-sm p-6 shadow-soft transition-all duration-300 hover:border-brand-accent/50 hover:shadow-[0_20px_40px_-10px_rgba(159,18,57,0.15)] hover:-translate-y-1">
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
-        <p className="mt-1.5 text-3xl font-extrabold tracking-tight text-neutral-900">{value}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-brand-textMuted">{label}</p>
+        <p className="mt-1.5 text-3xl font-extrabold tracking-tight text-brand-text">{value}</p>
         {trend && (
           <p className="mt-2 text-xs font-medium {trend.up ? 'text-emerald-600' : 'text-rose-600'}">
             {trend.up ? <ArrowRight size={12} className="mr-1" /> : <ArrowRight size={12} rotate={180} className="ml-1" />}
             {trend.label}
           </p>
         )}
-        {hint && <p className="mt-2.5 text-xs text-text-secondary">{hint}</p>}
+        {hint && <p className="mt-2.5 text-xs text-brand-textMuted">{hint}</p>}
       </div>
       {Icon && (
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset shadow-lg">
@@ -77,7 +77,7 @@ const BADGE_TONES = {
   warn: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   danger: 'bg-rose-50 text-rose-700 ring-rose-600/20',
   neutral: 'bg-slate-100 text-slate-700 ring-slate-500/20',
-  brand: 'bg-brand-500/10 text-brand-500 ring-brand-500/20',
+  brand: 'bg-brand-accent/10 text-brand-accent ring-brand-accent/20',
 };
 
 export const Badge = ({ tone = 'neutral', children, size = 'sm' }) => {
@@ -98,17 +98,17 @@ export const Badge = ({ tone = 'neutral', children, size = 'sm' }) => {
 /* ------------------------------------------------------------------ */
 
 export const DataTable = ({ columns, rows, emptyMessage, emptyIcon, emptyAction, rowKey = 'id' }) => (
-  <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]">
+  <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]">
     {rows.length === 0 ? (
       <div className="p-8 text-center">
-        {emptyIcon && <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-500"><emptyIcon size={24} aria-hidden="true" /></div>}
-        <p className="text-sm font-semibold text-neutral-900">{emptyMessage || 'No hay datos para mostrar'}</p>
+        {emptyIcon && <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent"><emptyIcon size={24} aria-hidden="true" /></div>}
+        <p className="text-sm font-semibold text-brand-text">{emptyMessage || 'No hay datos para mostrar'}</p>
         {emptyAction && <div className="mt-4">{emptyAction}</div>}
       </div>
     ) : (
       <>
         <table className="table w-full text-sm">
-          <thead className="bg-brand-50/70 text-left text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
+          <thead className="bg-brand-dark/70 text-left text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
             <tr>
               {columns.map((col) => (
                 <th key={col.key} scope="col" className={`px-4 py-3 ${col.align || 'left'}`}>
@@ -117,13 +117,13 @@ export const DataTable = ({ columns, rows, emptyMessage, emptyIcon, emptyAction,
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-brand-border">
             {rows.map((row) => (
-              <tr key={row[rowKey]} className="transition-colors hover:bg-brand-50/60">
+              <tr key={row[rowKey]} className="transition-colors hover:bg-brand-dark/60">
                 {columns.map((col) => {
                   const val = col.render ? col.render(row) : String(row[col.key] || '—');
                   return (
-                    <td key={col.key} className={`px-4 py-3 whitespace-nowrap ${col.align || 'left'} text-neutral-900`}>
+                    <td key={col.key} className={`px-4 py-3 whitespace-nowrap ${col.align || 'left'} text-brand-text`}>
                       {val}
                     </td>
                   );
@@ -136,10 +136,10 @@ export const DataTable = ({ columns, rows, emptyMessage, emptyIcon, emptyAction,
         {/* Mobile card view */}
         <div className="space-y-3 md:hidden">
           {rows.map((row) => (
-            <div key={row[rowKey]} className="rounded-xl border p-4 hover:bg-brand-50/50 transition-colors">
+            <div key={row[rowKey]} className="rounded-xl border p-4 hover:bg-brand-dark/50 transition-colors">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-xs font-semibold text-neutral-900">{String(row[rowKey] || '—')}</p>
+                  <p className="font-mono text-xs font-semibold text-brand-text">{String(row[rowKey] || '—')}</p>
                 </div>
               </div>
               <div className="grid gap-1.5">
@@ -148,8 +148,8 @@ export const DataTable = ({ columns, rows, emptyMessage, emptyIcon, emptyAction,
                   const val = col.render ? col.render(row) : String(row[col.key] || '—');
                   return (
                     <div key={col.key} className="flex items-baseline gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">{col.label}</span>
-                      <span className="text-sm text-neutral-900">{val}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">{col.label}</span>
+                      <span className="text-sm text-brand-text">{val}</span>
                     </div>
                   );
                 })}
@@ -169,8 +169,8 @@ export const DataTable = ({ columns, rows, emptyMessage, emptyIcon, emptyAction,
 export const FormSection = ({ title, description, children, className = '' }) => (
   <section className={`space-y-5 ${className}`}>
     <div>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary">{title}</h2>
-      {description && <p className="mt-1 max-w-md text-xs text-text-secondary">{description}</p>}
+      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-textMuted">{title}</h2>
+      {description && <p className="mt-1 max-w-md text-xs text-brand-textMuted">{description}</p>}
     </div>
     <div className="space-y-4">{children}</div>
   </section>
@@ -183,11 +183,11 @@ export const FormSection = ({ title, description, children, className = '' }) =>
 export const FieldRow = ({ icon: Icon, label, hint, required, children, className = '' }) => (
   <div className={`space-y-2 ${className}`}>
     <div className="flex items-center gap-2">
-      {Icon && <Icon size={15} className="text-brand-500 shrink-0" aria-hidden="true" />}
-      <label className="text-sm font-medium text-neutral-900/90">{required ? <span>{label} <span className="text-rose-500 ml-0.5">*</span></span> : label}</label>
+      {Icon && <Icon size={15} className="text-brand-accent shrink-0" aria-hidden="true" />}
+      <label className="text-sm font-medium text-brand-text/90">{required ? <span>{label} <span className="text-rose-500 ml-0.5">*</span></span> : label}</label>
     </div>
     {children}
-    {hint && <p className="text-xs text-text-secondary">{hint}</p>}
+    {hint && <p className="text-xs text-brand-textMuted">{hint}</p>}
   </div>
 );
 
@@ -196,10 +196,10 @@ export const FieldRow = ({ icon: Icon, label, hint, required, children, classNam
 /* ------------------------------------------------------------------ */
 
 export const EmptyState = ({ icon: Icon, title, text, action }) => (
-  <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-border bg-brand-50/50">
-    {Icon && <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500/10 text-brand-500"><Icon size={24} aria-hidden="true" /></div>}
-    <h3 className="mb-1 text-sm font-semibold text-neutral-900">{title}</h3>
-    {text && <p className="max-w-sm mx-auto text-xs text-text-secondary leading-relaxed">{text}</p>}
+  <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-brand-border bg-brand-dark/50">
+    {Icon && <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent"><Icon size={24} aria-hidden="true" /></div>}
+    <h3 className="mb-1 text-sm font-semibold text-brand-text">{title}</h3>
+    {text && <p className="max-w-sm mx-auto text-xs text-brand-textMuted leading-relaxed">{text}</p>}
     {action && <div className="mt-6">{action}</div>}
   </div>
 );
@@ -211,7 +211,7 @@ export const EmptyState = ({ icon: Icon, title, text, action }) => (
 export const LoadingCard = ({ rows = 3, height = 'h-12' }) => (
   <div className="animate-pulse space-y-3 p-4" aria-busy="true">
     {[...Array(rows)].map((_, i) => (
-      <div key={i} className={`${height} rounded-lg bg-border/60`} />
+      <div key={i} className={`${height} rounded-lg bg-brand-border/60`} />
     ))}
   </div>
 );
@@ -220,73 +220,36 @@ export const LoadingCard = ({ rows = 3, height = 'h-12' }) => (
 /* ConfirmDialog - Modal de confirmación simple                       */
 /* ------------------------------------------------------------------ */
 
-export const ConfirmDialog = ({ isOpen, onClose, title, text, onConfirm, confirmLabel = 'Confirmar', confirmVariant = 'danger', loading = false }) => {
-  const modalRef = useRef(null);
-  const prevFocusRef = useRef(null);
-
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const focusables = modalRef.current?.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])') || [];
-      const current = document.activeElement;
-      const currentIndex = Array.from(focusables).indexOf(current);
-      const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-      const wrappedIndex = (nextIndex + focusables.length) % focusables.length;
-      focusables[wrappedIndex]?.focus();
-    }
-  }, [onClose]);
-
-  useEffect(() => {
-    if (isOpen) {
-      prevFocusRef.current = document.activeElement;
-      modalRef.current?.focus();
-      document.addEventListener('keydown', handleKeyDown);
-    } else {
-      document.removeEventListener('keydown', handleKeyDown);
-      prevFocusRef.current?.focus?.();
-    }
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleKeyDown]);
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center" aria-modal="true" role="dialog" aria-labelledby="confirm-title" onClick={e => e.stopPropagation()}>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div
-        ref={modalRef}
-        tabIndex={-1}
-        className="relative w-full max-w-md p-6 mx-auto bg-white rounded-2xl border border-border shadow-2xl outline-none"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 id="confirm-title" className="mb-2 text-base font-semibold text-neutral-900">{title}</h2>
-        <p className="mb-6 text-sm text-text-secondary leading-relaxed">{text}</p>
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl px-4 py-2.5 text-sm font-medium text-text-secondary hover:bg-brand-50/50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className={`rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all disabled:opacity-50 ${
-              confirmVariant === 'danger'
-                ? 'bg-rose-600 hover:bg-rose-500'
-                : 'bg-brand-500 hover:bg-brand-600'
-            }`}
-          >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : confirmLabel}
-          </button>
-        </div>
+export const ConfirmDialog = ({ isOpen, onClose, title, text, onConfirm, confirmLabel = 'Confirmar', confirmVariant = 'danger', loading = false }) => (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center" aria-modal="true" role="dialog" aria-labelledby="confirm-title">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+    <div className="relative w-full max-w-md p-6 mx-auto bg-white rounded-2xl border border-brand-border shadow-2xl">
+      <h2 id="confirm-title" className="mb-2 text-base font-semibold text-brand-text">{title}</h2>
+      <p className="mb-6 text-sm text-brand-textMuted leading-relaxed">{text}</p>
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-xl px-4 py-2.5 text-sm font-medium text-brand-textMuted hover:bg-brand-dark/50 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={loading}
+          className={`rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all disabled:opacity-50 ${
+            confirmVariant === 'danger'
+              ? 'bg-rose-600 hover:bg-rose-500'
+              : 'bg-brand-accent hover:bg-brand-accentHover'
+          }`}
+        >
+          {loading ? <Loader2 size={16} className="animate-spin" /> : confirmLabel}
+        </button>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 /* ------------------------------------------------------------------ */
 /* StepIndicator - Indicador de paso para flujos multi-paso           */
@@ -302,19 +265,19 @@ export const StepIndicator = ({ steps, current }) => (
           <span
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-2 transition-all ${
               done
-                ? 'bg-brand-500 text-white ring-brand-500'
+                ? 'bg-brand-accent text-white ring-brand-accent'
                 : active
-                  ? 'bg-brand-500/10 text-brand-500 ring-brand-500/30'
-                  : 'bg-white text-text-secondary ring-border'
+                  ? 'bg-brand-accent/10 text-brand-accent ring-brand-accent/30'
+                  : 'bg-white text-brand-textMuted ring-brand-border'
             }`}
           >
             {done ? <CheckCircle2 size={14} strokeWidth={2.5} /> : i + 1}
           </span>
-          <span className={`${done || active ? 'text-neutral-900' : 'text-text-secondary'} text-[11px] font-medium`}>{step.label}</span>
+          <span className={`${done || active ? 'text-brand-text' : 'text-brand-textMuted'} text-[11px] font-medium`}>{step.label}</span>
           {i < steps.length - 1 && (
             <span
               className={`absolute -top-1/2 h-[1px] w-full ${
-                done ? 'bg-brand-500' : 'bg-border'
+                done ? 'bg-brand-accent' : 'bg-brand-border'
               }`}
               aria-hidden="true"
             />
@@ -332,8 +295,8 @@ export const StepIndicator = ({ steps, current }) => (
 export const IconButton = ({ icon: Icon, label, variant = 'ghost', size = 'md', className = '', ...props }) => {
   const sizes = { sm: 'h-8 w-8', md: 'h-9 w-9', lg: 'h-10 w-10' };
   const variants = {
-    ghost: 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900',
-    brand: 'text-neutral-900 hover:bg-brand-500 hover:text-white',
+    ghost: 'text-brand-textMuted hover:bg-brand-dark hover:text-brand-text',
+    brand: 'text-brand-text hover:bg-brand-accent hover:text-white',
     danger: 'text-rose-600 hover:bg-rose-50 hover:text-rose-600',
   };
   return (
@@ -347,5 +310,3 @@ export const IconButton = ({ icon: Icon, label, variant = 'ghost', size = 'md', 
     </button>
   );
 };
-
-

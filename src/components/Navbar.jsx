@@ -17,62 +17,8 @@ const navItems = [
 
 const EASE = [0.22, 1, 0.36, 1];
 
-/** Enlace de navegación reutilizable para desktop y mobile. */
-const NavLinkItem = ({ item, isActive, variant = 'desktop', className = '' }) => {
-  const active = isActive(item.href);
-  const base =
-    variant === 'mobile'
-      ? 'block rounded-lg px-3 py-3 text-[15px] font-medium transition-colors'
-      : 'relative rounded-lg px-3 py-2 transition-colors';
-  return (
-    <Link
-      to={item.href}
-      aria-current={active ? 'page' : undefined}
-      className={`${base} ${active ? 'bg-brand-500/10 text-brand-500' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'} ${className}`}
-    >
-      {item.label}
-    </Link>
-  );
-};
-
-/** Enlaces del panel de usuario (compartido entre desktop y mobile). */
-const UserMenuLinks = ({ isAuthenticated, isAdmin, routes, menuItemClass }) => {
-  const userLinks = [
-    { label: 'Mi panel', to: routes.dashboard, icon: LayoutDashboard },
-    { label: 'Perfil', to: routes.dashboardProfile, icon: User },
-    { label: 'Contactos', to: routes.dashboardContacts, icon: Users },
-    { label: 'Privacidad', to: routes.dashboardPrivacy, icon: ShieldCheck },
-    { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
-    { label: 'Pedidos', to: routes.dashboardOrders, icon: Package },
-  ];
-
-  return (
-    <>
-      {!isAdmin && (
-        <>
-          {userLinks.map(({ label, to, icon: Icon }) => (
-            <Link key={to} role="menuitem" to={to} className={`${menuItemClass} rounded-lg px-3`}>
-              <Icon size={18} aria-hidden="true" />
-              {label}
-            </Link>
-          ))}
-        </>
-      )}
-      {isAdmin && (
-        <Link role="menuitem" to="/admin" className={`${menuItemClass} rounded-lg px-3 text-brand-500`}>
-          <Settings size={18} /> Panel administrativo
-        </Link>
-      )}
-      <button
-        type="button"
-        role="menuitem"
-        className={`${menuItemClass} rounded-lg px-3 text-rose-700 hover:bg-rose-50 hover:text-rose-700`}
-      >
-        <LogOut size={18} /> Cerrar sesión
-      </button>
-    </>
-  );
-};
+const menuItem =
+  'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text';
 
 export const Navbar = () => {
   const { user, logout, isAuthenticated, loading } = useAuth();
@@ -133,20 +79,17 @@ export const Navbar = () => {
     navigate(routes.home, { replace: true });
   };
 
-  const menuItem =
-    'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900';
-
   return (
     <header
       className={`sticky top-0 z-40 border-b backdrop-blur-md transition-all duration-300 ${
         scrolled
-          ? 'border-border bg-white/90 shadow-soft'
-          : 'border-border/60 bg-white/70'
+          ? 'border-brand-border bg-white/90 shadow-soft'
+          : 'border-brand-border/60 bg-white/70'
       }`}
     >
       <div className="container-page flex h-16 items-center justify-between">
-        <Link to={routes.home} className="flex items-center gap-2.5 font-bold tracking-tight text-neutral-900" aria-label="Tu QR te Cuida, ir al inicio">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white shadow-soft">
+        <Link to={routes.home} className="flex items-center gap-2.5 font-bold tracking-tight text-brand-text" aria-label="Tu QR te Cuida, ir al inicio">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent text-white shadow-soft">
             <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
           </span>
           <span className="text-[15px]">Tu QR te Cuida</span>
@@ -154,18 +97,34 @@ export const Navbar = () => {
 
         <nav className="hidden items-center gap-1 text-sm font-medium md:flex" aria-label="Principal">
           {navItems.map((item) => (
-            <NavLinkItem key={item.href} item={item} isActive={isActive} variant="desktop" />
+            <Link
+              key={item.href}
+              to={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={`relative rounded-lg px-3 py-2 transition-colors ${
+                isActive(item.href) ? 'text-brand-accent' : 'text-brand-textMuted hover:text-brand-text'
+              }`}
+            >
+              {isActive(item.href) && (
+                <motion.span
+                  layoutId="nav-active"
+                  className="absolute inset-0 rounded-lg bg-brand-accent/10"
+                  transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 34 }}
+                />
+              )}
+              <span className="relative">{item.label}</span>
+            </Link>
           ))}
 
-          <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
+          <span className="mx-2 h-5 w-px bg-brand-border" aria-hidden="true" />
 
-          {loading && <span className="h-9 w-32 animate-pulse rounded-lg bg-border/60" aria-hidden="true" />}
+          {loading && <span className="h-9 w-32 animate-pulse rounded-lg bg-brand-border/60" aria-hidden="true" />}
 
           {!loading && !isAuthenticated && (
             <>
               <Link
                 to={routes.login}
-                className="rounded-lg px-3 py-2 text-text-secondary transition-colors hover:text-neutral-900"
+                className="rounded-lg px-3 py-2 text-brand-textMuted transition-colors hover:text-brand-text"
               >
                 Iniciar sesión
               </Link>
@@ -182,9 +141,9 @@ export const Navbar = () => {
                 onClick={() => setDrop((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={drop}
-                className="flex items-center gap-2 rounded-full border border-border bg-white py-1 pl-1 pr-3 text-neutral-900 transition-colors hover:border-brand-500/50"
+                className="flex items-center gap-2 rounded-full border border-brand-border bg-white py-1 pl-1 pr-3 text-brand-text transition-colors hover:border-brand-accent/50"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-accent text-xs font-bold text-white">
                   {initial}
                 </span>
                 <span className="max-w-[9rem] truncate">{displayName}</span>
@@ -198,42 +157,56 @@ export const Navbar = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.98 }}
                     transition={{ duration: 0.18, ease: EASE }}
-                    className="absolute right-0 mt-2 w-60 origin-top-right overflow-hidden rounded-2xl border border-border bg-white py-1 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.35)]"
+                    className="absolute right-0 mt-2 w-60 origin-top-right overflow-hidden rounded-2xl border border-brand-border bg-white py-1 shadow-[0_24px_60px_-24px_rgba(159,18,57,0.35)]"
                   >
-                    <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
+                    <div className="flex items-center gap-3 border-b border-brand-border px-4 py-3">
+                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-accent text-sm font-bold text-white">
                         {initial}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
-                        <p className="truncate text-xs text-text-secondary">{user?.email}</p>
+                        <p className="truncate text-sm font-semibold text-brand-text">{displayName}</p>
+                        <p className="truncate text-xs text-brand-textMuted">{user?.email}</p>
                         <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset ${
-                          isAdmin ? 'bg-rose-50 text-rose-700 ring-rose-600/20' : 'bg-brand-500/10 text-brand-500 ring-brand-500/20'
+                          isAdmin ? 'bg-rose-50 text-rose-700 ring-rose-600/20' : 'bg-brand-accent/10 text-brand-accent ring-brand-accent/20'
                         }`}>
                           {isAdmin ? 'Administrador' : 'Usuario'}
                         </span>
                       </div>
                     </div>
-                    <div className="border-t border-border">
-                      {!isAdmin && (
-                        <>
-                          {navItems.filter(i => i.label !== 'Inicio').map((item) => (
-                            <NavLinkItem key={item.href} item={item} isActive={isActive} variant="desktop" className={menuItem} />
-                          ))}
-                          <UserMenuLinks isAuthenticated isAdmin={isAdmin} routes={routes} menuItemClass={menuItem} />
-                        </>
-                      )}
-                      {isAdmin && (
-                        <Link role="menuitem" to="/admin" className={`${menuItem} text-brand-500`}>
+                    {!isAdmin && (
+                      <>
+                        <Link role="menuitem" to={routes.dashboard} className={menuItem}>
+                          <LayoutDashboard size={16} /> Mi panel
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardProfile} className={menuItem}>
+                          <User size={16} /> Perfil
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardContacts} className={menuItem}>
+                          <Users size={16} /> Contactos
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardPrivacy} className={menuItem}>
+                          <ShieldCheck size={16} /> Privacidad
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardQr} className={menuItem}>
+                          <QrCode size={16} /> Mi QR
+                        </Link>
+                        <Link role="menuitem" to={routes.dashboardOrders} className={menuItem}>
+                          <Package size={16} /> Pedidos
+                        </Link>
+                      </>
+                    )}
+                    {isAdmin && (
+                      <>
+                        <Link role="menuitem" to="/admin" className={`${menuItem} text-brand-accent`}>
                           <Settings size={16} /> Panel administrativo
                         </Link>
-                      )}
-                    </div>
+                      </>
+                    )}
                     <button
                       type="button"
                       role="menuitem"
                       onClick={handleLogout}
-                      className={`${menuItem} border-t border-border text-rose-700 hover:bg-rose-50 hover:text-rose-700`}
+                      className={`${menuItem} border-t border-brand-border text-rose-700 hover:bg-rose-50 hover:text-rose-700`}
                     >
                       <LogOut size={16} /> Cerrar sesión
                     </button>
@@ -247,7 +220,7 @@ export const Navbar = () => {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-white text-neutral-900 transition-colors hover:bg-brand-50 md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-border bg-white text-brand-text transition-colors hover:bg-brand-dark md:hidden"
           aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={open}
         >
@@ -262,27 +235,71 @@ export const Navbar = () => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.28, ease: EASE }}
-            className="overflow-hidden border-t border-border bg-white md:hidden"
+            className="overflow-hidden border-t border-brand-border bg-white md:hidden"
           >
             <div className="max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto px-4 py-4">
               {navItems.map((item) => (
-                <NavLinkItem key={item.href} item={item} isActive={isActive} variant="mobile" />
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                  className={`block rounded-lg px-3 py-3 text-[15px] font-medium transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-brand-accent/10 text-brand-accent'
+                      : 'text-brand-textMuted hover:bg-brand-dark hover:text-brand-text'
+                  }`}
+                >
+                  {item.label}
+                </Link>
               ))}
 
-              <div className="my-3 h-px bg-border" />
+              <div className="my-3 h-px bg-brand-border" />
 
               {!loading && isAuthenticated && (
                 <>
-                  <div className="mb-2 flex items-center gap-3 rounded-xl bg-brand-50 p-3">
-                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
+                  <div className="mb-2 flex items-center gap-3 rounded-xl bg-brand-dark p-3">
+                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent text-sm font-bold text-white">
                       {initial}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
-                      <p className="truncate text-xs text-text-secondary">{user?.email}</p>
+                      <p className="truncate text-sm font-semibold text-brand-text">{displayName}</p>
+                      <p className="truncate text-xs text-brand-textMuted">{user?.email}</p>
                     </div>
                   </div>
-                  <UserMenuLinks isAuthenticated isAdmin={isAdmin} routes={routes} menuItemClass={menuItem} />
+                  {!isAdmin && (
+                    <>
+                      <Link to={routes.dashboard} className={`${menuItem} rounded-lg px-3`}>
+                        <LayoutDashboard size={18} /> Mi panel
+                      </Link>
+                      <Link to={routes.dashboardProfile} className={`${menuItem} rounded-lg px-3`}>
+                        <User size={18} /> Mi perfil
+                      </Link>
+                      <Link to={routes.dashboardContacts} className={`${menuItem} rounded-lg px-3`}>
+                        <Users size={18} /> Contactos
+                      </Link>
+                      <Link to={routes.dashboardPrivacy} className={`${menuItem} rounded-lg px-3`}>
+                        <ShieldCheck size={18} /> Privacidad
+                      </Link>
+                      <Link to={routes.dashboardQr} className={`${menuItem} rounded-lg px-3`}>
+                        <QrCode size={18} /> Mi QR
+                      </Link>
+                      <Link to={routes.dashboardOrders} className={`${menuItem} rounded-lg px-3`}>
+                        <Package size={18} /> Pedidos
+                      </Link>
+                    </>
+                  )}
+                  {isAdmin && (
+                    <Link to="/admin" className={`${menuItem} rounded-lg px-3 text-brand-accent`}>
+                      <Settings size={18} /> Panel administrativo
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className={`${menuItem} rounded-lg px-3 text-rose-700 hover:bg-rose-50 hover:text-rose-700`}
+                  >
+                    <LogOut size={18} /> Cerrar sesión
+                  </button>
                 </>
               )}
 
@@ -305,4 +322,3 @@ export const Navbar = () => {
 };
 
 export default Navbar;
-

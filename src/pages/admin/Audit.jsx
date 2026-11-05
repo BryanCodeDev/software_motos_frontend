@@ -57,9 +57,9 @@ export const AdminAudit = () => {
     <div className="space-y-5">
       <PageTitle title="Auditoría" description="Eventos administrativos registrados." />
 
-      <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+      <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -87,27 +87,27 @@ export const AdminAudit = () => {
       )}
 
       {loading && !error && (
-        <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
-          {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 rounded-lg bg-border/60" />)}
+        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 rounded-lg bg-brand-border/60" />)}
         </div>
       )}
 
       {!loading && !error && visible.length === 0 && (
-        <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col items-center gap-2 p-10 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+        <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] flex flex-col items-center gap-2 p-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
             <ScrollText size={22} />
           </span>
-          <p className="text-sm font-semibold text-neutral-900">Sin eventos para mostrar</p>
-          <p className="text-xs text-text-secondary">Aún no hay registros o no coinciden con el filtro.</p>
+          <p className="text-sm font-semibold text-brand-text">Sin eventos para mostrar</p>
+          <p className="text-xs text-brand-textMuted">Aún no hay registros o no coinciden con el filtro.</p>
         </div>
       )}
 
       {!loading && !error && visible.length > 0 && (
         <>
-          <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden hidden md:block">
+          <div className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] overflow-hidden hidden md:block">
             <div className="custom-scrollbar overflow-x-auto">
               <table className="table w-full text-sm">
-                <thead className="bg-brand-50/70 text-left text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
+                <thead className="bg-brand-dark/70 text-left text-[10px] font-semibold uppercase tracking-wider text-brand-textMuted">
                   <tr>
                     <th scope="col" className="px-4 py-3">Fecha</th>
                     <th scope="col" className="px-4 py-3">Actor</th>
@@ -116,17 +116,17 @@ export const AdminAudit = () => {
                     <th scope="col" className="px-4 py-3">ID</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-brand-border">
                   {visible.map((l) => (
-                    <tr key={l.id} className="transition-colors hover:bg-brand-50/60">
-                      <td className="whitespace-nowrap px-4 py-3 text-text-secondary">{formatDate(l.created_at)}</td>
-                      <td className="max-w-[220px] truncate px-4 py-3 text-neutral-900" title={l.actor_email || ''}>
-                        {l.actor_email || <span className="text-text-secondary">Sistema</span>}
-                        {l.ip_address && <span className="block text-[11px] text-text-secondary">{l.ip_address}</span>}
+                    <tr key={l.id} className="transition-colors hover:bg-brand-dark/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-brand-textMuted">{formatDate(l.created_at)}</td>
+                      <td className="max-w-[220px] truncate px-4 py-3 text-brand-text" title={l.actor_email || ''}>
+                        {l.actor_email || <span className="text-brand-textMuted">Sistema</span>}
+                        {l.ip_address && <span className="block text-[11px] text-brand-textMuted">{l.ip_address}</span>}
                       </td>
                       <td className="px-4 py-3"><Badge tone={actionTone(l.action)} size="sm">{l.action}</Badge></td>
-                      <td className="px-4 py-3 text-neutral-900">{l.entity_type}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-text-secondary">{l.entity_id}</td>
+                      <td className="px-4 py-3 text-brand-text">{l.entity_type}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-brand-textMuted">{l.entity_id}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -136,15 +136,15 @@ export const AdminAudit = () => {
 
           <ul className="space-y-3 md:hidden">
             {visible.map((l) => (
-              <li key={l.id} className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-4">
+              <li key={l.id} className="rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] p-4">
                 <div className="flex items-start justify-between gap-2">
                   <Badge tone={actionTone(l.action)} size="sm">{l.action}</Badge>
-                  <span className="text-right text-[11px] text-text-secondary">{formatDate(l.created_at)}</span>
+                  <span className="text-right text-[11px] text-brand-textMuted">{formatDate(l.created_at)}</span>
                 </div>
-                <p className="mt-3 break-all text-sm font-medium text-neutral-900">
+                <p className="mt-3 break-all text-sm font-medium text-brand-text">
                   {l.actor_email || 'Sistema'}
                 </p>
-                <p className="mt-1 text-xs text-text-secondary">
+                <p className="mt-1 text-xs text-brand-textMuted">
                   {l.entity_type} · <span className="font-mono">#{l.entity_id}</span>
                   {l.ip_address && <> · {l.ip_address}</>}
                 </p>
@@ -152,7 +152,7 @@ export const AdminAudit = () => {
             ))}
           </ul>
 
-          <p className="text-center text-xs text-text-secondary">
+          <p className="text-center text-xs text-brand-textMuted">
             Mostrando {visible.length} de {logs.length} eventos
           </p>
         </>
@@ -162,5 +162,3 @@ export const AdminAudit = () => {
 };
 
 export default AdminAudit;
-
-

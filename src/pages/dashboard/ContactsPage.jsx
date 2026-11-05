@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { Badge, ConfirmDialog } from '../../components/ui-kit';
 
-const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
-const iconCls = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary';
+const panel = 'rounded-2xl border border-brand-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const iconCls = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-textMuted';
 const inputCls = 'h-11 pl-10 text-base sm:text-sm';
 
 const emptyForm = {
@@ -47,10 +47,21 @@ export const ContactsPage = () => {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      await loadContacts();
+      try {
+        const res = await api.get('/contacts');
+        if (!mounted) return;
+        setContacts(res.data.contacts || res.data || []);
+      } catch (error) {
+        if (!mounted) return;
+        if (!(error.response && error.response.status === 404)) {
+          toast.error('No se pudieron cargar los contactos');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
     })();
     return () => { mounted = false; };
-  }, [loadContacts]);
+  }, [toast]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -124,14 +135,14 @@ export const ContactsPage = () => {
 
       <section ref={formRef} className={`${panel} scroll-mt-24 p-5 sm:p-6 lg:p-8`} aria-labelledby="contact-form-title">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
+          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-accent/10 text-brand-accent ring-1 ring-brand-accent/15">
             {editingId ? <Pencil size={18} aria-hidden="true" /> : <Users size={18} aria-hidden="true" />}
           </span>
           <div>
-            <h2 id="contact-form-title" className="text-base font-semibold text-neutral-900">
+            <h2 id="contact-form-title" className="text-base font-semibold text-brand-text">
               {editingId ? 'Editar contacto' : 'Agregar contacto'}
             </h2>
-            <p className="text-xs text-text-secondary">
+            <p className="text-xs text-brand-textMuted">
               {editingId ? 'Modifica los datos y guarda los cambios.' : 'Añade a una persona de confianza.'}
             </p>
           </div>
@@ -169,7 +180,7 @@ export const ContactsPage = () => {
             </div>
           </div>
 
-          <div className="space-y-3 rounded-xl border border-border bg-brand-50/60 p-4">
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-dark/60 p-4">
             <CheckField
               id="c_public"
               checked={form.is_public}
@@ -178,7 +189,7 @@ export const ContactsPage = () => {
               hint="Aparecerá en tu página de emergencia cuando alguien escanee el QR."
             />
             {form.is_public && (
-              <div className="space-y-3 border-t border-border pl-7 pt-3">
+              <div className="space-y-3 border-t border-brand-border pl-7 pt-3">
                 <CheckField
                   id="c_dphone"
                   checked={form.display_phone}
@@ -211,7 +222,7 @@ export const ContactsPage = () => {
 
       <section className={`${panel} p-5 sm:p-6 lg:p-8`} aria-labelledby="contact-list-title">
         <div className="mb-5 flex items-center justify-between">
-          <h2 id="contact-list-title" className="text-base font-semibold text-neutral-900">Lista de contactos</h2>
+          <h2 id="contact-list-title" className="text-base font-semibold text-brand-text">Lista de contactos</h2>
           {sorted.length > 0 && (
             <Badge tone="brand" size="md">
               {sorted.length} {sorted.length === 1 ? 'contacto' : 'contactos'}
@@ -232,31 +243,31 @@ export const ContactsPage = () => {
               return (
                 <li
                   key={c.id}
-                  className={`rounded-xl border p-4 transition-colors hover:border-brand-500/30 hover:bg-brand-50/50 ${
-                    editingId === c.id ? 'border-brand-500/50 bg-brand-500/5' : 'border-border bg-white'
+                  className={`rounded-xl border p-4 transition-colors hover:border-brand-accent/30 hover:bg-brand-dark/50 ${
+                    editingId === c.id ? 'border-brand-accent/50 bg-brand-accent/5' : 'border-brand-border bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <span
-                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-500/10 text-sm font-bold text-brand-500 ring-1 ring-brand-500/15"
+                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-accent/10 text-sm font-bold text-brand-accent ring-1 ring-brand-accent/15"
                     >
                       {c.name?.charAt(0)?.toUpperCase() || '?'}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className="truncate text-sm font-semibold text-neutral-900">{c.name}</p>
+                        <p className="truncate text-sm font-semibold text-brand-text">{c.name}</p>
                         <Badge tone={c.is_public ? 'success' : 'neutral'} size="sm">
                           {c.is_public ? <Eye size={11} aria-hidden="true" /> : <EyeOff size={11} aria-hidden="true" />}
                           {c.is_public ? 'Público' : 'Privado'}
                         </Badge>
                       </div>
-                      {c.relationship && <p className="mt-0.5 truncate text-xs text-text-secondary">{c.relationship}</p>}
+                      {c.relationship && <p className="mt-0.5 truncate text-xs text-brand-textMuted">{c.relationship}</p>}
                     </div>
                     <div className="flex flex-none gap-1">
                       <button
                         type="button"
                         onClick={() => edit(c)}
-                        className="rounded-lg p-2 text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900"
+                        className="rounded-lg p-2 text-brand-textMuted transition-colors hover:bg-brand-dark hover:text-brand-text"
                         aria-label={`Editar ${c.name}`}
                       >
                         <Pencil size={16} />
@@ -273,7 +284,7 @@ export const ContactsPage = () => {
                   </div>
 
                   {(c.phone || c.email) && (
-                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border pt-3 text-xs text-text-secondary sm:pl-[52px]">
+                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-brand-border pt-3 text-xs text-brand-textMuted sm:pl-[52px]">
                       {c.phone && (
                         <span className="flex min-w-0 items-center gap-1.5">
                           <PhoneIcon size={14} className="flex-none" aria-hidden="true" />
@@ -287,7 +298,7 @@ export const ContactsPage = () => {
                         </span>
                       )}
                       {c.is_public && shown.length > 0 && (
-                        <span className="text-brand-500">Visible: {shown.join(' y ')}</span>
+                        <span className="text-brand-accent">Visible: {shown.join(' y ')}</span>
                       )}
                     </div>
                   )}
@@ -299,8 +310,8 @@ export const ContactsPage = () => {
       </section>
 
       <Modal isOpen={!!toDelete} onClose={() => setToDelete(null)} title="Eliminar contacto">
-        <p className="mb-6 text-sm leading-relaxed text-text-secondary">
-          ¿Seguro que deseas eliminar a <span className="font-semibold text-neutral-900">{toDelete?.name}</span>?
+        <p className="mb-6 text-sm leading-relaxed text-brand-textMuted">
+          ¿Seguro que deseas eliminar a <span className="font-semibold text-brand-text">{toDelete?.name}</span>?
           Dejará de aparecer en tu página de emergencia. Esta acción no se puede deshacer.
         </p>
         <div className="flex justify-end gap-3">
@@ -317,4 +328,3 @@ export const ContactsPage = () => {
 };
 
 export default ContactsPage;
-
