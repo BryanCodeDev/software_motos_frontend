@@ -75,7 +75,7 @@ export const HeroSection = () => {
 
   return (
     <section
-      className="relative isolate flex w-full items-center overflow-hidden min-h-[640px] lg:min-h-0 lg:aspect-video lg:max-h-[100svh] pt-24 pb-16 lg:pt-20 lg:pb-0 bg-[url('/herosection-movil.webp')] bg-cover bg-center md:bg-[url('/herosection.webp')]"
+      className="relative isolate flex w-full items-center overflow-hidden min-h-[640px] lg:min-h-0 lg:aspect-video lg:max-h-[100svh] pt-24 pb-16 lg:pt-20 lg:pb-0 bg-[url('/herosection-movil.webp')] bg-contain bg-center md:bg-[url('/herosection.webp')] md:bg-cover"
     >
       {/* Degradado superior: asegura legibilidad del navbar transparente */}
       <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-black/60 to-transparent" aria-hidden="true" />
