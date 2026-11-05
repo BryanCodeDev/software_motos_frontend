@@ -1,42 +1,85 @@
 import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
-  Search, X, ShieldCheck, ShieldOff, ChevronLeft, ChevronRight, BadgeCheck, AlertTriangle, Loader2,
+  Search, X, ShieldCheck, ShieldOff, ChevronLeft, ChevronRight, AlertTriangle, Loader2, Users as UsersIcon,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
+import { Button } from '../../components/ui';
+import Modal from '../../components/Modal';
 import { Badge } from '../../components/ui-kit';
 
-const badge = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset';
+/* ───────── Constantes de diseño (alineadas con Home) ───────── */
+const EASE = [0.22, 1, 0.36, 1];
+const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
-const searchInputClasses =
-  'block w-full pl-10 pr-4 py-2.5 text-base sm:text-sm rounded-lg border border-border bg-brand-50 text-neutral-900 placeholder-text-text-secondary/60 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed';
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+};
 
-const searchSelectClasses =
-  'block w-full pl-3 pr-10 py-2.5 text-base sm:text-sm rounded-lg border border-border bg-brand-50 text-neutral-900 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors cursor-pointer appearance-none disabled:opacity-60 disabled:cursor-not-allowed';
-
-const RoleBadge = ({ role }) => (
-  <span
-    className={`${badge} ${
-      role === 'admin'
-        ? 'bg-brand-500/10 text-brand-500 ring-brand-500/20'
-        : 'bg-slate-100 text-slate-700 ring-slate-500/20'
-    }`}
-  >
-    {role === 'admin' ? 'Administrador' : 'Usuario'}
-  </span>
-);
+const ROLE_TABS = [
+  { id: '', label: 'Todos' },
+  { id: 'user', label: 'Usuarios' },
+  { id: 'admin', label: 'Administradores' },
+];
 
 const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
-const Avatar = ({ email }) => (
-  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500/10 text-sm font-bold text-brand-500">
+/* ───────── Piezas ───────── */
+const RoleBadge = ({ role }) => (
+  <Badge tone={role === 'admin' ? 'brand' : 'neutral'} size="sm">
+    {role === 'admin' && <ShieldCheck size={11} aria-hidden="true" />}
+    {role === 'admin' ? 'Administrador' : 'Usuario'}
+  </Badge>
+);
+
+const Avatar = ({ email, admin }) => (
+  <span
+    className={`flex h-10 w-10 flex-none items-center justify-center rounded-full text-sm font-bold ring-1 ${
+      admin ? 'bg-brand-500 text-white ring-brand-500' : 'bg-brand-500/10 text-brand-500 ring-brand-500/15'
+    }`}
+  >
     {(email || '?').charAt(0).toUpperCase()}
   </span>
 );
 
+const RoleAction = ({ u, meId, busy, onChange }) => {
+  if (meId === u.id) return <Badge tone="info" size="sm">Tu cuenta</Badge>;
+  const toAdmin = u.role === 'user';
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => onChange(u, toAdmin ? 'admin' : 'user')}
+      className={`focus-ring inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        toAdmin
+          ? 'border-brand-500/30 text-brand-500 hover:bg-brand-500/10'
+          : 'border-amber-300 text-amber-700 hover:bg-amber-50'
+      }`}
+    >
+      {busy ? <Loader2 size={14} className="animate-spin" /> : toAdmin ? <ShieldCheck size={14} /> : <ShieldOff size={14} />}
+      {toAdmin ? 'Hacer admin' : 'Quitar admin'}
+    </button>
+  );
+};
+
+const ErrorBanner = ({ message, onRetry }) => (
+  <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 text-sm text-rose-700" role="alert">
+    <AlertTriangle size={18} className="flex-none" aria-hidden="true" />
+    <span className="min-w-0 flex-1">{message}</span>
+    <button type="button" onClick={onRetry} className="flex-none font-semibold underline underline-offset-2">Reintentar</button>
+  </div>
+);
+
+/* ───────── Página ───────── */
 export const AdminUsers = () => {
   const toast = useToast();
   const { user: me } = useAuth();
@@ -48,7 +91,7 @@ export const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [confirmRole, setConfirmRole] = useState(null);
+  const [confirm, setConfirm] = useState(null); // { user, role }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,11 +114,17 @@ export const AdminUsers = () => {
     return () => clearTimeout(t);
   }, [load]);
 
-  const submitSearch = (e) => {
-    e.preventDefault();
-    setFilters((f) => ({ ...f, q: input.trim() }));
-    setPage(1);
-  };
+  // Búsqueda en vivo con retardo
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const q = input.trim();
+      setFilters((f) => (f.q === q ? f : { ...f, q }));
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [input]);
+
+  const hasFilters = !!(input || filters.q || filters.role);
 
   const clearFilters = () => {
     setInput('');
@@ -83,15 +132,16 @@ export const AdminUsers = () => {
     setPage(1);
   };
 
-  const changeRole = async (u, newRole) => {
-    const msg = newRole === 'admin'
-      ? `¿Dar permisos de administrador a ${u.email}?`
-      : `¿Quitar permisos de administrador a ${u.email}?`;
-    if (!window.confirm(msg)) return;
+  const askChangeRole = (u, role) => setConfirm({ user: u, role });
+
+  const doChangeRole = async () => {
+    if (!confirm) return;
+    const { user: u, role } = confirm;
     setBusyId(u.id);
     try {
-      await api.patch(`/admin/users/${u.id}/role`, { role: newRole });
+      await api.patch(`/admin/users/${u.id}/role`, { role });
       toast.success('Rol actualizado');
+      setConfirm(null);
       load();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo cambiar el rol');
@@ -100,180 +150,242 @@ export const AdminUsers = () => {
     }
   };
 
-  const RoleAction = ({ u }) => {
-    if (me?.id === u.id) return <span className="text-xs font-medium text-text-secondary">Tu cuenta</span>;
-    const busy = busyId === u.id;
-    const toAdmin = u.role === 'user';
-    return (
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => changeRole(u, toAdmin ? 'admin' : 'user')}
-        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-          toAdmin
-            ? 'border-brand-500/30 text-brand-500 hover:bg-brand-500/10'
-            : 'border-amber-300 text-amber-700 hover:bg-amber-50'
-        }`}
-      >
-        {busy ? <Loader2 size={14} className="animate-spin" /> : toAdmin ? <ShieldCheck size={14} /> : <ShieldOff size={14} />}
-        {toAdmin ? 'Hacer admin' : 'Quitar admin'}
-      </button>
-    );
-  };
+  const confirming = confirm && busyId === confirm.user.id;
 
   return (
-    <div className="space-y-5">
-      <PageTitle title="Gestión de usuarios" description="Administra cuentas y roles." />
+    <MotionConfig reducedMotion="user">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
+        <motion.div variants={item}>
+          <PageTitle title="Gestión de usuarios" description="Administra cuentas y roles." />
+        </motion.div>
 
-      <form onSubmit={submitSearch} className="rounded-2xl border border-border bg-white shadow-[0_10px_30px_-10px_rgba(159,18,57,0.12)] p-4 sm:p-6 sm:flex sm:items-center sm:gap-4 lg:gap-6">
-        <div className="relative flex-1 min-w-0">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
-            <Search size={18} />
-          </div>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Buscar por email o ID"
-            aria-label="Buscar usuarios"
-            className={searchInputClasses}
-          />
-        </div>
-        <select
-          value={filters.role}
-          onChange={(e) => { setFilters((f) => ({ ...f, role: e.target.value })); setPage(1); }}
-          aria-label="Filtrar por rol"
-          className={searchSelectClasses}
+        {/* Barra de búsqueda y filtros */}
+        <motion.form
+          variants={item}
+          onSubmit={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, q: input.trim() })); setPage(1); }}
+          className={`${panel} flex flex-col gap-3 p-4 lg:flex-row lg:items-center`}
+          role="search"
         >
-          <option value="">Todos los roles</option>
-          <option value="user">Usuario</option>
-          <option value="admin">Administrador</option>
-        </select>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6">
-          <button type="submit" className="btn-primary flex-1 sm:flex-none !px-6 !py-3 text-sm font-semibold">Buscar</button>
-          {(input || filters.q || filters.role) && (
-            <button type="button" onClick={clearFilters} className="btn-outline !px-4 !py-2.5 text-sm" aria-label="Limpiar filtros">
-              <X size={16} className="mr-1 sm:mr-2" /> Limpiar
-            </button>
-          )}
-        </div>
-      </form>
-
-      {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-5/50 p-4 text-sm text-rose-700 flex items-center gap-3">
-          <AlertTriangle size={18} /> {error}
-          <button type="button" onClick={load} className="ml-auto font-semibold underline">Reintentar</button>
-        </div>
-      )}
-
-      {loading && !error && (
-        <div className="rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)] animate-pulse space-y-3 p-4" aria-busy="true">
-          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-lg bg-border/60" />)}
-        </div>
-      )}
-
-      {!loading && !error && users.length === 0 && (
-        <div className="rounded-2xl border border-border bg-white shadow-[0_10px_30px_-10px_rgba(159,18,57,0.12)] p-10 sm:p-12 text-center">
-          <div className="flex h-16 w-16 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500 mx-auto mb-4">
-            <Search size={20} strokeWidth={2} />
+          <div className="relative min-w-0 flex-1">
+            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Buscar por email o ID"
+              aria-label="Buscar usuarios"
+              className="input !pl-10 !pr-10 !text-base sm:!text-sm"
+            />
+            <AnimatePresence>
+              {input && (
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.7 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => setInput('')}
+                  aria-label="Borrar búsqueda"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900"
+                >
+                  <X size={15} />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
-          <p className="text-sm font-semibold text-neutral-900">No se encontraron usuarios</p>
-          <p className="mt-1 text-xs text-text-secondary">Prueba con otra búsqueda o limpia los filtros.</p>
-          {(input || filters.q || filters.role) && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="mt-5 btn-outline !px-5 !py-2.5 text-sm font-semibold"
-            >
-              <X size={16} className="mr-1" /> Limpiar todo
+
+          <div role="tablist" aria-label="Filtrar por rol" className="custom-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-border bg-brand-50/50 p-1">
+            {ROLE_TABS.map((t) => {
+              const active = filters.role === t.id;
+              return (
+                <button
+                  key={t.id || 'all'}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => { setFilters((f) => ({ ...f, role: t.id })); setPage(1); }}
+                  className={`focus-ring relative flex-none rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                    active ? 'text-white' : 'text-text-secondary hover:text-neutral-900'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="users-role-tab"
+                      className="absolute inset-0 rounded-lg bg-brand-500 shadow-soft"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {hasFilters && (
+            <button type="button" onClick={clearFilters} className="btn-outline flex-none px-4 py-2.5 text-sm">
+              <X size={16} aria-hidden="true" /> Limpiar
             </button>
           )}
-        </div>
-      )}
+        </motion.form>
 
-      {!loading && !error && users.length > 0 && (
-        <>
-          <div className="rounded-2xl border border-border bg-white shadow-[0_10px_30px_-10px_rgba(159,18,57,0.12)] overflow-hidden hidden md:block">
-            <div className="custom-scrollbar overflow-x-auto">
-              <table className="table w-full text-sm">
-                <thead className="bg-brand-50/50 text-left text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-                  <tr>
-                    <th scope="col" className="px-4 py-4">Usuario</th>
-                    <th scope="col" className="px-4 py-4">Rol</th>
-                    <th scope="col" className="px-4 py-4">Registrado</th>
-                    <th scope="col" className="px-4 py-4 text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {users.map((u) => (
-                    <tr key={u.id} className="transition-colors hover:bg-brand-50/40 border-b border-border/50 last:border-0">
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar email={u.email} />
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-neutral-900">{u.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4"><RoleBadge role={u.role} /></td>
-                      <td className="whitespace-nowrap px-4 py-4 text-text-secondary">{formatDate(u.created_at)}</td>
-                      <td className="px-4 py-4 text-right"><RoleAction u={u} /></td>
+        {error && <ErrorBanner message={error} onRetry={load} />}
+
+        {loading && !error && (
+          <div className={`${panel} animate-pulse space-y-3 p-4`} aria-busy="true" aria-live="polite">
+            {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-14 rounded-lg bg-border/60" />)}
+          </div>
+        )}
+
+        {!loading && !error && users.length === 0 && (
+          <div className={`${panel} flex flex-col items-center p-10 text-center sm:p-12`}>
+            <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+              <UsersIcon size={22} aria-hidden="true" />
+            </span>
+            <p className="text-sm font-semibold text-neutral-900">No se encontraron usuarios</p>
+            <p className="mt-1 text-xs text-text-secondary">Prueba con otra búsqueda o limpia los filtros.</p>
+            {hasFilters && (
+              <button type="button" onClick={clearFilters} className="btn-outline mt-5 px-5 py-2.5 text-sm">
+                <X size={16} aria-hidden="true" /> Limpiar todo
+              </button>
+            )}
+          </div>
+        )}
+
+        {!loading && !error && users.length > 0 && (
+          <>
+            {/* Escritorio */}
+            <div className={`${panel} hidden overflow-hidden md:block`}>
+              <div className="custom-scrollbar overflow-x-auto">
+                <table className="table w-full text-sm">
+                  <thead className="bg-brand-50/70 text-left text-xs font-semibold text-text-secondary">
+                    <tr>
+                      <th scope="col" className="px-5 py-3.5">Usuario</th>
+                      <th scope="col" className="px-5 py-3.5">Rol</th>
+                      <th scope="col" className="px-5 py-3.5">Registrado</th>
+                      <th scope="col" className="px-5 py-3.5 text-right">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <ul className="space-y-3 md:hidden">
-            {users.map((u) => (
-              <li key={u.id} className="rounded-2xl border border-border bg-white shadow-[0_10px_30px_-10px_rgba(159,18,57,0.12)] p-4 sm:p-5">
-                <div className="flex items-start gap-4">
-                  <Avatar email={u.email} />
-                  <div className="min-w-0 flex-1">
-                    <p className="break-all text-sm font-medium text-neutral-900">{u.email}</p>
-                    <p className="mt-0.5 text-xs text-text-secondary">Registrado el {formatDate(u.created_at)}</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    <RoleBadge role={u.role} />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <RoleAction u={u} />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          {pagination && (
-            <div className="flex flex-col items-center justify-between gap-3 text-xs text-text-secondary sm:flex-row">
-              <span>
-                {pagination.total} usuarios · Página {pagination.page} de {pagination.pages}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={pagination.page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="btn-outline !px-3 !py-2 text-sm"
-                >
-                  <ChevronLeft size={16} /> Anterior
-                </button>
-                <button
-                  type="button"
-                  disabled={pagination.page >= pagination.pages}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="btn-outline !px-3 !py-2 text-sm"
-                >
-                  Siguiente <ChevronRight size={16} />
-                </button>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {users.map((u, i) => (
+                      <motion.tr
+                        key={u.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 10) * 0.03 }}
+                        className="transition-colors hover:bg-brand-50/50"
+                      >
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <Avatar email={u.email} admin={u.role === 'admin'} />
+                            <p className="min-w-0 truncate font-medium text-neutral-900">{u.email}</p>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5"><RoleBadge role={u.role} /></td>
+                        <td className="whitespace-nowrap px-5 py-3.5 text-text-secondary">{formatDate(u.created_at)}</td>
+                        <td className="px-5 py-3.5 text-right">
+                          <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} />
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
-        </>
-      )}
-    </div>
+
+            {/* Móvil */}
+            <ul className="space-y-3 md:hidden">
+              {users.map((u, i) => (
+                <motion.li
+                  key={u.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: EASE, delay: Math.min(i, 8) * 0.04 }}
+                  className={`${panel} p-4`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar email={u.email} admin={u.role === 'admin'} />
+                    <div className="min-w-0 flex-1">
+                      <p className="break-all text-sm font-semibold text-neutral-900">{u.email}</p>
+                      <p className="mt-0.5 text-xs text-text-secondary">Registrado el {formatDate(u.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                    <RoleBadge role={u.role} />
+                    <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} />
+                  </div>
+                </motion.li>
+              ))}
+            </ul>
+
+            {/* Paginación */}
+            {pagination && (
+              <div className="flex flex-col items-center justify-between gap-3 text-xs text-text-secondary sm:flex-row">
+                <span>
+                  <span className="font-semibold text-neutral-900">{pagination.total}</span>{' '}
+                  {pagination.total === 1 ? 'usuario' : 'usuarios'} · Página {pagination.page} de {pagination.pages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={pagination.page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="btn-outline px-3 py-2 text-sm"
+                  >
+                    <ChevronLeft size={16} aria-hidden="true" /> Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pagination.page >= pagination.pages}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="btn-outline px-3 py-2 text-sm"
+                  >
+                    Siguiente <ChevronRight size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Confirmación de cambio de rol */}
+        <Modal
+          isOpen={!!confirm}
+          onClose={() => (confirming ? null : setConfirm(null))}
+          title={confirm?.role === 'admin' ? 'Dar permisos de administrador' : 'Quitar permisos de administrador'}
+        >
+          <div className="mb-6 flex items-start gap-3">
+            <span
+              className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ring-1 ${
+                confirm?.role === 'admin'
+                  ? 'bg-brand-500/10 text-brand-500 ring-brand-500/15'
+                  : 'bg-amber-50 text-amber-600 ring-amber-600/15'
+              }`}
+            >
+              {confirm?.role === 'admin' ? <ShieldCheck size={18} aria-hidden="true" /> : <ShieldOff size={18} aria-hidden="true" />}
+            </span>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              {confirm?.role === 'admin' ? (
+                <>
+                  <span className="break-all font-semibold text-neutral-900">{confirm?.user.email}</span> podrá gestionar
+                  usuarios, pedidos y la auditoría de la plataforma.
+                </>
+              ) : (
+                <>
+                  <span className="break-all font-semibold text-neutral-900">{confirm?.user.email}</span> perderá el
+                  acceso al panel administrativo.
+                </>
+              )}
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setConfirm(null)} disabled={confirming}>Cancelar</Button>
+            <Button variant={confirm?.role === 'admin' ? 'primary' : 'danger'} onClick={doChangeRole} disabled={confirming}>
+              {confirming && <Loader2 size={16} className="animate-spin" />}
+              {confirming ? 'Guardando...' : confirm?.role === 'admin' ? 'Dar permisos' : 'Quitar permisos'}
+            </Button>
+          </div>
+        </Modal>
+      </motion.div>
+    </MotionConfig>
   );
 };
 

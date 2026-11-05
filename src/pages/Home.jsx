@@ -1,5 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import { routes } from '../utils/routes';
 import {
   ScanLine,
@@ -23,6 +23,8 @@ import Seo from '../components/Seo';
 import { HeroSection } from '../components/HeroSection';
 import { Reveal, SectionHeading, Accordion } from '../components/Section';
 import { homeFaqs } from '../data/faqs';
+
+const EASE = [0.22, 1, 0.36, 1];
 
 /* Banda de confianza justo debajo del hero */
 const trust = [
@@ -96,266 +98,351 @@ const products = [
   },
 ];
 
-export const Home = () => (
-  <main className="min-h-screen flex flex-col">
-    <Seo
-      title="Inicio"
-      description="Perfil digital de emergencia con código QR para motociclistas. Si tú no puedes hablar, tu información importante puede hacerlo por ti."
-    />
+/* Datos estructurados: las preguntas frecuentes pueden aparecer como resultado enriquecido en Google. */
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: homeFaqs.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+};
 
-    <HeroSection />
-
-    {/* BANDA DE CONFIANZA */}
-    <section className="border-b border-border/60 bg-white">
-      <div className="container-page">
-        <ul className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border/60">
-          {trust.map(({ icon: Icon, t, d }) => (
-            <li key={t} className="flex items-start gap-3 p-5 lg:p-6">
-              <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
-                <Icon className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-neutral-900">{t}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">{d}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-
-    {/* POR QUÉ */}
-    <section className="section section-alt">
-      <div className="container-page">
-        <SectionHeading
-          eyebrow="Por qué Tu QR te Cuida"
-          title="En un accidente, cada minuto cuenta"
-          subtitle="Quien te auxilia necesita saber a quién llamar y qué debe tener en cuenta. Tu QR se lo dice, solo con lo que tú decidiste compartir."
-        />
-        <div className="grid gap-6 md:grid-cols-3">
-          {pillars.map(({ icon: Icon, title, text }, i) => (
-            <Reveal key={title} delay={i * 0.1}>
-              <Card className="h-full p-7">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-neutral-900">{title}</h3>
-                <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    {/* QUÉ PASA EN UNA EMERGENCIA */}
-    <section className="section">
-      <div className="container-page">
-        <SectionHeading
-          eyebrow="En el momento clave"
-          title="Así te ayuda tu QR en tres pasos"
-          subtitle="Pensado para que cualquier persona pueda actuar rápido, incluso sin conocerte."
-        />
-        <ol className="relative grid gap-6 md:grid-cols-3">
-          <span
-            className="absolute left-[16%] right-[16%] top-7 hidden h-px bg-gradient-to-r from-brand-500/10 via-brand-500/40 to-brand-500/10 md:block"
-            aria-hidden="true"
-          />
-          {scene.map(({ icon: Icon, title, text }, i) => (
-            <Reveal key={title} delay={i * 0.12}>
-              <li className="relative flex flex-col items-center text-center">
-                <span className="relative z-10 mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white shadow-glow ring-8 ring-brand-50">
-                  <Icon className="h-6 w-6" />
-                </span>
-                <h3 className="mb-1.5 font-semibold text-neutral-900">{title}</h3>
-                <p className="max-w-xs text-sm leading-relaxed text-text-secondary">{text}</p>
-              </li>
-            </Reveal>
-          ))}
-        </ol>
-        <p className="mt-10 text-center text-xs text-text-secondary">
-          Se necesita conexión a internet para abrir el perfil vinculado al QR.
-        </p>
-      </div>
-    </section>
-
-    {/* CÓMO FUNCIONA */}
-    <section className="section section-alt">
-      <div className="container-page">
-        <SectionHeading
-          eyebrow="Cómo funciona"
-          title="De tu perfil a tu casco en seis pasos"
-          subtitle="Un proceso corto, claro y sin costos ocultos."
-        />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {steps.map(({ icon: Icon, title, text }, i) => (
-            <Reveal key={title} delay={(i % 3) * 0.1}>
-              <Card className="h-full p-6">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-3xl font-bold text-brand-200">{String(i + 1).padStart(2, '0')}</span>
-                </div>
-                <h3 className="mb-1.5 font-semibold text-neutral-900">{title}</h3>
-                <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-        <div className="mt-10 text-center">
-          <Link
-            to={routes.howItWorks}
-            className="inline-flex items-center gap-2 font-semibold text-brand-500 transition-colors hover:text-brand-600"
-          >
-            Ver el proceso completo <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-
-    {/* PRIVACIDAD (sección oscura) */}
-    <section className="section relative overflow-hidden bg-brand-900 text-white">
-      <div
-        className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-500/30 blur-3xl"
+/** Tarjeta con un reflejo suave que sigue al cursor. */
+const SpotlightCard = ({ children, className = '' }) => {
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
+  return (
+    <Card className={`group relative h-full overflow-hidden ${className}`} onMouseMove={onMove}>
+      <span
         aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          background:
+            'radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(159,18,57,0.09), transparent 70%)',
+        }}
       />
-      <div className="container-page relative">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <Reveal>
-            <span className="mb-4 inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">
-              <span className="h-px w-6 bg-brand-300" aria-hidden="true" />
-              Privacidad y seguridad
-            </span>
-            <h2 className="mb-5 text-3xl font-bold leading-tight lg:text-4xl">Tus datos, bajo tus reglas</h2>
-            <p className="mb-6 leading-relaxed text-white/80">
-              Tu QR nunca contiene datos personales: solo apunta a tu perfil, y el perfil muestra
-              únicamente los campos que marcaste como públicos. Lo demás se queda contigo.
-            </p>
-            <Link
-              to={routes.privacy}
-              className="inline-flex items-center gap-2 font-semibold text-brand-300 transition-colors hover:text-white"
-            >
-              Leer cómo protegemos tu información <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Reveal>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {privacyPoints.map(({ icon: Icon, t, d }, i) => (
-              <Reveal key={t} delay={i * 0.08}>
-                <div className="h-full rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-                  <Icon className="mb-3 h-5 w-5 text-brand-300" />
-                  <h3 className="mb-1 text-sm font-semibold">{t}</h3>
-                  <p className="text-xs leading-relaxed text-white/70">{d}</p>
+      <div className="relative">{children}</div>
+    </Card>
+  );
+};
+
+export const Home = () => {
+  const reduce = useReducedMotion();
+
+  return (
+    <main id="contenido" className="flex min-h-screen flex-col">
+      <Seo
+        title="Inicio"
+        description="Perfil digital de emergencia con código QR para motociclistas. Si tú no puedes hablar, tu información importante puede hacerlo por ti."
+        jsonLd={faqJsonLd}
+      />
+
+      <HeroSection />
+
+      {/* BANDA DE CONFIANZA */}
+      <section className="border-b border-border/60 bg-white" aria-label="Por qué confiar">
+        <div className="container-page">
+          <ul className="grid grid-cols-2 divide-x divide-y divide-border/60 lg:grid-cols-4 lg:divide-y-0">
+            {trust.map(({ icon: Icon, t, d }, i) => (
+              <Reveal as="li" key={t} delay={i * 0.07} y={14} className="group flex items-start gap-3 p-5 lg:p-6">
+                <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">{t}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">{d}</p>
                 </div>
+              </Reveal>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* POR QUÉ */}
+      <section className="section section-alt">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="Por qué Tu QR te Cuida"
+            title="En un accidente, cada minuto cuenta"
+            subtitle="Quien te auxilia necesita saber a quién llamar y qué debe tener en cuenta. Tu QR se lo dice, solo con lo que tú decidiste compartir."
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {pillars.map(({ icon: Icon, title, text }, i) => (
+              <Reveal key={title} delay={i * 0.1}>
+                <SpotlightCard className="p-7">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:rotate-6 group-hover:bg-brand-500 group-hover:text-white">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-neutral-900">{title}</h3>
+                  <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
+                </SpotlightCard>
               </Reveal>
             ))}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* PRODUCTOS */}
-    <section className="section">
-      <div className="container-page">
-        <SectionHeading
-          eyebrow="Productos"
-          title="Empieza gratis, suma el sticker cuando quieras"
-          subtitle="Tu QR digital te acompaña desde el primer día. El sticker físico lo pone a la vista en tu casco o moto."
-        />
-        <div className="grid gap-6 md:grid-cols-3">
-          {products.map((p, i) => (
-            <Reveal key={p.name} delay={i * 0.1}>
-              <Card className={`flex h-full flex-col p-7 ${p.free ? 'border-brand-500/40 shadow-glow' : ''}`}>
-                <div className="mb-3 h-6">
-                  {p.free && (
-                    <span className="inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
-                      Más elegido
-                    </span>
-                  )}
-                  {p.coming && (
-                    <span className="inline-block rounded-full border border-brand-500/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
-                      Próximamente
-                    </span>
-                  )}
-                </div>
-                <h3 className="mb-1 text-lg font-semibold text-neutral-900">{p.name}</h3>
-                <div className="mb-3 text-2xl font-bold text-neutral-900">{p.price}</div>
-                <p className="mb-5 text-sm leading-relaxed text-text-secondary">{p.desc}</p>
-                <ul className="mb-7 space-y-2 text-sm text-text-secondary">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-auto">
-                  {p.coming ? (
-                    <span className="text-xs text-text-secondary">Aún no está disponible</span>
-                  ) : p.free ? (
-                    <Link to={routes.register} className="btn-primary w-full">Obtener mi QR gratis</Link>
-                  ) : (
-                    <Link to={routes.products} className="btn-outline w-full">Quiero el sticker</Link>
-                  )}
-                </div>
-              </Card>
-            </Reveal>
-          ))}
+      {/* QUÉ PASA EN UNA EMERGENCIA */}
+      <section className="section">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="En el momento clave"
+            title="Así te ayuda tu QR en tres pasos"
+            subtitle="Pensado para que cualquier persona pueda actuar rápido, incluso sin conocerte."
+          />
+          <ol className="relative grid gap-10 md:grid-cols-3 md:gap-6">
+            {/* La línea se dibuja al entrar en pantalla */}
+            <motion.span
+              aria-hidden="true"
+              className="absolute left-[16%] right-[16%] top-7 hidden h-px origin-left bg-gradient-to-r from-brand-500/20 via-brand-500/50 to-brand-500/20 md:block"
+              initial={reduce ? false : { scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 1.1, delay: 0.2, ease: EASE }}
+            />
+            {scene.map(({ icon: Icon, title, text }, i) => (
+              <Reveal as="li" key={title} delay={i * 0.18} className="relative flex flex-col items-center text-center">
+                <span className="relative mb-5 flex h-14 w-14 items-center justify-center">
+                  <span aria-hidden="true" className="absolute inset-0 rounded-full bg-brand-500/40 animate-pulse-ring" />
+                  <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white shadow-glow ring-8 ring-brand-50 transition-transform duration-300 hover:scale-110">
+                    <Icon className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                </span>
+                <h3 className="mb-1.5 font-semibold text-neutral-900">{title}</h3>
+                <p className="max-w-xs text-sm leading-relaxed text-text-secondary">{text}</p>
+              </Reveal>
+            ))}
+          </ol>
+          <p className="mt-10 text-center text-xs text-text-secondary">
+            Se necesita conexión a internet para abrir el perfil vinculado al QR.
+          </p>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* FAQ */}
-    <section className="section section-alt">
-      <div className="container-page">
-        <SectionHeading
-          eyebrow="Preguntas frecuentes"
-          title="Resolvemos tus dudas"
-          subtitle="Lo esencial antes de crear tu perfil de emergencia."
-        />
-        <div className="mx-auto max-w-3xl">
-          <Accordion items={homeFaqs} />
-          <div className="mt-8 text-center">
+      {/* CÓMO FUNCIONA */}
+      <section className="section section-alt">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="Cómo funciona"
+            title="De tu perfil a tu casco en seis pasos"
+            subtitle="Un proceso corto, claro y sin costos ocultos."
+          />
+          <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {steps.map(({ icon: Icon, title, text }, i) => (
+              <Reveal as="li" key={title} delay={(i % 3) * 0.1} className="list-none">
+                <Card className="group h-full p-6">
+                  <div className="mb-5 flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <span
+                      className="text-3xl font-bold tabular-nums text-brand-200 transition-colors duration-300 group-hover:text-brand-500"
+                      aria-hidden="true"
+                    >
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <h3 className="mb-1.5 font-semibold text-neutral-900">
+                    <span className="sr-only">Paso {i + 1}: </span>
+                    {title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
+                </Card>
+              </Reveal>
+            ))}
+          </ol>
+          <div className="mt-10 text-center">
             <Link
-              to={routes.faq}
-              className="inline-flex items-center gap-2 font-semibold text-brand-500 transition-colors hover:text-brand-600"
+              to={routes.howItWorks}
+              className="group inline-flex items-center gap-2 font-semibold text-brand-500 transition-colors hover:text-brand-600"
             >
-              Ver todas las preguntas <ArrowRight className="h-4 w-4" />
+              Ver el proceso completo
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
             </Link>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* CTA FINAL */}
-    <section className="section">
-      <div className="container-page">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-10 text-center shadow-glow lg:p-16">
-            <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
-            <div className="relative">
-              <Globe className="mx-auto mb-5 h-8 w-8 text-brand-300" aria-hidden="true" />
-              <h2 className="mb-4 text-3xl font-bold text-white lg:text-4xl">
-                Prepárate hoy, en menos de dos minutos
+      {/* PRIVACIDAD (sección oscura) */}
+      <section className="section relative overflow-hidden bg-brand-900 text-white">
+        <div
+          className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-500/30 blur-3xl animate-float"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-brand-700/40 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="container-page relative">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal>
+              <span className="mb-4 inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">
+                <span className="h-px w-6 bg-brand-300" aria-hidden="true" />
+                Privacidad y seguridad
+              </span>
+              <h2 className="mb-5 text-3xl font-bold leading-tight [text-wrap:balance] lg:text-4xl">
+                Tus datos, bajo tus reglas
               </h2>
-              <p className="mx-auto mb-8 max-w-xl leading-relaxed text-white/80">
-                Crea tu perfil gratuito, elige qué compartir y descarga tu QR. Mañana saldrás a la
-                carretera con una protección más.
+              <p className="mb-6 leading-relaxed text-white/80">
+                Tu QR nunca contiene datos personales: solo apunta a tu perfil, y el perfil muestra
+                únicamente los campos que marcaste como públicos. Lo demás se queda contigo.
               </p>
               <Link
-                to={routes.register}
-                className="btn inline-flex bg-white px-6 py-3 text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50"
+                to={routes.privacy}
+                className="group inline-flex items-center gap-2 font-semibold text-brand-300 transition-colors hover:text-white"
               >
-                Crear mi perfil gratuito <ArrowRight className="h-4 w-4" />
+                Leer cómo protegemos tu información
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
               </Link>
-              <p className="mx-auto mt-6 max-w-lg text-xs text-white/60">
-                Herramienta de apoyo: no sustituye a los servicios oficiales de emergencia.
-              </p>
+            </Reveal>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {privacyPoints.map(({ icon: Icon, t, d }, i) => (
+                <Reveal key={t} delay={i * 0.08}>
+                  <div className="group h-full rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-300/40 hover:bg-white/10">
+                    <Icon
+                      className="mb-3 h-5 w-5 text-brand-300 transition-transform duration-300 group-hover:scale-110"
+                      aria-hidden="true"
+                    />
+                    <h3 className="mb-1 text-sm font-semibold">{t}</h3>
+                    <p className="text-xs leading-relaxed text-white/70">{d}</p>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </div>
-        </Reveal>
-      </div>
-    </section>
-  </main>
-);
+        </div>
+      </section>
+
+      {/* PRODUCTOS */}
+      <section className="section">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="Productos"
+            title="Empieza gratis, suma el sticker cuando quieras"
+            subtitle="Tu QR digital te acompaña desde el primer día. El sticker físico lo pone a la vista en tu casco o moto."
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {products.map((p, i) => (
+              <Reveal key={p.name} delay={i * 0.1}>
+                <Card
+                  className={`flex h-full flex-col p-7 ${p.free ? 'border-brand-500/40 shadow-glow' : ''} ${
+                    p.coming ? 'bg-brand-50/60' : ''
+                  }`}
+                >
+                  <div className="mb-3 h-6">
+                    {p.free && (
+                      <span className="inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                        Más elegido
+                      </span>
+                    )}
+                    {p.coming && (
+                      <span className="inline-block rounded-full border border-brand-500/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                        Próximamente
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mb-1 text-lg font-semibold text-neutral-900">{p.name}</h3>
+                  <div className="mb-3 text-2xl font-bold text-neutral-900">{p.price}</div>
+                  <p className="mb-5 text-sm leading-relaxed text-text-secondary">{p.desc}</p>
+                  <ul className="mb-7 space-y-2 text-sm text-text-secondary">
+                    {p.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-auto">
+                    {p.coming ? (
+                      <span className="text-xs text-text-secondary">Aún no está disponible</span>
+                    ) : p.free ? (
+                      <Link to={routes.register} className="btn-primary w-full">
+                        Obtener mi QR gratis
+                      </Link>
+                    ) : (
+                      <Link to={routes.products} className="btn-outline w-full">
+                        Quiero el sticker
+                      </Link>
+                    )}
+                  </div>
+                </Card>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="section section-alt">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="Preguntas frecuentes"
+            title="Resolvemos tus dudas"
+            subtitle="Lo esencial antes de crear tu perfil de emergencia."
+          />
+          <div className="mx-auto max-w-3xl">
+            <Accordion items={homeFaqs} />
+            <div className="mt-8 text-center">
+              <Link
+                to={routes.faq}
+                className="group inline-flex items-center gap-2 font-semibold text-brand-500 transition-colors hover:text-brand-600"
+              >
+                Ver todas las preguntas
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="section">
+        <div className="container-page">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-10 text-center shadow-glow lg:p-16">
+              <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
+              <div
+                className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl animate-float"
+                aria-hidden="true"
+              />
+              <div
+                className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-black/25 blur-3xl"
+                aria-hidden="true"
+              />
+              <div className="relative">
+                <Globe className="mx-auto mb-5 h-8 w-8 text-brand-300" aria-hidden="true" />
+                <h2 className="mb-4 text-3xl font-bold text-white [text-wrap:balance] lg:text-4xl">
+                  Prepárate hoy, en menos de dos minutos
+                </h2>
+                <p className="mx-auto mb-8 max-w-xl leading-relaxed text-white/80">
+                  Crea tu perfil gratuito, elige qué compartir y descarga tu QR. Mañana saldrás a la
+                  carretera con una protección más.
+                </p>
+                <Link
+                  to={routes.register}
+                  className="btn group relative inline-flex overflow-hidden bg-white px-6 py-3 text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-brand-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full motion-reduce:hidden"
+                  />
+                  Crear mi perfil gratuito
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+                </Link>
+                <p className="mx-auto mt-6 max-w-lg text-xs text-white/60">
+                  Herramienta de apoyo: no sustituye a los servicios oficiales de emergencia.
+                </p>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    </main>
+  );
+};
 
 export default Home;
