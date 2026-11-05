@@ -18,7 +18,7 @@ const Shell = ({ children, title = 'Perfil de emergencia' }) => (
     <Seo title={title} description="Información de contacto de emergencia" noindex />
     <div className="max-w-4xl mx-auto animate-slide-up">{children}</div>
     <p className="max-w-4xl mx-auto mt-12 text-center text-[11px] text-text-secondary leading-relaxed">
-      Tu QR te Cuida · <a href="https://mastercodecompany.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-500 transition-colors font-medium">MasterCode Company</a>
+      Tu QR te Cuida · <a href="https://software-motos.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-500 transition-colors font-medium">software-motos.netlify.app</a>
     </p>
   </main>
 );
@@ -77,7 +77,7 @@ const ContactCard = ({ c, displayName }) => {
         )}
         {hasPhone && (
           <a
-            href={'https://wa.me/' + phone.replace('+', '') + '?text=' + encodeURIComponent(`Hola, te escribo de parte de ${displayName} y estas como contacto de emergencia, atiende lo antes posible.`)}
+            href={'https://wa.me/' + phone.replace('+', '') + '?text=' + encodeURIComponent(`Hola ${c.name}, te escribo de parte de ${displayName}. Estas registrado como contacto de emergencia en Tu QR te Cuida (https://software-motos.netlify.app). Por favor, atiende lo antes posible. Gracias.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold text-sm py-3 hover:bg-emerald-100 hover:-translate-y-0.5 transition-all"
@@ -215,8 +215,8 @@ export const PublicEmergency = () => {
             <PhoneCall className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="text-left">
-            <strong className="block text-sm text-neutral-900">Si requiere atención inmediata</strong>
-            <span className="text-[11px] text-text-secondary">Haz clic para llamar a la línea de emergencias</span>
+            <strong className="block text-base font-extrabold text-neutral-900">Si requiere atención inmediata</strong>
+            <span className="block mt-1 text-sm font-bold text-text-secondary">Haz clic para llamar a la línea de emergencias</span>
           </div>
         </div>
       </a>
