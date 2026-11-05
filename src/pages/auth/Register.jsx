@@ -116,8 +116,8 @@ export const Register = () => {
     setLoading(true);
     try {
       await register({ ...form, role: 'user' });
-      toast.success('Cuenta creada. Verifica tu correo para activarla');
-      navigate(routes.verifyEmail);
+      toast.success('Cuenta creada');
+      navigate(routes.home);
     } catch (error) {
       try {
         showApiError(error);

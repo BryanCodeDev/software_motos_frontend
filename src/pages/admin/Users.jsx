@@ -1,21 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Search, X, ShieldCheck, ShieldOff, ChevronLeft, ChevronRight, BadgeCheck, AlertTriangle, Loader2,
-  Mail, ShieldAlert,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
-import { Badge, ConfirmDialog } from '../../components/ui-kit';
+import { Badge } from '../../components/ui-kit';
 
-  const badge = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset';
+const badge = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset';
 
-  const searchInputClasses =
-    'block w-full pl-10 pr-4 py-2.5 text-base sm:text-sm rounded-lg border border-border bg-brand-50 text-neutral-900 placeholder-text-text-secondary/60 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed';
+const searchInputClasses =
+  'block w-full pl-10 pr-4 py-2.5 text-base sm:text-sm rounded-lg border border-border bg-brand-50 text-neutral-900 placeholder-text-text-secondary/60 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed';
 
-  const searchSelectClasses =
-    'block w-full pl-3 pr-10 py-2.5 text-base sm:text-sm rounded-lg border border-border bg-brand-50 text-neutral-900 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors cursor-pointer appearance-none disabled:opacity-60 disabled:cursor-not-allowed';
+const searchSelectClasses =
+  'block w-full pl-3 pr-10 py-2.5 text-base sm:text-sm rounded-lg border border-border bg-brand-50 text-neutral-900 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors cursor-pointer appearance-none disabled:opacity-60 disabled:cursor-not-allowed';
 
 const RoleBadge = ({ role }) => (
   <span
@@ -50,7 +49,6 @@ export const AdminUsers = () => {
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [confirmRole, setConfirmRole] = useState(null);
-  const [confirmVerify, setConfirmVerify] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,26 +100,6 @@ export const AdminUsers = () => {
     }
   };
 
-  const toggleVerify = async (u) => {
-    const newVerified = !u.email_verified;
-    const msg = newVerified
-      ? `¿Marcar como verificado el correo de ${u.email}?`
-      : `¿Quitar la verificación del correo de ${u.email}?`;
-    if (!window.confirm(msg)) return;
-    setBusyId(u.id);
-    try {
-      await api.patch(`/admin/users/${u.id}/verify`, { email_verified: newVerified });
-      toast.success(newVerified ? 'Usuario verificado' : 'Verificación removida');
-      load();
-    } catch (e) {
-      toast.error(e?.response?.data?.error || 'No se pudo actualizar la verificación');
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const hasFilters = Boolean(filters.q || filters.role);
-
   const RoleAction = ({ u }) => {
     if (me?.id === u.id) return <span className="text-xs font-medium text-text-secondary">Tu cuenta</span>;
     const busy = busyId === u.id;
@@ -142,36 +120,6 @@ export const AdminUsers = () => {
       </button>
     );
   };
-
-  const VerifyAction = ({ u }) => {
-    if (me?.id === u.id) return <span className="text-xs font-medium text-text-secondary">Tu cuenta</span>;
-    const busy = busyId === u.id;
-    const toVerify = !u.email_verified;
-    return (
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => toggleVerify(u)}
-        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-          toVerify
-            ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-            : 'border-rose-300 text-rose-700 hover:bg-rose-50'
-        }`}
-      >
-        {busy ? <Loader2 size={14} className="animate-spin" /> : toVerify ? <Mail size={14} /> : <ShieldAlert size={14} />}
-        {toVerify ? 'Verificar' : 'Quitar verif.'}
-      </button>
-    );
-  };
-
-  const verified = (u) =>
-    u.email_verified === undefined ? null : u.email_verified ? (
-      <Badge tone="success" size="sm">
-        <BadgeCheck size={12} /> Verificado
-      </Badge>
-    ) : (
-      <Badge tone="neutral" size="sm">Sin verificar</Badge>
-    );
 
   return (
     <div className="space-y-5">
@@ -202,7 +150,7 @@ export const AdminUsers = () => {
         </select>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6">
           <button type="submit" className="btn-primary flex-1 sm:flex-none !px-6 !py-3 text-sm font-semibold">Buscar</button>
-          {(hasFilters || input) && (
+          {(input || filters.q || filters.role) && (
             <button type="button" onClick={clearFilters} className="btn-outline !px-4 !py-2.5 text-sm" aria-label="Limpiar filtros">
               <X size={16} className="mr-1 sm:mr-2" /> Limpiar
             </button>
@@ -230,7 +178,7 @@ export const AdminUsers = () => {
           </div>
           <p className="text-sm font-semibold text-neutral-900">No se encontraron usuarios</p>
           <p className="mt-1 text-xs text-text-secondary">Prueba con otra búsqueda o limpia los filtros.</p>
-          {(hasFilters || input) && (
+          {(input || filters.q || filters.role) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -244,38 +192,37 @@ export const AdminUsers = () => {
 
       {!loading && !error && users.length > 0 && (
         <>
-        <div className="rounded-2xl border border-border bg-white shadow-[0_10px_30px_-10px_rgba(159,18,57,0.12)] overflow-hidden hidden md:block">
-          <div className="custom-scrollbar overflow-x-auto">
-            <table className="table w-full text-sm">
-              <thead className="bg-brand-50/50 text-left text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-                <tr>
-                  <th scope="col" className="px-4 py-4">Usuario</th>
-                  <th scope="col" className="px-4 py-4">Rol</th>
-                  <th scope="col" className="px-4 py-4">Registrado</th>
-                  <th scope="col" className="px-4 py-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {users.map((u) => (
-                  <tr key={u.id} className="transition-colors hover:bg-brand-50/40 border-b border-border/50 last:border-0">
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar email={u.email} />
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-neutral-900">{u.email}</p>
-                          <div className="mt-0.5">{verified(u)}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4"><RoleBadge role={u.role} /></td>
-                    <td className="whitespace-nowrap px-4 py-4 text-text-secondary">{formatDate(u.created_at)}</td>
-                    <td className="px-4 py-4 text-right"><RoleAction u={u} /><VerifyAction u={u} /></td>
+          <div className="rounded-2xl border border-border bg-white shadow-[0_10px_30px_-10px_rgba(159,18,57,0.12)] overflow-hidden hidden md:block">
+            <div className="custom-scrollbar overflow-x-auto">
+              <table className="table w-full text-sm">
+                <thead className="bg-brand-50/50 text-left text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
+                  <tr>
+                    <th scope="col" className="px-4 py-4">Usuario</th>
+                    <th scope="col" className="px-4 py-4">Rol</th>
+                    <th scope="col" className="px-4 py-4">Registrado</th>
+                    <th scope="col" className="px-4 py-4 text-right">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {users.map((u) => (
+                    <tr key={u.id} className="transition-colors hover:bg-brand-50/40 border-b border-border/50 last:border-0">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar email={u.email} />
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-neutral-900">{u.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4"><RoleBadge role={u.role} /></td>
+                      <td className="whitespace-nowrap px-4 py-4 text-text-secondary">{formatDate(u.created_at)}</td>
+                      <td className="px-4 py-4 text-right"><RoleAction u={u} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
           <ul className="space-y-3 md:hidden">
             {users.map((u) => (
@@ -290,11 +237,9 @@ export const AdminUsers = () => {
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-4">
                   <div className="flex flex-wrap gap-1.5">
                     <RoleBadge role={u.role} />
-                    {verified(u)}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <RoleAction u={u} />
-                    <VerifyAction u={u} />
                   </div>
                 </div>
               </li>
@@ -333,5 +278,3 @@ export const AdminUsers = () => {
 };
 
 export default AdminUsers;
-
-

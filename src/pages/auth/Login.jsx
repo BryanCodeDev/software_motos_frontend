@@ -107,13 +107,8 @@ export const Login = () => {
     setLoading(true);
     try {
       const res = await login(data);
-      if (res.data?.user?.email_verified) {
-        toast.success('Sesión iniciada');
-        navigate(routes.dashboard);
-      } else {
-        toast.info('Verifica tu correo para continuar');
-        navigate(routes.verifyEmail);
-      }
+      toast.success('Sesión iniciada');
+      navigate(routes.dashboard);
     } catch (error) {
       try {
         showApiError(error);
