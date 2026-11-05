@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Menu, X, LogOut, User, Users, LayoutDashboard, ChevronDown, ChevronRight, ShieldCheck, QrCode, Package, Settings, UserPlus, LogIn,
 } from 'lucide-react';
@@ -31,21 +31,6 @@ const listVariants = { hidden: {}, show: { transition: { staggerChildren: 0.045,
 const rowVariants = {
   hidden: { opacity: 0, x: -12 },
   show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: EASE } },
-};
-
-/** Barra fina que muestra cuánto se ha avanzado en la página. */
-const ScrollProgress = ({ hidden }) => {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
-  return (
-    <motion.span
-      aria-hidden="true"
-      style={{ scaleX }}
-      className={`absolute inset-x-0 bottom-0 h-0.5 origin-left bg-gradient-to-r from-brand-500 to-brand-400 transition-opacity duration-300 ${
-        hidden ? 'opacity-0' : 'opacity-100'
-      }`}
-    />
-  );
 };
 
 /** Enlace de navegación reutilizable para desktop y mobile. `pill` activa el indicador deslizante. */
@@ -416,8 +401,7 @@ export const Navbar = () => {
           )}
         </AnimatePresence>
 
-        <ScrollProgress hidden={onHero} />
-      </header>
+        </header>
 
       {/* Fondo del menú móvil: fuera del header porque su backdrop-filter atraparía el position:fixed. */}
       <AnimatePresence>
