@@ -227,9 +227,9 @@ export const DashboardIndex = () => {
       </section>
 
       {/* Accesos rápidos */}
-      <section>
+      <section className="px-4 sm:px-6 lg:px-8">
         <h2 className="mb-4 text-base font-semibold text-neutral-900">Accesos rápidos</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {QUICK_ACTIONS.map((action, idx) => {
             const { to, label, desc, icon: Icon, tone } = action;
             return (
