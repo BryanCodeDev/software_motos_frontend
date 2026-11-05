@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AuthContext } from './AuthContext';
-import api from '../api/client';
+import api, { TOKEN_KEY } from '../api/client';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,12 +23,18 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     const { data } = await api.post('/auth/login', credentials);
+    if (data.accessToken) {
+      localStorage.setItem(TOKEN_KEY, data.accessToken);
+    }
     setUser(data.user);
     return data;
   };
 
   const register = async (payload) => {
     const { data } = await api.post('/auth/register', payload);
+    if (data.accessToken) {
+      localStorage.setItem(TOKEN_KEY, data.accessToken);
+    }
     setUser(data.user);
     return data;
   };
@@ -39,6 +45,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // ignore
     }
+    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
 
