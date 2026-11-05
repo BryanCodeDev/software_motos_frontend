@@ -218,7 +218,13 @@ export const ProfilePage = () => {
         if (!mounted) return;
         const p = res.data.profile || res.data;
         const loaded = Object.fromEntries(
-          fields.map((f) => [f.key, f.input === 'checkbox' ? Boolean(p[f.key]) : (p[f.key] ?? '')])
+          fields.map((f) => {
+            let v = p[f.key] ?? '';
+            if (f.input === 'date' && v) {
+              v = String(v).slice(0, 10);
+            }
+            return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
+          })
         );
         setForm({
           ...emptyForm,
