@@ -42,8 +42,8 @@ export const SidebarContent = ({
   onLogout,
 }) => (
   <div className="flex flex-col h-full">
-    <div className="flex items-center gap-3 rounded-2xl bg-brand-500/5 p-4 border border-border/50">
-      <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-500 text-white shadow-[0_8px_24px_-6px_rgba(159,18,57,0.35)]">
+    <div className="sticky top-0 z-10 flex items-center gap-3 rounded-none bg-white p-3 border-b border-border mb-4">
+      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500 text-white shadow-[0_8px_24px_-6px_rgba(159,18,57,0.35)]">
         {initial}
       </span>
       <div className="min-w-0">
@@ -148,8 +148,8 @@ export const SidebarDesktop = ({
   onNavigate,
   onLogout,
 }) => (
-  <aside className="hidden w-72 flex-none border-r border-border/50 bg-white lg:block">
-    <div className="custom-scrollbar sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto p-6">
+  <aside className="hidden w-72 flex-none border-r border-border/50 bg-white lg:block flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar p-4">
       <SidebarContent
         items={items}
         displayName={displayName}

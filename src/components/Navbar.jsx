@@ -36,7 +36,7 @@ const NavLinkItem = ({ item, isActive, variant = 'desktop', className = '' }) =>
 };
 
 /** Enlaces del panel de usuario (compartido entre desktop y mobile). */
-const UserMenuLinks = ({ isAuthenticated, isAdmin, routes, menuItemClass }) => {
+const UserMenuLinks = ({ isAuthenticated, isAdmin, routes, menuItemClass, onLogout }) => {
   const userLinks = [
     { label: 'Mi panel', to: routes.dashboard, icon: LayoutDashboard },
     { label: 'Perfil', to: routes.dashboardProfile, icon: User },
@@ -66,6 +66,7 @@ const UserMenuLinks = ({ isAuthenticated, isAdmin, routes, menuItemClass }) => {
       <button
         type="button"
         role="menuitem"
+        onClick={onLogout}
         className={`${menuItemClass} rounded-lg px-3 text-rose-700 hover:bg-rose-50 hover:text-rose-700`}
       >
         <LogOut size={18} /> Cerrar sesión
@@ -217,10 +218,10 @@ export const Navbar = () => {
                     <div className="border-t border-border">
                       {!isAdmin && (
                         <>
-                          {navItems.filter(i => i.label !== 'Inicio').map((item) => (
+                          {navItems.filter(i => i.label !== 'Inicio' && i.label !== 'Privacidad').map((item) => (
                             <NavLinkItem key={item.href} item={item} isActive={isActive} variant="desktop" className={menuItem} />
                           ))}
-                          <UserMenuLinks isAuthenticated isAdmin={isAdmin} routes={routes} menuItemClass={menuItem} />
+                          <UserMenuLinks isAuthenticated isAdmin={isAdmin} routes={routes} menuItemClass={menuItem} onLogout={handleLogout} />
                         </>
                       )}
                       {isAdmin && (
@@ -229,14 +230,6 @@ export const Navbar = () => {
                         </Link>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleLogout}
-                      className={`${menuItem} border-t border-border text-rose-700 hover:bg-rose-50 hover:text-rose-700`}
-                    >
-                      <LogOut size={16} /> Cerrar sesión
-                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -265,7 +258,7 @@ export const Navbar = () => {
             className="overflow-hidden border-t border-border bg-white md:hidden"
           >
             <div className="max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto px-4 py-4">
-              {navItems.map((item) => (
+              {navItems.filter(i => i.label !== 'Privacidad').map((item) => (
                 <NavLinkItem key={item.href} item={item} isActive={isActive} variant="mobile" />
               ))}
 
@@ -282,7 +275,7 @@ export const Navbar = () => {
                       <p className="truncate text-xs text-text-secondary">{user?.email}</p>
                     </div>
                   </div>
-                  <UserMenuLinks isAuthenticated isAdmin={isAdmin} routes={routes} menuItemClass={menuItem} />
+                  <UserMenuLinks isAuthenticated isAdmin={isAdmin} routes={routes} menuItemClass={menuItem} onLogout={handleLogout} />
                 </>
               )}
 
