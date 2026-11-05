@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/client';
+import { routes } from '../../utils/routes';
 import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
 import { Button } from '../../components/ui';
@@ -7,12 +9,11 @@ import { PageTitle, PageLoader } from '../../components/DashPage';
 import {
   User, Image, AlertTriangle, Stethoscope, Pill, FileText, Save, Power, Lock, EyeOff, Eye,
 } from 'lucide-react';
-import { Badge, StepIndicator } from '../../components/ui-kit';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 const fieldDefs = [
-  { key: 'display_name', label: 'Nombre o identificación', icon: User, category: 'Identificación' },
+  { key: 'display_name', label: 'Nombre', icon: User, category: 'Identificación' },
   { key: 'photo_url', label: 'Fotografía', icon: Image, category: 'Identificación' },
   { key: 'allergies', label: 'Alergias', icon: AlertTriangle, category: 'Médico' },
   { key: 'medical_conditions', label: 'Condiciones médicas', icon: Stethoscope, category: 'Médico' },
@@ -20,13 +21,18 @@ const fieldDefs = [
   { key: 'additional_info', label: 'Información adicional', icon: FileText, category: 'Otros' },
 ];
 
-const categories = ['Identificación', 'Médico', 'Otros'];
+const categories = [
+  { name: 'Identificación', hint: 'Quién eres' },
+  { name: 'Médico', hint: 'Lo que el personal de salud necesita saber' },
+  { name: 'Otros', hint: 'Notas extra' },
+];
 
 export const PrivacyPage = () => {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toggles, setToggles] = useState({});
+  const [dirty, setDirty] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,9 +46,10 @@ export const PrivacyPage = () => {
         });
       }
       setToggles(map);
+      setDirty(false);
     } catch (error) {
       if (!(error.response && error.response.status === 404)) {
-        toast.error('No se pudo cargar la configuración de privacidad');
+        toast.error('No pudimos cargar tu configuración de privacidad. Recarga la página.');
       }
     } finally {
       setLoading(false);
@@ -58,6 +65,7 @@ export const PrivacyPage = () => {
 
   const toggle = (key) => {
     setToggles((prev) => ({ ...prev, [key]: !isPublic(key) }));
+    setDirty(true);
   };
 
   const hideAll = () => {
@@ -66,18 +74,20 @@ export const PrivacyPage = () => {
       fieldDefs.forEach((f) => { next[f.key] = false; });
       return next;
     });
+    setDirty(true);
   };
 
   const save = async () => {
     setSaving(true);
     try {
       await api.patch('/privacy/me', { settings: toggles });
-      toast.success('Configuración de privacidad guardada');
+      setDirty(false);
+      toast.success('Privacidad guardada');
     } catch (error) {
       try {
         showApiError(error);
       } catch (err) {
-        toast.error(err?.message || 'No se pudo guardar la privacidad');
+        toast.error(err?.message || 'No pudimos guardar los cambios. Intenta de nuevo.');
       }
     } finally {
       setSaving(false);
@@ -93,23 +103,26 @@ export const PrivacyPage = () => {
     <div className="space-y-6">
       <PageTitle
         title="Privacidad de tu perfil"
-        description="Elige qué información se muestra en tu página pública de emergencia."
+        description="Elige qué información verá quien escanee tu QR. Todo lo que dejes oculto solo lo ves tú."
       />
 
-      {/* Resumen */}
       <section className={`${panel} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`} aria-label="Resumen de visibilidad">
         <div className="flex items-center gap-4">
-          <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 ${
-            publicCount === 0 ? 'bg-brand-500/10 text-brand-500 ring-brand-500/15' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-          }`}>
+          <span
+            className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ring-1 ${
+              publicCount === 0 ? 'bg-brand-500/10 text-brand-500 ring-brand-500/15' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+            }`}
+          >
             {publicCount === 0 ? <EyeOff size={22} aria-hidden="true" /> : <Eye size={22} aria-hidden="true" />}
           </span>
           <div>
             <p className="text-base font-semibold text-neutral-900">
-              {publicCount} de {fieldDefs.length} campos son públicos
+              {publicCount} de {fieldDefs.length} datos son visibles
             </p>
             <p className="text-xs text-text-secondary">
-              {publicCount === 0 ? 'Tu página pública no muestra datos personales.' : 'Solo se publica lo que activaste.'}
+              {publicCount === 0
+                ? 'Quien escanee tu QR no verá datos personales.'
+                : 'Quien escanee tu QR solo verá lo que activaste.'}
             </p>
           </div>
         </div>
@@ -122,17 +135,17 @@ export const PrivacyPage = () => {
 
       <div className={`${panel} p-5 sm:p-6 lg:p-8`}>
         <div className="space-y-8">
-          {categories.map((cat) => (
-            <section key={cat} aria-labelledby={`cat-${cat}`}>
-              <h2
-                id={`cat-${cat}`}
-                className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary"
-              >
-                {cat}
-              </h2>
+          {categories.map(({ name, hint }) => (
+            <section key={name} aria-labelledby={`cat-${name}`}>
+              <div className="mb-3">
+                <h2 id={`cat-${name}`} className="text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary">
+                  {name}
+                </h2>
+                <p className="mt-0.5 text-xs text-text-secondary">{hint}</p>
+              </div>
               <ul className="space-y-3">
                 {fieldDefs
-                  .filter((f) => f.category === cat)
+                  .filter((f) => f.category === name)
                   .map((f) => {
                     const pub = isPublic(f.key);
                     const Icon = f.icon;
@@ -150,7 +163,7 @@ export const PrivacyPage = () => {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-neutral-900">{f.label}</p>
                             <p className={`text-xs ${pub ? 'font-medium text-brand-500' : 'text-text-secondary'}`}>
-                              {pub ? 'Público' : 'Oculto'}
+                              {pub ? 'Visible al escanear tu QR' : 'Oculto: solo lo ves tú'}
                             </p>
                           </div>
                         </div>
@@ -158,7 +171,7 @@ export const PrivacyPage = () => {
                           type="button"
                           role="switch"
                           aria-checked={pub}
-                          aria-label={`${f.label}: ${pub ? 'público' : 'oculto'}`}
+                          aria-label={`${f.label}: ${pub ? 'visible' : 'oculto'}`}
                           onClick={() => toggle(f.key)}
                           className={`relative h-7 w-12 flex-none rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                             pub ? 'bg-brand-500' : 'bg-slate-300'
@@ -181,8 +194,8 @@ export const PrivacyPage = () => {
         <div className="mt-8 flex items-start gap-2.5 rounded-xl bg-brand-50/70 p-4 text-xs leading-relaxed text-text-secondary">
           <Lock size={14} className="mt-0.5 flex-shrink-0 text-brand-500" aria-hidden="true" />
           <p>
-            Los cambios se aplican a tu página pública al guardar. Los datos marcados como privados nunca se
-            envían en la respuesta del perfil público.
+            Los cambios se aplican a tu página de emergencia cuando pulsas guardar. Los datos ocultos nunca se
+            envían a quien escanea tu QR.
           </p>
         </div>
 
@@ -190,8 +203,8 @@ export const PrivacyPage = () => {
           <Button type="button" variant="ghost" onClick={hideAll} disabled={publicCount === 0}>
             <EyeOff size={16} /> Ocultar todo
           </Button>
-          <Button onClick={save} disabled={saving} variant="primary">
-            <Save size={16} /> {saving ? 'Guardando...' : 'Guardar configuración'}
+          <Button onClick={save} disabled={saving || !dirty} variant="primary">
+            <Save size={16} /> {saving ? 'Guardando...' : 'Guardar cambios'}
           </Button>
         </div>
       </div>
@@ -199,21 +212,15 @@ export const PrivacyPage = () => {
       <section className="rounded-2xl border border-rose-200 bg-rose-50/50 p-5 sm:p-6 lg:p-8" aria-labelledby="deactivate-title">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-2xl">
-            <h2 id="deactivate-title" className="mb-1.5 text-base font-semibold text-neutral-900">Desactivar perfil</h2>
+            <h2 id="deactivate-title" className="mb-1.5 text-base font-semibold text-neutral-900">Desactivar mi perfil</h2>
             <p className="text-sm leading-relaxed text-text-secondary">
-              Puedes desactivar tu perfil de emergencia. Su página pública dejará de estar disponible y tu código
-              QR mostrará un aviso de inactivo.
+              Si lo desactivas, tu página de emergencia deja de estar disponible y quien escanee tu QR verá un
+              aviso de que ya no está activo. Escríbenos y lo hacemos por ti.
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="flex-none"
-            onClick={() =>
-              toast.info('Desactivación de perfil: control administrativo pendiente de implementación')
-            }
-          >
-            <Power size={16} /> Desactivar perfil
-          </Button>
+          <Link to={routes.contact} className="btn-outline flex-none">
+            <Power size={16} /> Pedir la desactivación
+          </Link>
         </div>
       </section>
     </div>
@@ -221,4 +228,3 @@ export const PrivacyPage = () => {
 };
 
 export default PrivacyPage;
-
