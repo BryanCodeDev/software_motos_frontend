@@ -212,7 +212,7 @@ export const SidebarDesktop = ({
   onLogout,
   loggingOut,
 }) => (
-  <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 flex-none border-r border-border/60 bg-white lg:block">
+  <aside className="fixed top-16 inset-x-0 bottom-0 left-0 z-40 hidden h-[calc(100vh-4rem)] w-72 flex-none border-r border-border/60 bg-white lg:block">
     <div className="custom-scrollbar h-full overflow-y-auto p-4">
       <SidebarContent
         items={items}
