@@ -5,7 +5,7 @@ import { Navbar } from './Navbar';
 import {
   SidebarDesktop,
   SidebarMobile,
-  SidebarHeaderMobile,
+  MobileBottomNav,
 } from './Sidebar';
 import { useAuth } from '../contexts/useAuth';
 import { routes } from '../utils/routes';
@@ -147,17 +147,10 @@ export const DashboardShell = ({ requiredRole, maxWidth }) => {
           />
 
           <div className="flex min-w-0 flex-1 flex-col lg:pl-72">
-            <SidebarHeaderMobile
-              role={role}
-              currentLabel={current.label}
-              open={sidebarOpen}
-              onOpen={() => setSidebarOpen(true)}
-            />
-
             <main
               id="contenido-panel"
               tabIndex={-1}
-              className="flex-1 p-4 focus:outline-none sm:p-6 lg:px-10 lg:py-8 xl:px-14"
+              className="flex-1 overflow-x-hidden p-4 pb-24 focus:outline-none sm:p-6 sm:pb-24 lg:px-10 lg:py-8 xl:px-14"
             >
               <div className={`mx-auto ${contentWidth}`}>
                 <nav
@@ -187,6 +180,9 @@ export const DashboardShell = ({ requiredRole, maxWidth }) => {
                 </div>
               </div>
             </main>
+
+            {/* Barra de navegación inferior tipo WhatsApp (solo móvil) */}
+            <MobileBottomNav items={items} onOpenDrawer={() => setSidebarOpen(true)} />
           </div>
         </div>
       ) : (

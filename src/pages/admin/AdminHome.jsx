@@ -212,7 +212,7 @@ export const AdminHome = () => {
         <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
           {/* Pipeline de pedidos */}
           <motion.section variants={item} className={`${panel} p-4 sm:p-5 lg:col-span-2 lg:p-6`} aria-labelledby="pipeline-title">
-            <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <h2 id="pipeline-title" className="text-base font-semibold text-neutral-900">Estado de los pedidos</h2>
               <p className="text-xs text-text-secondary">{fmt(pipelineTotal)} en seguimiento</p>
             </div>
@@ -269,9 +269,9 @@ export const AdminHome = () => {
               <p className="mt-1 text-xs leading-relaxed text-white/70">
                 Usuarios que ya completaron su perfil de emergencia.
               </p>
-              <div className="my-5 flex items-center gap-4 lg:my-6">
+              <div className="my-5 flex flex-wrap items-center gap-4 lg:my-6">
                 <CoverageRing pct={coverage} reduce={reduce} />
-                <p className="text-sm text-white/75">
+                <p className="min-w-0 text-sm text-white/75">
                   <span className="block text-lg font-bold text-white">{fmt(profiles)}</span>
                   de {fmt(users)} usuarios
                 </p>

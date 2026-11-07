@@ -7,8 +7,8 @@ import Seo from '../components/Seo';
 import { Reveal, PageHeader } from '../components/Section';
 
 const principles = [
-  { icon: SlidersHorizontal, t: 'Tú decides', d: 'Cada dato es público o privado, según tú.' },
-  { icon: QrCode, t: 'El QR no guarda datos', d: 'Solo contiene un código aleatorio.' },
+  { icon: SlidersHorizontal, t: 'Tú decides', d: 'Cada dato es público o privado, campo por campo.' },
+  { icon: QrCode, t: 'El QR no guarda datos', d: 'Solo contiene un código aleatorio, nunca datos personales ni médicos.' },
   { icon: Lock, t: 'Control total', d: 'Edita, oculta o elimina tu información cuando quieras.' },
 ];
 
@@ -19,7 +19,7 @@ const sections = [
     items: [
       'Tu nombre, o la forma de identificación que prefieras mostrar.',
       'Una fotografía (opcional).',
-      'Datos de contacto de las personas a quienes avisar.',
+      'Datos de contacto de las personas a quienes avisar, con su orden de prioridad.',
       'Información médica opcional: alergias, condiciones médicas y medicamentos.',
     ],
   },
@@ -35,9 +35,9 @@ const sections = [
     icon: EyeOff,
     title: 'Quién puede ver tu información',
     items: [
-      'Solo se muestra lo que marcaste como público en tu página de emergencia.',
+      'Quien escanea tu QR activo ve únicamente los campos que marcaste como públicos, sin crear cuenta.',
       'Los datos privados nunca viajan en el QR ni en la dirección pública.',
-      'Cambias la visibilidad de cada campo desde tu cuenta.',
+      'Cambias la visibilidad de cada campo desde tu cuenta, cuando quieras.',
     ],
   },
   {
@@ -47,15 +47,17 @@ const sections = [
       'Puedes editar tu perfil en cualquier momento desde tu cuenta.',
       'Puedes solicitar la eliminación de tus datos desde los controles de privacidad.',
       'Desactivar tu QR no borra tu cuenta, y puedes volver a activarlo.',
+      'Si pierdes un sticker, lo desactivas o lo reemplazas desde tu cuenta.',
     ],
   },
   {
     icon: AlertTriangle,
     title: 'Lo que debes saber',
     items: [
-      'La plataforma no garantiza atención médica ni sustituye a los servicios oficiales de emergencia.',
+      'Es una herramienta de apoyo: no garantiza atención médica ni sustituye a los servicios oficiales de emergencia.',
+      'No podemos asegurar que alguien escanee tu código ni que la respuesta sea inmediata.',
       'Abrir el perfil requiere conexión a internet.',
-      'La durabilidad del material del sticker físico debe validarse por separado.',
+      'Estamos validando la durabilidad del material del sticker físico; colócalo en un lugar visible y protegido del desgaste.',
     ],
   },
 ];
@@ -69,7 +71,7 @@ export const Privacy = () => (
     <PageHeader
       eyebrow="Privacidad y seguridad"
       title="Tú decides qué compartes"
-      subtitle="Tu información está bajo tu control. Aquí te explicamos, sin tecnicismos, qué guardamos, quién puede verlo y cómo gestionarlo."
+      subtitle="Tu información está bajo tu control. Aquí te explicamos, sin tecnicismos, qué guardamos, quién puede verla y cómo gestionarla."
     />
 
     <section className="pb-20">
@@ -118,11 +120,12 @@ export const Privacy = () => (
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
                   <Lock className="h-5 w-5" />
                 </span>
-                <h2 className="font-semibold text-neutral-900">Datos sensibles en los registros</h2>
+                <h2 className="font-semibold text-neutral-900">Seguridad de tu cuenta y registros</h2>
               </div>
               <p className="text-sm leading-relaxed text-text-secondary">
-                Nuestros registros de auditoría no guardan copias innecesarias de datos médicos ni de
-                información privada sensible.
+                Tu sesión se protege con cookies seguras, limitamos las solicitudes repetidas y confirmamos
+                los pagos desde nuestro servidor. También registramos las acciones sensibles para poder
+                auditarlas, sin guardar copias innecesarias de datos médicos ni de información privada.
               </p>
             </Card>
           </Reveal>

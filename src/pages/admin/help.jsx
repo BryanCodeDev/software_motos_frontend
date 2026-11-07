@@ -170,13 +170,13 @@ const Section = ({ id, icon: Icon, title, lead, children }) => (
     viewport={{ once: true, margin: '-60px' }}
     transition={{ duration: 0.55, ease: EASE }}
   >
-    <div className="mb-5 flex items-start gap-3.5">
-      <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
+    <div className="mb-4 flex items-start gap-3">
+      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
         <Icon size={20} aria-hidden="true" />
       </span>
       <div>
-        <h3 className="text-xl font-bold tracking-tight text-neutral-900">{title}</h3>
-        {lead && <p className="mt-1 text-sm leading-relaxed text-text-secondary">{lead}</p>}
+        <h3 className="text-lg font-bold tracking-tight text-neutral-900">{title}</h3>
+        {lead && <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{lead}</p>}
       </div>
     </div>
     {children}
@@ -253,7 +253,7 @@ const Help = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="space-y-6 lg:space-y-8">
+      <div className="space-y-4 lg:space-y-5">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
           <PageTitle title="Documentación" description="Guía de referencia del panel administrativo y arquitectura del sistema." />
         </motion.div>
@@ -263,7 +263,7 @@ const Help = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: EASE, delay: 0.08 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-6 text-white shadow-glow sm:p-8 lg:p-10"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-5 text-white shadow-glow sm:p-6 lg:p-7"
         >
           <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
           <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-400/30 blur-3xl" />
@@ -271,8 +271,8 @@ const Help = () => {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
               <Info size={13} aria-hidden="true" /> Documentación
             </span>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight lg:text-4xl">Tu QR te Cuida</h2>
-            <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">
+            <h2 className="mt-3 text-2xl font-bold tracking-tight lg:text-3xl">Tu QR te Cuida</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/80 sm:text-base">
               Plataforma de{' '}
               <a
                 href="https://mastercodecompany.com/"
@@ -286,7 +286,7 @@ const Help = () => {
               lugar visible) con una página web de emergencia que muestra únicamente la información que el
               propietario autorizó compartir.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {['React + Vite', 'Node.js + Express', 'MySQL 8', 'Netlify · Railway'].map((t) => (
                 <span key={t} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90">
                   {t}
@@ -317,7 +317,7 @@ const Help = () => {
           </ul>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
           {/* Índice lateral */}
           <nav aria-label="Índice de la documentación" className="hidden lg:block">
             <ul className="sticky top-24 space-y-1">
@@ -349,18 +349,18 @@ const Help = () => {
             </ul>
           </nav>
 
-          <div className="min-w-0 space-y-14">
+          <div className="min-w-0 space-y-10">
             {/* Resumen */}
             <Section id="resumen" icon={Info} title="Resumen" lead="Qué problema resuelve y cuáles son sus límites.">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className={`${panel} p-5`}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className={`${panel} p-4 sm:p-5`}>
                   <h4 className="mb-2 text-sm font-semibold text-neutral-900">Problema</h4>
                   <p className="text-sm leading-relaxed text-text-secondary">
                     En un accidente la persona puede estar inconsciente y no poder indicar a quién contactar.
                     El QR permite a quienes auxilian consultar los datos que ella decidió compartir.
                   </p>
                 </div>
-                <div className={`${panel} p-5`}>
+                <div className={`${panel} p-4 sm:p-5`}>
                   <h4 className="mb-2 text-sm font-semibold text-neutral-900">Propuesta de valor</h4>
                   <ul className="space-y-2 text-sm text-text-secondary">
                     {['Acceso inmediato, sin cuenta ni app.', 'Privacidad configurable por campo.', 'Control total: desactivar o reemplazar el QR.'].map((t) => (
@@ -371,7 +371,7 @@ const Help = () => {
                   </ul>
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-3">
                 <Callout tone="warning" icon={AlertTriangle}>
                   <strong className="text-neutral-900">Herramienta de apoyo.</strong> No reemplaza los servicios
                   de emergencia, no garantiza que alguien escanee el código ni asegura una respuesta inmediata.
@@ -381,7 +381,7 @@ const Help = () => {
 
             {/* Flujo */}
             <Section id="flujo" icon={Workflow} title="Cómo funciona" lead="Del registro a la consulta en la página pública.">
-              <ol className="space-y-3">
+              <ol className="space-y-2.5">
                 {STEPS.map((s, i) => (
                   <li key={s.title} className="relative">
                     {i < STEPS.length - 1 && (
@@ -399,7 +399,7 @@ const Help = () => {
                   </li>
                 ))}
               </ol>
-              <p className="mt-4 text-sm leading-relaxed text-text-secondary">
+              <p className="mt-3 text-sm leading-relaxed text-text-secondary">
                 Además, el usuario puede comprar productos físicos con QR mediante Mercado Pago. El modelo
                 contempla un identificador digital básico gratuito y productos físicos personalizados; NFC
                 queda como evolución futura, una vez validado el prototipo físico.
@@ -408,18 +408,18 @@ const Help = () => {
 
             {/* Arquitectura */}
             <Section id="arquitectura" icon={Layers} title="Arquitectura" lead="Tecnologías y servicios previstos; su puesta en producción debe verificarse.">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {STACK.map(({ icon: Icon, name, tech, detail, host }) => (
-                  <article key={name} className={`${panel} p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)]`}>
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
+                  <article key={name} className={`${panel} p-4 sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)]`}>
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
                         <Icon size={20} aria-hidden="true" />
                       </span>
                       <Badge tone="neutral" size="sm">{host}</Badge>
                     </div>
                     <p className="text-xs font-medium text-text-secondary">{name}</p>
                     <h4 className="mt-0.5 text-base font-semibold text-neutral-900">{tech}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-text-secondary">{detail}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">{detail}</p>
                   </article>
                 ))}
               </div>
@@ -430,8 +430,8 @@ const Help = () => {
               <DocTable head={['Módulo', 'Responsabilidad']}>
                 {MODULES.map(([name, desc]) => (
                   <Tr key={name}>
-                    <td className="whitespace-nowrap px-4 py-3.5"><Code>{name}</Code></td>
-                    <td className="px-4 py-3.5 text-text-secondary">{desc}</td>
+                    <td className="whitespace-nowrap px-4 py-3"><Code>{name}</Code></td>
+                    <td className="px-4 py-3 text-text-secondary">{desc}</td>
                   </Tr>
                 ))}
               </DocTable>
@@ -442,9 +442,9 @@ const Help = () => {
               <DocTable head={['Rol', 'Acceso', 'Puede']}>
                 {ROLES.map((r) => (
                   <Tr key={r.role}>
-                    <td className="px-4 py-3.5"><Badge tone={r.tone} size="sm">{r.role}</Badge></td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-neutral-900">{r.access}</td>
-                    <td className="px-4 py-3.5 text-text-secondary">{r.can}</td>
+                    <td className="px-4 py-3"><Badge tone={r.tone} size="sm">{r.role}</Badge></td>
+                    <td className="whitespace-nowrap px-4 py-3 text-neutral-900">{r.access}</td>
+                    <td className="px-4 py-3 text-text-secondary">{r.can}</td>
                   </Tr>
                 ))}
               </DocTable>
@@ -455,10 +455,10 @@ const Help = () => {
               <DocTable head={['Método', 'Ruta', 'Descripción', 'Acceso']}>
                 {ENDPOINTS.map(([method, path, desc, access]) => (
                   <Tr key={path}>
-                    <td className="px-4 py-3.5"><Badge tone={methodTone(method)} size="sm">{method === '*' ? 'CRUD' : method}</Badge></td>
-                    <td className="whitespace-nowrap px-4 py-3.5"><Code>{path}</Code></td>
-                    <td className="px-4 py-3.5 text-text-secondary">{desc}</td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-neutral-900">{access}</td>
+                    <td className="px-4 py-3"><Badge tone={methodTone(method)} size="sm">{method === '*' ? 'CRUD' : method}</Badge></td>
+                    <td className="whitespace-nowrap px-4 py-3"><Code>{path}</Code></td>
+                    <td className="px-4 py-3 text-text-secondary">{desc}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-neutral-900">{access}</td>
                   </Tr>
                 ))}
               </DocTable>
@@ -476,7 +476,7 @@ const Help = () => {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4">
+              <div className="mt-3">
                 <Callout tone="info">
                   Antes de comercializar, confirma que estas medidas estén correctamente implementadas y revisa
                   el tratamiento de datos personales conforme a la normativa colombiana, incluidas las
@@ -487,7 +487,7 @@ const Help = () => {
 
             {/* Entorno */}
             <Section id="entorno" icon={KeyRound} title="Variables de entorno (backend)" lead="Nunca las incluyas en el repositorio; configúralas en Railway o en un archivo .env local. Haz clic en una variable para copiar su nombre.">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {ENV_GROUPS.map(({ group, vars }) => (
                   <div key={group} className={`${panel} p-4`}>
                     <h4 className="mb-2 px-2 text-sm font-semibold text-neutral-900">{group}</h4>
@@ -503,8 +503,8 @@ const Help = () => {
 
             {/* Estado */}
             <Section id="estado" icon={ListChecks} title="Estado actual y próximos pasos">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className={`${panel} p-5`}>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className={`${panel} p-4 sm:p-5`}>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-900">
                     <CheckCircle2 size={16} className="text-emerald-600" aria-hidden="true" />
                     Verificaciones reportadas
@@ -517,12 +517,12 @@ const Help = () => {
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-4 text-xs leading-relaxed text-text-secondary">
+                  <p className="mt-3 text-xs leading-relaxed text-text-secondary">
                     Resultados del informe interno; no constituyen auditoría independiente ni garantizan que el
                     sistema esté listo para producción.
                   </p>
                 </div>
-                <div className={`${panel} p-5`}>
+                <div className={`${panel} p-4 sm:p-5`}>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-900">
                     <Rocket size={16} className="text-brand-500" aria-hidden="true" />
                     Pendiente antes del lanzamiento

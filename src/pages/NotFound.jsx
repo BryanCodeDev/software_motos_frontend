@@ -7,9 +7,9 @@ import { Card } from '../components/ui';
 import Seo from '../components/Seo';
 
 const links = [
-  { icon: Package, label: 'Ver productos', to: routes.products },
+  { icon: Package, label: 'Ver productos y precios', to: routes.products },
   { icon: Compass, label: 'Cómo funciona', to: routes.howItWorks },
-  { icon: MessageCircle, label: 'Contactar con soporte', to: routes.contact },
+  { icon: MessageCircle, label: 'Escribir a soporte', to: routes.contact },
 ];
 
 export const NotFound = () => {
@@ -28,7 +28,7 @@ export const NotFound = () => {
           <div className="text-gradient mb-2 text-8xl font-extrabold leading-none">404</div>
           <h1 className="mb-2 mt-4 text-2xl font-bold text-neutral-900">Esta página no existe</h1>
           <p className="mb-8 leading-relaxed text-text-secondary">
-            Puede que el enlace esté mal escrito o que la página haya cambiado de lugar. Vuelve al
+            Es posible que el enlace esté mal escrito o que la página ya no esté disponible. Vuelve al
             inicio o elige una de estas opciones.
           </p>
           <Link to={routes.home} className="btn-primary mb-6">

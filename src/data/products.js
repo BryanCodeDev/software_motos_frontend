@@ -1,31 +1,86 @@
 import { routes } from '../utils/routes';
 
+/* ------------------------------------------------------------------ */
+/* WhatsApp para stickers personalizados                               */
+/* ------------------------------------------------------------------ */
+
+export const WHATSAPP_NUMBER = '573212209943';
+export const WHATSAPP_DISPLAY = '+57 321 220 9943';
+const WHATSAPP_MESSAGE = 'Hola, quiero un sticker QR personalizado de Tu QR te Cuida.';
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+
+/* Precio del pack de stickers (2 stickers por un solo precio) */
+export const STICKER_PACK_PRICE = '$30.000 COP';
+
+/* ------------------------------------------------------------------ */
+/* Tarjetas de producto                                                */
+/* ------------------------------------------------------------------ */
+
 export const productPlans = [
   {
-    name: 'QR digital básico + sticker físico',
-    price: '$30.000 COP',
-    desc: 'Activación única de tu perfil de emergencia digital con código QR. Incluye sticker físico personalizado con envío gratis a domicilio. Pago único, sin suscripción mensual ni anual.',
-    features: ['Perfil y contactos de emergencia', 'Control de visibilidad por campo', 'Descarga del código QR', 'Página pública autorizada', 'Sticker físico personalizado', 'Envío gratis a domicilio'],
-    action: 'Activar mi QR',
-    href: routes.dashboardQr,
-    free: false,
+    name: 'QR digital',
+    price: 'Gratis',
+    desc: 'Tu perfil de emergencia y tu código QR, listos para descargar. Es el punto de partida de todo.',
+    features: [
+      'Perfil y contactos de emergencia',
+      'Privacidad configurable campo por campo',
+      'Descarga tu QR cuando quieras',
+    ],
+    badge: 'Más elegido',
+    highlight: true,
+    action: 'Crear mi QR gratis',
+    authAction: 'Ir a Mi QR',
+    href: routes.register,
+    requiresAccount: true,
+  },
+  {
+    name: 'Stickers QR',
+    price: STICKER_PACK_PRICE,
+    priceNote: '2 stickers · pago único',
+    desc: 'Llévate dos stickers por el precio de uno. Pégalos en tu casco, tu moto o donde quieras: si ocurre una emergencia, quien los escanee verá la información que tú autorizaste.',
+    features: [
+      '2 stickers vinculados a tu perfil de emergencia',
+      'Para casco, moto, mochila o el lugar que prefieras',
+      'Sin suscripción ni costo por escaneo',
+      'Si pierdes uno, lo desactivas o lo reemplazas desde tu cuenta',
+    ],
+    badge: '2 por 1',
+    action: 'Quiero mis 2 stickers',
+    authAction: 'Pedir mis stickers',
+    href: routes.register,
+    requiresAccount: true,
+  },
+  {
+    name: 'Personalizado',
+    price: 'A tu medida',
+    priceNote: 'cotiza por WhatsApp',
+    desc: 'Un sticker pensado para ti: tu diseño, la cantidad que necesites o una solicitud especial. Escríbenos y lo acordamos.',
+    features: [
+      'Diseño y cantidad a tu medida',
+      'Atención directa por WhatsApp',
+      'Vinculado a tu perfil de emergencia',
+    ],
+    action: 'Comprar por WhatsApp',
+    whatsapp: true,
   },
   {
     name: 'QR + NFC',
     price: 'Próximamente',
     desc: 'Identificador QR con tecnología NFC. Próximamente disponible una vez validado el prototipo físico.',
-    features: ['Lectura por proximidad', 'Vinculado a tu perfil actual'],
-    action: null,
-    href: null,
+    features: [
+      'Lectura por proximidad',
+      'Vinculado a tu perfil actual',
+    ],
     coming: true,
   },
 ];
 
+/* Notas que se muestran en "Antes de elegir, ten en cuenta" */
 export const productInfoItems = [
-  'También puedes completar tu pago por WhatsApp escribiendo al +57 321 220 9943.',
-  'La activación del QR digital + sticker físico tiene un pago único de $30.000 COP con envío gratis a domicilio. No hay suscripciones ni cobros automáticos de renovación.',
-  'Al activar el QR por $30.000 COP se te envía el sticker físico personalizado sin costo adicional.',
-  'Los precios los configura el administrador y se confirman antes del pago.',
-  'El QR contiene solo el enlace con tu identificador, nunca datos personales ni médicos.',
-  'QR + NFC no está disponible para compra hasta que el prototipo físico sea validado.',
+  'El QR no guarda datos personales ni médicos: solo contiene un código aleatorio que abre tu perfil.',
+  'Quien escanea no necesita cuenta ni aplicación, y solo ve los campos que marcaste como públicos.',
+  'Para abrir el perfil se necesita conexión a internet.',
+  'Si pierdes un sticker, lo desactivas o lo reemplazas desde tu cuenta.',
+  'Estamos validando la durabilidad del sticker físico; colócalo en un lugar visible y protegido del desgaste.',
+  'Es una herramienta de apoyo: no reemplaza a los servicios oficiales de emergencia ni garantiza que alguien escanee el código.',
 ];

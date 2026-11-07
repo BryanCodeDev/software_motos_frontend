@@ -17,12 +17,12 @@ export const FAQ = () => (
   <main className="min-h-screen">
     <Seo
       title="Preguntas frecuentes"
-      description="Respuestas sobre cómo funciona el QR de emergencia, privacidad, stickers y pagos."
+      description="Respuestas claras sobre el QR de emergencia, tu privacidad, los stickers (2 por $30.000 COP) y los pagos."
     />
     <PageHeader
       eyebrow="Preguntas frecuentes"
       title="Todo lo que necesitas saber"
-      subtitle="Respuestas claras sobre cómo funciona Tu QR te Cuida, cómo protegemos tu privacidad y qué productos ofrecemos."
+      subtitle="Así funciona Tu QR te Cuida, cómo protegemos tu privacidad y qué productos ofrecemos, explicado sin tecnicismos."
     />
     <section className="pb-20">
       <div className="container-page">
@@ -39,7 +39,7 @@ export const FAQ = () => (
                 </span>
                 <h2 className="mb-2 text-lg font-bold">¿No encuentras tu respuesta?</h2>
                 <p className="mb-5 text-sm leading-relaxed text-white/80">
-                  Cuéntanos tu duda y te responderemos.
+                  Escríbenos tu duda y te respondemos al correo que nos dejes.
                 </p>
                 <Link to={routes.contact} className="btn bg-white px-5 py-2.5 text-sm text-brand-500 hover:bg-brand-50">
                   Contáctanos <ArrowRight className="h-4 w-4" />

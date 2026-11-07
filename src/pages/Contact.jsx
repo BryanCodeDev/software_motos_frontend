@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { routes } from '../utils/routes';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Mail, Phone, Send, MapPin, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, Send, MapPin, MessageCircle, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button, Input, Label, Card } from '../components/ui';
 import { useToast } from '../components/useToast';
 import api from '../api/client';
 import { showApiError } from '../utils/errors';
 import Seo from '../components/Seo';
 import { Reveal, PageHeader } from '../components/Section';
+import { WHATSAPP_URL, WHATSAPP_DISPLAY } from '../data/products';
 
 // Datos de contacto configurables mediante variables de entorno de Vite.
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL;
@@ -18,10 +19,11 @@ const SUPPORT_OFFICE = import.meta.env.VITE_SUPPORT_OFFICE;
 const channels = [
   { icon: Mail, label: 'Correo de soporte', value: SUPPORT_EMAIL, href: SUPPORT_EMAIL && `mailto:${SUPPORT_EMAIL}` },
   { icon: Phone, label: 'Teléfono', value: SUPPORT_PHONE, href: SUPPORT_PHONE && `tel:${SUPPORT_PHONE.replace(/\s/g, '')}` },
+  { icon: MessageCircle, label: 'WhatsApp · stickers personalizados', value: WHATSAPP_DISPLAY, href: WHATSAPP_URL },
   { icon: MapPin, label: 'Oficina', value: SUPPORT_OFFICE },
 ];
 
-const topics = ['Mi cuenta', 'Mi QR o sticker', 'Un pedido', 'Privacidad de mis datos', 'Otro tema'];
+const topics = ['Mi cuenta', 'Mi QR o mis stickers', 'Un pedido', 'Sticker personalizado', 'Privacidad de mis datos', 'Otro tema'];
 
 export const Contact = () => {
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,7 @@ export const Contact = () => {
       try {
         showApiError(error);
       } catch (err) {
-        toast.error(err.message || 'No pudimos enviar tu mensaje. Intenta de nuevo.');
+        toast.error(err.message || 'No pudimos enviar tu mensaje. Revisa tu conexión e inténtalo de nuevo.');
       }
     } finally {
       setLoading(false);
@@ -65,8 +67,8 @@ export const Contact = () => {
               </div>
               <h1 className="mb-3 text-2xl font-bold text-neutral-900">¡Mensaje enviado!</h1>
               <p className="mb-8 leading-relaxed text-text-secondary">
-                Gracias por escribirnos. Revisaremos tu mensaje y te responderemos al correo que nos
-                dejaste.
+                Gracias por escribirnos. Ya recibimos tu mensaje y te responderemos lo antes posible
+                al correo que nos dejaste.
               </p>
               <div className="flex flex-col justify-center gap-3 sm:flex-row">
                 <Link to={routes.home} className="btn-primary">Volver al inicio</Link>
@@ -83,12 +85,12 @@ export const Contact = () => {
     <main className="min-h-screen">
       <Seo
         title="Contacto"
-        description="Escríbenos para resolver dudas sobre tu cuenta, tu QR, tus pedidos o la privacidad de tus datos."
+        description="Escríbenos para resolver tus dudas sobre tu cuenta, tu QR, tus stickers, tus pedidos o la privacidad de tus datos."
       />
       <PageHeader
         eyebrow="Contacto"
         title="Estamos para ayudarte"
-        subtitle="¿Dudas sobre tu cuenta, tu QR o tus pedidos? Escríbenos y te respondemos."
+        subtitle="¿Dudas sobre tu cuenta, tu QR, tus stickers o tus pedidos? Escríbenos y te respondemos."
       />
 
       <section className="pb-20">
@@ -100,8 +102,9 @@ export const Contact = () => {
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <p className="leading-relaxed">
-                <strong>¿Es una emergencia?</strong> Este canal es solo para soporte de la plataforma.
-                Llama de inmediato a los servicios oficiales de emergencia.
+                <strong>¿Es una emergencia?</strong> Este canal es solo para soporte de la plataforma y no se
+                atiende en tiempo real. Si tú o alguien más necesita ayuda ahora, llama de inmediato a las
+                líneas oficiales de emergencia.
               </p>
             </div>
           </Reveal>
@@ -109,7 +112,7 @@ export const Contact = () => {
           <div className="grid gap-8 lg:grid-cols-5">
             <Reveal className="lg:col-span-2">
               <Card className="h-full p-7">
-                <h2 className="mb-6 font-semibold text-neutral-900">Otros canales de soporte</h2>
+                <h2 className="mb-6 font-semibold text-neutral-900">Otras formas de contactarnos</h2>
                 <div className="space-y-6">
                   {channels.map(({ icon: Icon, label, value, href }) => (
                     <div key={label} className="flex items-start gap-4">
@@ -134,7 +137,7 @@ export const Contact = () => {
                   ))}
                 </div>
                 <div className="mt-8 border-t border-border pt-6">
-                  <p className="mb-3 text-sm text-text-secondary">¿Quieres una respuesta inmediata?</p>
+                  <p className="mb-3 text-sm text-text-secondary">¿Prefieres una respuesta inmediata?</p>
                   <Link
                     to={routes.faq}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-500 transition-colors hover:text-brand-600"
@@ -158,7 +161,7 @@ export const Contact = () => {
                         autoComplete="name"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="Tu nombre"
+                        placeholder="Nombre y apellido"
                       />
                     </div>
                     <div className="space-y-2">

@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
   ShieldCheck, QrCode, LogOut, ArrowLeft, ArrowRight, Loader2,
-  X as XIcon, Menu as MenuIcon,
+  X as XIcon, Menu as MenuIcon, ChevronUp,
 } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { ROLE_LABEL, PANEL_LABEL } from '../utils/dashboardNav';
@@ -38,6 +38,62 @@ const ProfileCard = ({ displayName, email, initial, role }) => (
     </span>
   </div>
 );
+
+/** Barra de navegación inferior tipo WhatsApp (solo móvil).
+ * Muestra los primeros `visible` ítems y un botón "Más" que abre el drawer. */
+export const MobileBottomNav = ({ items, onOpenDrawer }) => {
+  const VISIBLE = 4;
+  const visibleItems = items.slice(0, VISIBLE);
+  const hasMore = items.length > VISIBLE;
+
+  return (
+    <nav
+      aria-label="Navegación rápida"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+    >
+      <div className="mx-auto flex max-w-xl items-center justify-around gap-1">
+        {visibleItems.map(({ label, to, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium transition-colors ${
+                isActive ? 'text-brand-500' : 'text-text-secondary hover:text-neutral-900'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
+                    isActive ? 'bg-brand-500/10 text-brand-500' : 'text-text-secondary'
+                  }`}
+                >
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <span className="truncate">{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={onOpenDrawer}
+            className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium text-brand-500 transition-colors hover:bg-brand-50"
+            aria-label="Más opciones de navegación"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
+              <ChevronUp size={20} aria-hidden="true" />
+            </span>
+            <span>Más</span>
+          </button>
+        )}
+      </div>
+    </nav>
+  );
+};
 
 export const SidebarContent = ({
   items,

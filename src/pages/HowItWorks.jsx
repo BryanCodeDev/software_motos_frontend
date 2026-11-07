@@ -12,6 +12,7 @@ import {
   Wifi,
   Smartphone,
   Eye,
+  AlertTriangle,
 } from 'lucide-react';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
@@ -26,7 +27,7 @@ const steps = [
   {
     icon: HeartPulse,
     title: 'Completa tu perfil de emergencia',
-    text: 'Agrega tu nombre y tus contactos de emergencia. Si quieres, suma datos médicos útiles, como alergias o grupo sanguíneo.',
+    text: 'Agrega tu nombre y tus contactos de emergencia, en el orden en que quieres que los llamen. Si quieres, suma datos médicos útiles, como alergias o grupo sanguíneo.',
   },
   {
     icon: SlidersHorizontal,
@@ -35,18 +36,18 @@ const steps = [
   },
   {
     icon: Download,
-    title: 'Descarga tu QR o pide un sticker',
-    text: 'Obtén tu código QR digital o solicita un sticker personalizado para llevarlo contigo.',
+    title: 'Descarga tu QR o pide tus stickers',
+    text: 'Obtén tu código QR digital gratis o pide 2 stickers por $30.000 COP para llevarlo contigo. Si quieres algo a tu medida, cotiza uno personalizado por WhatsApp.',
   },
   {
     icon: QrCode,
     title: 'Colócalo a la vista',
-    text: 'Pégalo en tu casco, moto o mochila, en un lugar visible y protegido del desgaste.',
+    text: 'Pégalo en tu casco, tu moto, tu mochila o donde quieras, en un lugar visible y protegido del desgaste.',
   },
   {
     icon: ScanLine,
     title: 'Listo para una emergencia',
-    text: 'Quien escanee el código abre tu perfil desde el navegador, sin cuenta ni aplicación, y ve solo lo que autorizaste.',
+    text: 'Quien escanee el código abre tu perfil desde el navegador, sin cuenta ni aplicación, y ve solo lo que autorizaste, con accesos directos para llamar o escribir a tus contactos.',
   },
 ];
 
@@ -54,18 +55,19 @@ const notes = [
   { icon: Wifi, text: 'Se necesita conexión a internet para abrir el perfil vinculado al QR.' },
   { icon: Smartphone, text: 'Quien escanea no necesita crear cuenta ni instalar ninguna aplicación.' },
   { icon: Eye, text: 'Tú decides qué información se ve, y puedes cambiarlo en cualquier momento.' },
+  { icon: AlertTriangle, text: 'Es una herramienta de apoyo: no reemplaza a los servicios oficiales de emergencia.' },
 ];
 
 export const HowItWorks = () => (
   <main className="min-h-screen">
     <Seo
       title="Cómo funciona"
-      description="Seis pasos para crear tu perfil de emergencia, generar tu QR y permitir el acceso autorizado a tu información."
+      description="Seis pasos para crear tu perfil de emergencia, obtener tu QR o tus stickers y compartir solo la información que tú autorizas."
     />
     <PageHeader
       eyebrow="Cómo funciona"
       title="Tu red de seguridad, lista en minutos"
-      subtitle="Seis pasos sencillos para que tu información importante esté disponible cuando haga falta."
+      subtitle="Seis pasos sencillos para que tu información importante hable por ti cuando haga falta."
     />
 
     <section className="pb-20">
@@ -115,7 +117,7 @@ export const HowItWorks = () => (
               <div className="rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-7 text-white shadow-glow">
                 <h2 className="mb-2 text-xl font-bold">¿Listo para empezar?</h2>
                 <p className="mb-6 text-sm leading-relaxed text-white/80">
-                  Crea tu perfil gratuito y ten tu QR en minutos.
+                  Crea tu perfil gratuito y ten tu QR listo en minutos.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
                   <Link
@@ -128,7 +130,7 @@ export const HowItWorks = () => (
                     to={routes.products}
                     className="btn border border-white/40 px-5 py-2.5 text-sm text-white hover:bg-white/10"
                   >
-                    Conocer el sticker
+                    Ver los stickers
                   </Link>
                 </div>
               </div>
