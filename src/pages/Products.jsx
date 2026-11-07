@@ -72,13 +72,13 @@ export const Products = () => {
       <PageHeader
         eyebrow="Productos"
         title="Elige cómo llevar tu identificación de emergencia"
-        subtitle="Empieza gratis con tu QR digital y suma stickers para pegarlos en tu casco, tu moto o donde quieras."
+        subtitle="Pega tu QR en tu casco, tu moto o donde quieras. Tu QR digital sigue siendo gratis desde tu cuenta."
         align="center"
       />
 
       <section className="pb-20">
         <div className="container-page">
-          <div className="mb-16 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-16 grid gap-6 md:grid-cols-3">
             {productPlans.map((p, i) => (
               <Reveal key={p.name} delay={(i % 4) * 0.1}>
                 <PlanCard plan={p} isAuthenticated={isAuthenticated} as="h2" />

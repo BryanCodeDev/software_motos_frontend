@@ -302,10 +302,10 @@ export const Home = () => {
         <div className="container-page">
           <SectionHeading
             eyebrow="Productos"
-            title="Empieza gratis, suma tus stickers cuando quieras"
-            subtitle="Tu QR digital te acompaña desde el primer día. Los stickers lo ponen a la vista en tu casco, tu moto o donde prefieras."
+            title="Pon tu QR a la vista"
+            subtitle="Los stickers ponen tu QR en tu casco, tu moto o donde prefieras. Tu QR digital sigue siendo gratis desde tu cuenta."
           />
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-3">
             {productPlans.map((p, i) => (
               <Reveal key={p.name} delay={(i % 4) * 0.1}>
                 <PlanCard plan={p} />

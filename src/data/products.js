@@ -18,22 +18,6 @@ export const STICKER_PACK_PRICE = '$30.000 COP';
 
 export const productPlans = [
   {
-    name: 'QR digital',
-    price: 'Gratis',
-    desc: 'Tu perfil de emergencia y tu código QR, listos para descargar. Es el punto de partida de todo.',
-    features: [
-      'Perfil y contactos de emergencia',
-      'Privacidad configurable campo por campo',
-      'Descarga tu QR cuando quieras',
-    ],
-    badge: 'Más elegido',
-    highlight: true,
-    action: 'Crear mi QR gratis',
-    authAction: 'Ir a Mi QR',
-    href: routes.register,
-    requiresAccount: true,
-  },
-  {
     name: 'Stickers QR',
     price: STICKER_PACK_PRICE,
     priceNote: '2 stickers · pago único',
@@ -45,6 +29,7 @@ export const productPlans = [
       'Si pierdes uno, lo desactivas o lo reemplazas desde tu cuenta',
     ],
     badge: '2 por 1',
+    highlight: true,
     action: 'Quiero mis 2 stickers',
     authAction: 'Pedir mis stickers',
     href: routes.register,
