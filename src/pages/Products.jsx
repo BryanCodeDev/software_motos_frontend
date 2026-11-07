@@ -86,30 +86,6 @@ export const Products = () => {
             ))}
           </div>
 
-          {products.length > 0 && (
-            <section className="mb-16">
-              <Reveal>
-                <h2 className="mb-6 text-2xl font-bold text-neutral-900">Disponibles para tu cuenta</h2>
-              </Reveal>
-              <div className="grid gap-6 md:grid-cols-3">
-                {products.map((p, i) => (
-                  <Reveal key={p.id} delay={(i % 3) * 0.08}>
-                    <Card className="flex h-full flex-col p-6">
-                      <h3 className="mb-2 font-semibold text-neutral-900">{p.name}</h3>
-                      <p className="mb-4 text-sm text-text-secondary">{p.description || ''}</p>
-                      <div className="mb-4 mt-auto font-bold text-brand-500">
-                        {p.price} {p.currency}
-                      </div>
-                      <Link to={routes.products} className="btn-outline w-full text-xs">
-                        Ver detalles
-                      </Link>
-                    </Card>
-                  </Reveal>
-                ))}
-              </div>
-            </section>
-          )}
-
           <Reveal>
             <Card className="p-8 lg:p-10">
               <h2 className="mb-6 font-semibold text-neutral-900">Antes de elegir, ten en cuenta</h2>
