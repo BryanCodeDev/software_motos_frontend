@@ -5,30 +5,9 @@ import { AlertTriangle, ArrowRight, Building2, Clock, FileText, Hash, Mail, Info
 import { routes } from '../utils/routes';
 import Seo from './Seo';
 import { Reveal, PageHeader } from './Section';
+import { PENDING, COMPANY, isPending, panel } from './legalConstants';
 
 const EASE = [0.22, 1, 0.36, 1];
-
-/* ------------------------------------------------------------------ */
-/* Datos del operador (variables de entorno de Vite)                   */
-/* ------------------------------------------------------------------ */
-
-export const PENDING = 'PENDIENTE DE CONFIGURAR';
-
-const env = import.meta.env;
-
-export const COMPANY = {
-  name: env.VITE_COMPANY_NAME || PENDING,
-  nit: env.VITE_COMPANY_NIT || PENDING,
-  address: env.VITE_COMPANY_ADDRESS || PENDING,
-  email: env.VITE_COMPANY_EMAIL || PENDING,
-  phone: env.VITE_COMPANY_PHONE || PENDING,
-  privacyEmail: env.VITE_PRIVACY_EMAIL || PENDING,
-};
-
-export const isPending = (value) => !value || value === PENDING;
-
-/** Panel base, igual al de la documentación y el resto del sitio. */
-export const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 /** Muestra el valor real o una etiqueta clara cuando aún no está configurado. */
 export const Value = ({ value, label, onDark = false }) => {

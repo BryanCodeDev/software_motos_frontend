@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
-  QrCode, Download, Copy, Link, ExternalLink, RefreshCw, FileText,
-  Printer, Check, CheckCircle2, AlertTriangle, Loader2, ChevronLeft,
-  Search, X, Users as UsersIcon, ChevronRight, ShieldCheck, ShieldOff,
+  QrCode, Download, Copy, ExternalLink, RefreshCw, FileText, Printer, Check,
+  AlertTriangle, Loader2, ChevronLeft, ChevronRight, Search, X, Minus, Clock,
+  Users as UsersIcon, ShieldCheck, ShieldOff,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
-import { CheckField } from '../../components/DashPage';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
 import { Button } from '../../components/ui';
@@ -16,6 +15,7 @@ import { Badge } from '../../components/ui-kit';
 
 /* ───────── Constantes de diseño ───────── */
 const EASE = [0.22, 1, 0.36, 1];
+const PAGE_SIZE = 20;
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } } };
@@ -26,44 +26,28 @@ const ROLE_TABS = [
   { id: 'admin', label: 'Administradores' },
 ];
 
-const PRINT_FILTERS = [
-  { id: '', label: 'Todos' },
-  { id: 'pending_print', label: 'Pendiente de impresión' },
-  { id: 'sent_to_print', label: 'Enviado a impresión' },
-  { id: 'printed', label: 'Impreso' },
-  { id: 'delivered', label: 'Entregado' },
+/* Flujo de impresión de stickers, en orden */
+const PRINT_STEPS = [
+  { id: 'pending_print', label: 'Pendiente', long: 'Pendiente de impresión', dot: 'bg-slate-400' },
+  { id: 'sent_to_print', label: 'Enviado', long: 'Enviado al proveedor', dot: 'bg-sky-500' },
+  { id: 'printed', label: 'Impreso', long: 'Impreso', dot: 'bg-emerald-500' },
+  { id: 'delivered', label: 'Entregado', long: 'Sticker entregado', dot: 'bg-brand-500' },
 ];
+const PRINT_FILTERS = [{ id: '', label: 'Todos', dot: 'bg-neutral-900' }, ...PRINT_STEPS];
+const PRINT_LABEL = Object.fromEntries(PRINT_STEPS.map((s) => [s.id, s.label]));
+const PRINT_TONE = { pending_print: 'neutral', sent_to_print: 'info', printed: 'success', delivered: 'brand' };
 
-const QR_STATUS_LABEL = {
-  pending_activation: 'Pendiente',
-  active: 'Activo',
-  disabled: 'Deshabilitado',
-};
-const QR_STATUS_TONE = {
-  pending_activation: 'warn',
-  active: 'success',
-  disabled: 'danger',
-};
-
-const PRINT_STATUS_LABEL = {
-  pending_print: 'Pendiente',
-  sent_to_print: 'Enviado',
-  printed: 'Impreso',
-  delivered: 'Entregado',
-};
-const PRINT_STATUS_TONE = {
-  pending_print: 'neutral',
-  sent_to_print: 'info',
-  printed: 'success',
-  delivered: 'brand',
-};
+const QR_STATUS_LABEL = { pending_activation: 'Pendiente', active: 'Activo', disabled: 'Deshabilitado' };
+const QR_STATUS_TONE = { pending_activation: 'warn', active: 'success', disabled: 'danger' };
 
 const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const formatDateTime = (d) =>
   d ? new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
-/* ───────── Helper: descarga de archivo (blob) ───────── */
+const publicUrl = (value) => `${window.location.origin}/e/${value}`;
+
+/* ───────── Helpers ───────── */
 const downloadBlob = async (url, fileName) => {
   const res = await api.get(url, { responseType: 'blob' });
   const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' });
@@ -77,52 +61,81 @@ const downloadBlob = async (url, fileName) => {
   URL.revokeObjectURL(objectUrl);
 };
 
+const copyText = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+};
+
 /* ───────── Piezas UI ───────── */
+const Checkbox = ({ checked, indeterminate = false, onChange, label }) => (
+  <label className="relative inline-flex h-5 w-5 flex-none cursor-pointer">
+    <input type="checkbox" checked={checked} onChange={onChange} aria-label={label} className="peer sr-only" />
+    <span
+      aria-hidden="true"
+      className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2 ${
+        checked || indeterminate ? 'border-brand-500 bg-brand-500 text-white' : 'border-border bg-white hover:border-brand-500/50'
+      }`}
+    >
+      {indeterminate && !checked ? <Minus size={12} strokeWidth={3} /> : checked ? <Check size={12} strokeWidth={3} /> : null}
+    </span>
+  </label>
+);
+
+const IconBtn = ({ label, onClick, disabled, tone = 'neutral', children }) => {
+  const tones = {
+    neutral: 'border-border text-text-secondary hover:bg-brand-50 hover:text-neutral-900',
+    brand: 'border-brand-500/30 text-brand-500 hover:bg-brand-500/10',
+    warn: 'border-amber-300 text-amber-700 hover:bg-amber-50',
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className={`focus-ring inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${tones[tone]}`}
+    >
+      {children}
+    </button>
+  );
+};
+
 const RoleBadge = ({ role }) => (
   <Badge tone={role === 'admin' ? 'brand' : 'neutral'} size="sm">
-    {role === 'admin' && <span className="mr-1" aria-hidden="true">●</span>}
     {role === 'admin' ? 'Administrador' : 'Usuario'}
   </Badge>
 );
 
 const QrStatusBadge = ({ status }) => (
-  <Badge tone={QR_STATUS_TONE[status] || 'neutral'} size="sm">
-    {QR_STATUS_LABEL[status] || status}
-  </Badge>
+  <Badge tone={QR_STATUS_TONE[status] || 'neutral'} size="sm">{QR_STATUS_LABEL[status] || status}</Badge>
 );
 
 const PrintStatusBadge = ({ status }) => (
-  <Badge tone={PRINT_STATUS_TONE[status] || 'neutral'} size="sm">
-    {PRINT_STATUS_LABEL[status] || status}
-  </Badge>
+  <Badge tone={PRINT_TONE[status] || 'neutral'} size="sm">{PRINT_LABEL[status] || status}</Badge>
 );
 
-const RoleAction = ({ u, meId, busy, className = '' }) => {
-  if (meId === u.id) return <Badge tone="info" size="sm">Tu cuenta</Badge>;
-  const toAdmin = u.role === 'user';
-  return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={() => {}}
-      className={`focus-ring inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        toAdmin
-          ? 'border-brand-500/30 text-brand-500 hover:bg-brand-500/10'
-          : 'border-amber-300 text-amber-700 hover:bg-amber-50'
-      } ${className}`}
-      aria-label={toAdmin ? `Hacer admin a ${u.email}` : `Quitar admin a ${u.email}`}
-    >
-      {busy ? <Loader2 size={14} className="animate-spin" /> : toAdmin ? <ShieldCheck size={14} /> : <ShieldOff size={14} />}
-      {toAdmin ? 'Hacer admin' : 'Quitar admin'}
-    </button>
-  );
-};
-
-const Avatar = ({ email, admin }) => (
+const Avatar = ({ email, admin, size = 'md' }) => (
   <span
-    className={`flex h-10 w-10 flex-none items-center justify-center rounded-full text-sm font-bold ring-1 ${
-      admin ? 'bg-brand-500 text-white ring-brand-500' : 'bg-brand-500/10 text-brand-500 ring-brand-500/15'
-    }`}
+    className={`flex flex-none items-center justify-center rounded-full font-bold ring-1 ${
+      size === 'lg' ? 'h-12 w-12 text-base' : 'h-10 w-10 text-sm'
+    } ${admin ? 'bg-brand-500 text-white ring-brand-500' : 'bg-brand-500/10 text-brand-500 ring-brand-500/15'}`}
   >
     {(email || '?').charAt(0).toUpperCase()}
   </span>
@@ -136,226 +149,190 @@ const ErrorBanner = ({ message, onRetry }) => (
   </div>
 );
 
-/* ───────── Modal: detalle del QR ───────── */
-const QrDetailModal = ({
-  isOpen,
-  onClose,
-  qr,
-  user,
-  history,
-  loading,
-  busy,
-  onRegenerate,
-  onSetPrintStatus,
-}) => {
-  const [imageObjectUrl, setImageObjectUrl] = useState(null);
-  const [copyConfirmed, setCopyConfirmed] = useState(false);
+const Fact = ({ label, children, className = '' }) => (
+  <div className={`rounded-xl border border-border bg-brand-50/60 p-3.5 ${className}`}>
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
+    <div className="mt-1 min-w-0 text-sm font-semibold text-neutral-900">{children}</div>
+  </div>
+);
 
-  const qrUrl = qr?.qr_url;
+/* ───────── Modal: detalle del QR ───────── */
+const QrDetailModal = ({ isOpen, onClose, qr, user, history, loading, busy, printBusy, onRegenerate, onSetPrintStatus }) => {
+  const toast = useToast();
+  const [imageUrl, setImageUrl] = useState(null);
+  const [imageVersion, setImageVersion] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const qrUrl = qr?.qr_url || (qr?.value ? publicUrl(qr.value) : '');
 
   useEffect(() => {
-    if (!isOpen || !qr?.id) return;
+    if (!isOpen || !qr?.id) return undefined;
     let cancelled = false;
+    let objectUrl = null;
     (async () => {
       try {
         const res = await api.get(`/identifiers/${qr.id}/qr`, { responseType: 'blob' });
         if (cancelled) return;
-        const blob = new Blob([res.data], { type: 'image/png' });
-        setImageObjectUrl(URL.createObjectURL(blob));
+        objectUrl = URL.createObjectURL(new Blob([res.data], { type: 'image/png' }));
+        setImageUrl(objectUrl);
       } catch {
-        // silencioso: la imagen ya se había cargado o falló
+        // sin imagen: se muestra el marcador
       }
     })();
     return () => {
       cancelled = true;
-      if (imageObjectUrl) URL.revokeObjectURL(imageObjectUrl);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, qr?.id]);
+  }, [isOpen, qr?.id, imageVersion]);
 
   const handleCopy = async () => {
     if (!qrUrl) return;
-    try {
-      await navigator.clipboard.writeText(qrUrl);
-      setCopyConfirmed(true);
-      setTimeout(() => setCopyConfirmed(false), 2000);
-    } catch {
-      // fallback
-      const ta = document.createElement('textarea');
-      ta.value = qrUrl;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      setCopyConfirmed(true);
-      setTimeout(() => setCopyConfirmed(false), 2000);
+    const ok = await copyText(qrUrl);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      toast.error('No se pudo copiar el enlace');
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!qr?.id) return;
-    window.location.href = `${api.defaults.baseURL || '/api'}/identifiers/${qr.id}/qr`;
-  };
-
-  const handlePreview = () => {
-    if (!qrUrl) return;
-    window.open(qrUrl, '_blank', 'noopener,noreferrer');
+    try {
+      await downloadBlob(`/identifiers/${qr.id}/qr`, `qr-${qr.value || qr.id}.png`);
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'No se pudo descargar el QR');
+    }
   };
 
   const handleRegenerate = async () => {
     if (!onRegenerate || !qr?.id) return;
     await onRegenerate(qr.id);
-    try {
-      const res = await api.get(`/identifiers/${qr.id}/qr`, { responseType: 'blob' });
-      const blob = new Blob([res.data], { type: 'image/png' });
-      setImageObjectUrl(URL.createObjectURL(blob));
-    } catch {
-      // silencioso
-    }
+    setImageVersion((v) => v + 1);
   };
 
-  const printStatusOptions = [
-    { id: 'pending_print', label: 'Pendiente de impresión' },
-    { id: 'sent_to_print', label: 'Enviado al proveedor' },
-    { id: 'printed', label: 'Impreso' },
-    { id: 'delivered', label: 'Sticker entregado' },
-  ];
+  const currentStep = PRINT_STEPS.findIndex((s) => s.id === qr?.print_status);
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Detalle del código QR"
-      size="lg"
-    >
-      <div className="space-y-6">
-        {/* Encabezado: imagen + datos clave */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 flex flex-col items-center">
-            <div className="relative inline-block">
-              {loading ? (
-                <div className="flex h-48 w-48 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-brand-50">
-                  <Loader2 size={24} className="animate-spin text-brand-500" />
-                </div>
-              ) : imageObjectUrl ? (
-                <img
-                  src={imageObjectUrl}
-                  alt="Código QR"
-                  className="h-48 w-48 rounded-2xl border border-border shadow-sm bg-white"
-                />
-              ) : (
-                <div className="h-48 w-48 rounded-2xl border-2 border-dashed border-border bg-brand-50 flex items-center justify-center">
-                  <QrCode size={44} className="text-brand-500" aria-hidden="true" />
-                </div>
-              )}
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalle del código QR" size="lg">
+      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        {/* Imagen + acciones */}
+        <div className="flex flex-col items-center gap-3">
+          {loading ? (
+            <div className="flex h-52 w-52 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-brand-50">
+              <Loader2 size={24} className="animate-spin text-brand-500" />
             </div>
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopy} disabled={busy || !qrUrl} loading={busy}>
-                {copyConfirmed ? <Check size={14} /> : <Copy size={14} />}
-                {copyConfirmed ? '¡Copiado!' : 'Copiar enlace'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleDownload} disabled={busy || !qr?.id} loading={busy}>
-                <Download size={14} /> Descargar PNG
-              </Button>
+          ) : imageUrl ? (
+            <img src={imageUrl} alt="Código QR" className="h-52 w-52 rounded-2xl border border-border bg-white shadow-sm" />
+          ) : (
+            <div className="flex h-52 w-52 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-brand-50">
+              <QrCode size={44} className="text-brand-500" aria-hidden="true" />
             </div>
-            <Button variant="ghost" size="sm" onClick={handlePreview} disabled={busy || !qrUrl} className="mt-2 text-xs">
+          )}
+          <div className="grid w-full gap-2">
+            <Button variant="outline" size="sm" onClick={handleCopy} disabled={busy || !qrUrl}>
+              {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? '¡Copiado!' : 'Copiar enlace'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDownload} disabled={busy || !qr?.id}>
+              <Download size={14} /> Descargar PNG
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => qrUrl && window.open(qrUrl, '_blank', 'noopener,noreferrer')} disabled={!qrUrl}>
               <ExternalLink size={14} /> Vista previa pública
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRegenerate} disabled={busy || !qr?.id} loading={busy} className="mt-2 text-xs">
+            <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={busy || !qr?.id} loading={busy}>
               <RefreshCw size={14} /> Regenerar imagen
             </Button>
           </div>
+        </div>
 
-          <div className="lg:col-span-2 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-border bg-brand-50 p-4">
-                <p className="text-xs text-text-secondary">Identificador público</p>
-                <p className="text-sm font-mono font-semibold text-neutral-900 break-all">{qr?.value}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-brand-50 p-4">
-                <p className="text-xs text-text-secondary">Estado del QR</p>
-                <QrStatusBadge status={qr?.status} />
-              </div>
-              <div className="rounded-xl border border-border bg-brand-50 p-4">
-                <p className="text-xs text-text-secondary">URL permanente</p>
-                <p className="text-xs font-mono text-text-secondary break-all truncate" title={qrUrl}>{qrUrl}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-brand-50 p-4">
-                <p className="text-xs text-text-secondary">Fecha de generación</p>
-                <p className="text-sm font-semibold text-neutral-900">{formatDate(qr?.created_at)}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-brand-50 p-4">
-                <p className="text-xs text-text-secondary">Fecha de activación</p>
-                <p className="text-sm font-semibold text-neutral-900">{formatDate(qr?.activation_at)}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-brand-50 p-4">
-                <p className="text-xs text-text-secondary">Estado de impresión</p>
-                <PrintStatusBadge status={qr?.print_status} />
-              </div>
+        <div className="min-w-0 space-y-5">
+          {/* Usuario */}
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-4">
+            <Avatar email={user?.email} admin={user?.role === 'admin'} size="lg" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-neutral-900">{user?.email || '—'}</p>
+              <p className="mt-0.5 text-xs text-text-secondary">ID {user?.id} · Registrado {formatDate(user?.created_at)}</p>
             </div>
+            {user?.role && <RoleBadge role={user.role} />}
+          </div>
 
-            {/* Control de impresión */}
-            <div className="rounded-xl border border-border bg-brand-50 p-4">
-              <p className="mb-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Estado de impresión (admin)</p>
-              <div className="flex flex-wrap gap-2">
-                {printStatusOptions.map((o) => (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => onSetPrintStatus && onSetPrintStatus(o.id)}
-                    disabled={busy}
-                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                      qr?.print_status === o.id
-                        ? 'bg-brand-100 text-brand-700 border-brand-500'
-                        : 'bg-white text-neutral-700 border-border hover:bg-brand-50'
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PRINT_STATUS_TONE[o.id] === 'brand' ? '#2563eb' : PRINT_STATUS_TONE[o.id] === 'success' ? '#15803d' : PRINT_STATUS_TONE[o.id] === 'info' ? '#0284c7' : '#64748b' }} aria-hidden="true" />
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-              {qr?.user_id && (
-                <p className="mt-3 text-xs text-text-secondary">
-                  Cambiará el estado de impresión de <span className="font-semibold">{user?.email || 'este usuario'}</span>. El identificador y la URL del QR no se modifican.
-                </p>
-              )}
+          {/* Datos del QR */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Fact label="Identificador público"><span className="break-all font-mono">{qr?.value || '—'}</span></Fact>
+            <Fact label="Estado del QR">{qr?.status ? <QrStatusBadge status={qr.status} /> : '—'}</Fact>
+            <Fact label="Generación">{formatDate(qr?.created_at)}</Fact>
+            <Fact label="Activación">{formatDate(qr?.activation_at)}</Fact>
+            <Fact label="URL permanente" className="sm:col-span-2">
+              <span className="block break-all font-mono text-xs font-medium text-text-secondary">{qrUrl || '—'}</span>
+            </Fact>
+          </div>
+
+          {/* Flujo de impresión */}
+          <div className="rounded-xl border border-border bg-white p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Estado de impresión</p>
+              {printBusy && <Loader2 size={14} className="animate-spin text-brand-500" aria-hidden="true" />}
             </div>
+            <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {PRINT_STEPS.map((s, i) => {
+                const active = qr?.print_status === s.id;
+                const done = currentStep > i;
+                return (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => !active && onSetPrintStatus?.(s.id)}
+                      disabled={printBusy}
+                      aria-pressed={active}
+                      className={`focus-ring flex w-full flex-col items-start gap-1.5 rounded-lg border px-3 py-2.5 text-left text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                        active
+                          ? 'border-brand-500 bg-brand-500/10 text-brand-700'
+                          : done
+                            ? 'border-emerald-200 bg-emerald-50/60 text-emerald-800 hover:bg-emerald-50'
+                            : 'border-border bg-white text-text-secondary hover:bg-brand-50'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {done ? <Check size={13} className="text-emerald-600" aria-hidden="true" /> : <span className={`h-2 w-2 rounded-full ${s.dot}`} aria-hidden="true" />}
+                        <span className="tabular-nums opacity-60">{i + 1}</span>
+                      </span>
+                      <span className="leading-tight">{s.long}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="mt-3 text-xs text-text-secondary">
+              Cambia solo el estado de impresión de <span className="font-semibold text-neutral-900">{user?.email || 'este usuario'}</span>.
+              El identificador y la URL del QR no se modifican.
+            </p>
+          </div>
 
-            {/* Información del usuario */}
-            <div className="rounded-xl border border-border bg-white p-4">
-              <p className="mb-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Usuario asociado</p>
-              <div className="flex items-center gap-3">
-                <Avatar email={user?.email} admin={user?.role === 'admin'} />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-neutral-900">{user?.email}</p>
-                  <p className="text-xs text-text-secondary">ID {user?.id} · {user?.role === 'admin' ? 'Administrador' : 'Usuario'} · Registrado {formatDate(user?.created_at)}</p>
-                </div>
-              </div>
+          {/* Historial */}
+          <div className="rounded-xl border border-border bg-white p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Historial del código</p>
+              <span className="text-xs font-medium text-neutral-900">{history?.length || 0} eventos</span>
             </div>
-
-            {/* Historial de auditoría */}
-            <div className="rounded-xl border border-border bg-white p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Historial del código</p>
-                <span className="text-xs font-medium text-neutral-900">{history?.length || 0} eventos</span>
-              </div>
-              {history && history.length === 0 ? (
-                <p className="text-xs text-text-secondary">No hay eventos registrados.</p>
-              ) : (
-                <ul className="divide-y divide-border/50 space-y-0">
-                  {history.map((ev, i) => (
-                    <li key={i} className="py-2.5">
+            {!history || history.length === 0 ? (
+              <p className="text-xs text-text-secondary">No hay eventos registrados.</p>
+            ) : (
+              <ul className="max-h-56 space-y-0 overflow-y-auto pr-1 custom-scrollbar">
+                {history.map((ev, i) => (
+                  <li key={i} className="relative flex gap-3 pb-4 last:pb-0">
+                    {i < history.length - 1 && <span aria-hidden="true" className="absolute left-[9px] top-5 -bottom-0 w-px bg-border" />}
+                    <span className="relative mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+                      <Clock size={11} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold text-neutral-900">{ev.action}</p>
                       <p className="text-xs text-text-secondary">{formatDateTime(ev.created_at)}</p>
-                      {ev.metadata && (
-                        <p className="text-[10px] text-text-secondary/70 mt-0.5 break-all">{String(ev.metadata).slice(0, 160)}</p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                      {ev.metadata && <p className="mt-0.5 break-all text-[10px] text-text-secondary/70">{String(ev.metadata).slice(0, 160)}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>
@@ -380,36 +357,28 @@ export const AdminUsers = () => {
   const [busyId, setBusyId] = useState(null);
   const [busyExport, setBusyExport] = useState(false);
   const [confirm, setConfirm] = useState(null); // { user, role }
+  const [bulkConfirm, setBulkConfirm] = useState(null); // estado de impresión a aplicar
 
-  // Selección y detalle de QR
+  // La selección se conserva al cambiar de página
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const selectedIdsRef = useRef(selectedIds);
-  useEffect(() => {
-    selectedIdsRef.current = selectedIds;
-  }, [selectedIds]);
-  const [selectAllChecked, setSelectAllChecked] = useState(false);
   const [qrModal, setQrModal] = useState(false);
   const [qrDetail, setQrDetail] = useState(null);
   const [qrUser, setQrUser] = useState(null);
   const [qrHistory, setQrHistory] = useState([]);
   const [qrLoading, setQrLoading] = useState(false);
-  const [qrBusy, setQrBusy] = useState(null); // qr id en operación
-  const [printBusyUser, setPrintBusyUser] = useState(null); // user id en bulk print
+  const [qrBusy, setQrBusy] = useState(null);
+  const [printBusyUser, setPrintBusyUser] = useState(null); // id de usuario o 'bulk'
+  const searchRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const { data } = await api.get('/admin/users', {
-        params: { q: filters.q, role: filters.role, print_status: filters.print_status, page, limit: 20 },
+        params: { q: filters.q, role: filters.role, print_status: filters.print_status, page, limit: PAGE_SIZE },
       });
       setUsers(data.users || []);
       setPagination(data.pagination);
-      // Mantener selección solo si sigue presente en la página
-      const present = new Set((data.users || []).map((u) => u.id));
-      const next = new Set([...selectedIdsRef.current].filter((id) => present.has(id)));
-      setSelectedIds(next);
-      setSelectAllChecked(next.size > 0 && next.size === (data.users || []).length);
     } catch (e) {
       setError(e?.response?.data?.error || 'Error al cargar usuarios');
     } finally {
@@ -439,30 +408,35 @@ export const AdminUsers = () => {
     setPage(1);
   };
 
-  const toggleSelect = (id) => {
+  const setFilter = (key, value) => {
+    setFilters((f) => ({ ...f, [key]: value }));
+    setPage(1);
+  };
+
+  /* Selección */
+  const toggleSelect = (id) =>
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  };
 
-  const toggleSelectAll = () => {
-    const pageIds = users.map((u) => u.id);
-    if (pageIds.length === 0) return;
-    const allSelected = pageIds.every((id) => selectedIds.has(id));
+  const pageSelectedCount = users.filter((u) => selectedIds.has(u.id)).length;
+  const allPageSelected = users.length > 0 && pageSelectedCount === users.length;
+  const somePageSelected = pageSelectedCount > 0 && !allPageSelected;
+
+  const toggleSelectPage = () =>
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (allSelected) pageIds.forEach((id) => next.delete(id));
-      else pageIds.forEach((id) => next.add(id));
+      if (allPageSelected) users.forEach((u) => next.delete(u.id));
+      else users.forEach((u) => next.add(u.id));
       return next;
     });
-    setSelectAllChecked(!allSelected);
-  };
 
-  const areAllPageSelected = users.length > 0 && users.every((u) => selectedIds.has(u.id));
+  const clearSelection = () => setSelectedIds(new Set());
 
+  /* Rol */
   const askChangeRole = (u, role) => setConfirm({ user: u, role });
 
   const doChangeRole = async () => {
@@ -484,10 +458,7 @@ export const AdminUsers = () => {
   /* Exportación masiva */
   const handleExport = async (format) => {
     const ids = [...selectedIds];
-    if (ids.length === 0) {
-      toast.error('Selecciona al menos un usuario');
-      return;
-    }
+    if (ids.length === 0) return;
     setBusyExport(true);
     try {
       const idParam = ids.join(',');
@@ -501,8 +472,6 @@ export const AdminUsers = () => {
         await downloadBlob(`/identifiers/export/pdf?ids=${idParam}&columns=3&rows=5&size_mm=25&gap_mm=8&margin_mm=12`, 'qrs-impresion.pdf');
         toast.success(`PDF de impresión de ${ids.length} código(s) QR descargado`);
       }
-      setSelectedIds(new Set());
-      setSelectAllChecked(false);
     } catch (e) {
       toast.error(e?.response?.data?.error || 'Error al exportar');
     } finally {
@@ -510,18 +479,16 @@ export const AdminUsers = () => {
     }
   };
 
-  const handleBulkPrint = async (printStatus) => {
+  /* Estado de impresión masivo */
+  const doBulkPrint = async () => {
     const ids = [...selectedIds];
-    if (ids.length === 0) {
-      toast.error('Selecciona al menos un usuario');
-      return;
-    }
+    if (!bulkConfirm || ids.length === 0) return;
     setPrintBusyUser('bulk');
     try {
-      await api.post('/identifiers/bulk-print-status', { user_ids: ids, print_status: printStatus });
-      toast.success(`Estado de impresión actualizado a "${PRINT_STATUS_LABEL[printStatus]}" para ${ids.length} usuario(s)`);
-      setSelectedIds(new Set());
-      setSelectAllChecked(false);
+      await api.post('/identifiers/bulk-print-status', { user_ids: ids, print_status: bulkConfirm });
+      toast.success(`Impresión marcada como "${PRINT_LABEL[bulkConfirm]}" para ${ids.length} usuario(s)`);
+      setBulkConfirm(null);
+      clearSelection();
       load();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el estado de impresión');
@@ -532,6 +499,7 @@ export const AdminUsers = () => {
 
   /* Detalle de QR */
   const openQrDetail = async (qrId) => {
+    setQrBusy(qrId);
     setQrLoading(true);
     try {
       const { data } = await api.get(`/identifiers/${qrId}`);
@@ -543,6 +511,7 @@ export const AdminUsers = () => {
       toast.error(e?.response?.data?.error || 'No se pudo cargar el detalle del QR');
     } finally {
       setQrLoading(false);
+      setQrBusy(null);
     }
   };
 
@@ -559,10 +528,12 @@ export const AdminUsers = () => {
   };
 
   const handleSetPrintStatus = async (userId, printStatus) => {
+    if (!userId) return;
     setPrintBusyUser(userId);
     try {
       await api.post('/identifiers/bulk-print-status', { user_ids: [userId], print_status: printStatus });
-      toast.success(`Estado de impresión actualizado a "${PRINT_STATUS_LABEL[printStatus]}"`);
+      toast.success(`Estado de impresión: "${PRINT_LABEL[printStatus]}"`);
+      setQrDetail((d) => (d ? { ...d, print_status: printStatus } : d));
       load();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el estado de impresión');
@@ -571,132 +542,174 @@ export const AdminUsers = () => {
     }
   };
 
+  const copyUserLink = async (u) => {
+    const ok = await copyText(publicUrl(u.qr_value));
+    if (ok) toast.success('Enlace del QR copiado');
+    else toast.error('No se pudo copiar el enlace');
+  };
+
   const confirming = confirm && busyId === confirm.user.id;
+  const selectedCount = selectedIds.size;
+  const from = pagination ? (pagination.page - 1) * PAGE_SIZE + 1 : 0;
+  const to = pagination ? Math.min(pagination.page * PAGE_SIZE, pagination.total) : 0;
+
+  /* Acciones por fila (compartidas entre tabla y tarjetas) */
+  const RowActions = ({ u }) => (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => u.qr_id && openQrDetail(u.qr_id)}
+        disabled={!u.qr_id || qrBusy === u.qr_id}
+        className={`focus-ring inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+          u.qr_id ? 'border-brand-500/30 bg-brand-50 text-brand-700 hover:bg-brand-100' : 'border-border text-text-secondary'
+        }`}
+        aria-label={`Gestionar el QR de ${u.email}`}
+      >
+        {qrBusy === u.qr_id ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} aria-hidden="true" />}
+        {u.qr_id ? 'Gestionar QR' : 'Sin QR'}
+      </button>
+      {u.qr_id && (
+        <IconBtn label={`Copiar enlace del QR de ${u.email}`} onClick={() => copyUserLink(u)}>
+          <Copy size={15} aria-hidden="true" />
+        </IconBtn>
+      )}
+      {me?.id === u.id ? (
+        <Badge tone="info" size="sm">Tu cuenta</Badge>
+      ) : (
+        <IconBtn
+          label={u.role === 'user' ? `Hacer administrador a ${u.email}` : `Quitar administrador a ${u.email}`}
+          tone={u.role === 'user' ? 'brand' : 'warn'}
+          disabled={busyId === u.id}
+          onClick={() => askChangeRole(u, u.role === 'user' ? 'admin' : 'user')}
+        >
+          {busyId === u.id ? <Loader2 size={15} className="animate-spin" /> : u.role === 'user' ? <ShieldCheck size={15} /> : <ShieldOff size={15} />}
+        </IconBtn>
+      )}
+    </div>
+  );
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-4 lg:space-y-5">
+      <motion.div variants={container} initial="hidden" animate="show" className={`space-y-4 lg:space-y-5 ${selectedCount > 0 ? 'pb-28' : ''}`}>
         <motion.div variants={item}>
           <PageTitle
-            title="Gestión de usuarios y QR"
-            description="Administra cuentas, consulta el código QR permanente de cada usuario y exporta códigos para impresión de stickers."
+            title="Usuarios y códigos QR"
+            description="Gestiona cuentas y roles, sigue el estado de impresión de los stickers y exporta códigos QR."
             actions={
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                {selectedIds.size > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-brand-50 text-sm font-medium">
-                    <span>{selectedIds.size} usuario(s) seleccionado(s)</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedIds(new Set())}
-                      className="ml-2 text-xs text-rose-600 underline underline-offset-2 hover:text-rose-800"
-                    >
-                      Limpiar selección
-                    </button>
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleExport('csv')} disabled={busyExport || selectedIds.size === 0} loading={busyExport}>
-                    <FileText size={14} /> CSV
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleExport('zip')} disabled={busyExport || selectedIds.size === 0} loading={busyExport}>
-                    <Download size={14} /> ZIP
-                  </Button>
-                  <Button size="sm" onClick={() => handleExport('pdf')} disabled={busyExport || selectedIds.size === 0} loading={busyExport}>
-                    <Printer size={14} /> PDF impresión
-                  </Button>
-                </div>
-              </div>
+              <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} aria-hidden="true" /> Actualizar
+              </Button>
             }
           />
         </motion.div>
 
-        {/* Barra de búsqueda y filtros */}
-        <motion.form
-          variants={item}
-          onSubmit={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, q: input.trim() })); setPage(1); }}
-          className={`${panel} flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:p-4`}
-          role="search"
-        >
-          <div className="relative min-w-0 flex-1">
-            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Buscar por email o ID"
-              aria-label="Buscar usuarios"
-              className="input !pl-10 !pr-10 !text-base sm:!text-sm"
-            />
-            <AnimatePresence>
-              {input && (
-                <motion.button
-                  type="button"
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.7 }}
-                  transition={{ duration: 0.15 }}
-                  onClick={() => setInput('')}
-                  aria-label="Borrar búsqueda"
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900"
-                >
-                  <X size={15} />
-                </motion.button>
+        {/* Barra de herramientas */}
+        <motion.div variants={item} className={`${panel} divide-y divide-border/70`}>
+          <form
+            role="search"
+            onSubmit={(e) => { e.preventDefault(); setFilter('q', input.trim()); }}
+            className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:p-4"
+          >
+            <div className="relative min-w-0 flex-1">
+              <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
+              <input
+                ref={searchRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Buscar por correo o ID"
+                aria-label="Buscar usuarios"
+                className="input !pl-10 !pr-10 !text-base sm:!text-sm"
+              />
+              <AnimatePresence>
+                {input && (
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => { setInput(''); searchRef.current?.focus(); }}
+                    aria-label="Borrar búsqueda"
+                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900"
+                  >
+                    <X size={15} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div role="tablist" aria-label="Filtrar por rol" className="custom-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-border bg-brand-50/50 p-1">
+              {ROLE_TABS.map((t) => {
+                const active = filters.role === t.id;
+                return (
+                  <button
+                    key={t.id || 'all'}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter('role', t.id)}
+                    className={`focus-ring relative flex-none rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${active ? 'text-white' : 'text-text-secondary hover:text-neutral-900'}`}
+                  >
+                    {active && (
+                      <motion.span layoutId="users-role-tab" className="absolute inset-0 rounded-lg bg-brand-500 shadow-soft" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />
+                    )}
+                    <span className="relative">{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {hasFilters && (
+              <button type="button" onClick={clearFilters} className="btn-outline flex-none px-4 py-2.5 text-sm">
+                <X size={16} aria-hidden="true" /> Limpiar
+              </button>
+            )}
+          </form>
+
+          <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 lg:px-4 lg:py-3">
+            <span className="flex-none text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Impresión de stickers</span>
+            <div role="tablist" aria-label="Filtrar por estado de impresión" className="custom-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:pb-0">
+              {PRINT_FILTERS.map((f) => {
+                const active = filters.print_status === f.id;
+                return (
+                  <button
+                    key={f.id || 'all'}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter('print_status', f.id)}
+                    className={`focus-ring inline-flex flex-none items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                      active ? 'border-brand-500 bg-brand-500 text-white shadow-soft' : 'border-border bg-white text-text-secondary hover:border-brand-500/40 hover:text-neutral-900'
+                    }`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${active ? 'bg-white' : f.dot}`} aria-hidden="true" />
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Resumen de resultados */}
+        {!error && (
+          <motion.div variants={item} className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-text-secondary">
+            <span aria-live="polite">
+              {pagination ? (
+                <>
+                  <span className="font-semibold text-neutral-900">{pagination.total}</span>{' '}
+                  {pagination.total === 1 ? 'resultado' : 'resultados'}
+                  {hasFilters && ' con los filtros aplicados'}
+                </>
+              ) : (
+                'Cargando…'
               )}
-            </AnimatePresence>
-          </div>
-
-          <div role="tablist" aria-label="Filtrar por rol" className="custom-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-border bg-brand-50/50 p-1">
-            {ROLE_TABS.map((t) => {
-              const active = filters.role === t.id;
-              return (
-                <button
-                  key={t.id || 'all'}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => { setFilters((f) => ({ ...f, role: t.id })); setPage(1); }}
-                  className={`focus-ring relative flex-none rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    active ? 'text-white' : 'text-text-secondary hover:text-neutral-900'
-                  }`}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="users-role-tab"
-                      className="absolute inset-0 rounded-lg bg-brand-500 shadow-soft"
-                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                    />
-                  )}
-                  <span className="relative">{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div role="tablist" aria-label="Filtrar por estado de impresión" className="custom-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-border bg-brand-50/50 p-1 mt-2 lg:mt-0 lg:ml-4">
-            {PRINT_FILTERS.map((f) => {
-              const active = filters.print_status === f.id;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => { setFilters((f2) => ({ ...f2, print_status: f.id })); setPage(1); }}
-                  className={`focus-ring relative flex-none rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                    active ? 'bg-brand-500 text-white shadow-soft' : 'text-text-secondary hover:text-neutral-900'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {hasFilters && (
-            <button type="button" onClick={clearFilters} className="btn-outline flex-none px-4 py-2.5 text-sm">
-              <X size={16} aria-hidden="true" /> Limpiar filtros
-            </button>
-          )}
-        </motion.form>
+            </span>
+            {selectedCount === 0 && users.length > 0 && (
+              <span>Marca usuarios para exportar sus QR o cambiar su estado de impresión.</span>
+            )}
+          </motion.div>
+        )}
 
         {error && <ErrorBanner message={error} onRetry={load} />}
 
@@ -726,117 +739,61 @@ export const AdminUsers = () => {
             {/* Escritorio */}
             <div className={`${panel} hidden overflow-hidden md:block`}>
               <div className="custom-scrollbar overflow-x-auto">
-                <table className="table w-full text-sm">
-                  <thead className="bg-brand-50/70 text-left text-xs font-semibold text-text-secondary">
+                <table className="w-full min-w-[860px] text-left text-sm">
+                  <thead className="border-b border-border bg-brand-50/70 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">
                     <tr>
-                      <th scope="col" className="px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={areAllPageSelected}
-                          onChange={toggleSelectAll}
-                          className="peer sr-only"
-                          aria-label="Seleccionar todos los de la página"
-                        />
-                        <span
-                          aria-hidden="true"
-                          className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border border-border bg-white transition-all ${
-                            areAllPageSelected ? 'peer-checked:border-brand-500 peer-checked:bg-brand-500' : ''
-                          }`}
-                        >
-                          {areAllPageSelected && (
-                            <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3.5 8.5l3 3 6-7" />
-                            </svg>
-                          )}
-                        </span>
+                      <th scope="col" className="w-12 py-3 pl-4 pr-2">
+                        <Checkbox checked={allPageSelected} indeterminate={somePageSelected} onChange={toggleSelectPage} label="Seleccionar todos los de la página" />
                       </th>
-                      <th scope="col" className="px-6 py-4">Usuario</th>
-                      <th scope="col" className="px-6 py-4">Correo</th>
-                      <th scope="col" className="px-6 py-4">Rol</th>
-                      <th scope="col" className="px-6 py-4">Estado QR</th>
-                      <th scope="col" className="px-6 py-4">Estado impresión</th>
-                      <th scope="col" className="px-6 py-4">Generación</th>
-                      <th scope="col" className="px-6 py-4 text-right">Acciones</th>
+                      <th scope="col" className="px-3 py-3">Usuario</th>
+                      <th scope="col" className="px-3 py-3">Código QR</th>
+                      <th scope="col" className="px-3 py-3">Impresión</th>
+                      <th scope="col" className="px-3 py-3">Generación</th>
+                      <th scope="col" className="px-4 py-3 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {users.map((u, i) => (
-                      <motion.tr
-                        key={u.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 10) * 0.03 }}
-                        className="transition-colors hover:bg-brand-50/50"
-                      >
-                        <td className="px-4 py-4 text-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(u.id)}
-                            onChange={() => toggleSelect(u.id)}
-                            className="peer sr-only"
-                          />
-                          <span
-                            aria-hidden="true"
-                            className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border border-border bg-white transition-all ${
-                              selectedIds.has(u.id) ? 'peer-checked:border-brand-500 peer-checked:bg-brand-500' : ''
-                            }`}
-                          >
-                            {selectedIds.has(u.id) && (
-                              <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3.5 8.5l3 3 6-7" />
-                              </svg>
+                    {users.map((u, i) => {
+                      const selected = selectedIds.has(u.id);
+                      return (
+                        <motion.tr
+                          key={u.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 10) * 0.03 }}
+                          className={`transition-colors ${selected ? 'bg-brand-50/80' : 'hover:bg-brand-50/40'}`}
+                        >
+                          <td className="py-3 pl-4 pr-2">
+                            <Checkbox checked={selected} onChange={() => toggleSelect(u.id)} label={`Seleccionar a ${u.email}`} />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-3">
+                              <Avatar email={u.email} admin={u.role === 'admin'} />
+                              <div className="min-w-0">
+                                <p className="max-w-[280px] truncate font-semibold text-neutral-900" title={u.email}>{u.email}</p>
+                                <p className="mt-1 flex items-center gap-2 text-xs text-text-secondary">
+                                  <RoleBadge role={u.role} />
+                                  <span>Registrado {formatDate(u.created_at)}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            {u.qr_id ? (
+                              <div className="space-y-1">
+                                <QrStatusBadge status={u.qr_status || 'pending_activation'} />
+                                {u.qr_value && <p className="font-mono text-[11px] text-text-secondary">{String(u.qr_value).slice(0, 10)}…</p>}
+                              </div>
+                            ) : (
+                              <Badge tone="neutral" size="sm">Sin QR</Badge>
                             )}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar email={u.email} admin={u.role === 'admin'} />
-                            <p className="min-w-0 truncate font-medium text-neutral-900">{u.email}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 min-w-0 break-all text-sm text-neutral-900">{u.email}</td>
-                        <td className="px-6 py-4"><RoleBadge role={u.role} /></td>
-                        <td className="px-6 py-4">{u.qr_id ? <QrStatusBadge status={u.qr_status || 'pending_activation'} /> : <Badge tone="neutral" size="sm">Sin QR</Badge>}</td>
-                        <td className="px-6 py-4"><PrintStatusBadge status={u.qr_print_status || 'pending_print'} /></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-text-secondary">{formatDate(u.qr_created_at || u.created_at)}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => u.qr_id && openQrDetail(u.qr_id)}
-                              disabled={!u.qr_id || qrBusy === u.qr_id}
-                              className={`focus-ring inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                u.qr_id
-                                  ? 'border-brand-500/30 bg-brand-50 text-brand-700 hover:bg-brand-100'
-                                  : 'border-border text-text-secondary hover:bg-brand-50'
-                              }`}
-                              aria-label={`Gestionar el QR de ${u.email}`}
-                              title={u.qr_id ? 'Ver detalle del QR' : 'Sin código QR asignado'}
-                            >
-                              <QrCode size={13} aria-hidden="true" />
-                              {qrBusy === u.qr_id ? <Loader2 size={13} className="animate-spin" /> : u.qr_id ? 'Ver QR' : 'Sin QR'}
-                            </button>
-                            {u.qr_id && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const url = `http://localhost:5173/e/${u.qr_value}`;
-                                  navigator.clipboard.writeText(url);
-                                  toast.success('Enlace QR copiado al portapapeles');
-                                }}
-                                disabled={qrBusy === u.qr_id}
-                                className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-brand-50 hover:text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                aria-label={`Copiar enlace del QR de ${u.email}`}
-                                title="Copiar enlace permanente del QR"
-                              >
-                                <Copy size={15} aria-hidden="true" />
-                              </button>
-                            )}
-                          </div>
-                          <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} className="ml-auto mt-2 lg:mt-0" />
-                        </td>
-                      </motion.tr>
-                    ))}
+                          </td>
+                          <td className="px-3 py-3"><PrintStatusBadge status={u.qr_print_status || 'pending_print'} /></td>
+                          <td className="whitespace-nowrap px-3 py-3 text-text-secondary">{formatDate(u.qr_created_at || u.created_at)}</td>
+                          <td className="px-4 py-3"><div className="flex justify-end"><RowActions u={u} /></div></td>
+                        </motion.tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -844,115 +801,59 @@ export const AdminUsers = () => {
 
             {/* Móvil */}
             <ul className="space-y-3 md:hidden">
-              {users.map((u, i) => (
-                <motion.li
-                  key={u.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: EASE, delay: Math.min(i, 8) * 0.04 }}
-                  className={`${panel} p-4`}
-                >
-                  <div className="flex items-start gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(u.id)}
-                        onChange={() => toggleSelect(u.id)}
-                        className="peer sr-only"
-                      />
-                      <span
-                        aria-hidden="true"
-                        className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border border-border bg-white transition-all ${
-                          selectedIds.has(u.id) ? 'peer-checked:border-brand-500 peer-checked:bg-brand-500' : ''
-                        }`}
-                      >
-                        {selectedIds.has(u.id) && (
-                          <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3.5 8.5l3 3 6-7" />
-                          </svg>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+              {users.map((u, i) => {
+                const selected = selectedIds.has(u.id);
+                return (
+                  <motion.li
+                    key={u.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: EASE, delay: Math.min(i, 8) * 0.04 }}
+                    className={`${panel} p-4 transition-colors ${selected ? 'border-brand-500/50 bg-brand-50/60' : ''}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="pt-2.5"><Checkbox checked={selected} onChange={() => toggleSelect(u.id)} label={`Seleccionar a ${u.email}`} /></div>
                       <Avatar email={u.email} admin={u.role === 'admin'} />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="break-all text-sm font-semibold text-neutral-900">{u.email}</p>
-                        <p className="mt-0.5 text-xs text-text-secondary">{u.role === 'admin' ? 'Administrador' : 'Usuario'} · Registrado {formatDate(u.created_at)}</p>
+                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary">
+                          <RoleBadge role={u.role} />
+                          <span>Registrado {formatDate(u.created_at)}</span>
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  <dl className="grid gap-1.5 text-sm">
-                    <div className="flex items-baseline justify-between gap-4">
-                      <dt className="text-xs font-medium text-text-secondary">Estado QR</dt>
-                      <dd className="min-w-0 text-right">{u.qr_id ? <QrStatusBadge status={u.qr_status || 'pending_activation'} /> : <Badge tone="neutral" size="sm">Sin QR</Badge>}</dd>
-                    </div>
-                    <div className="flex items-baseline justify-between gap-4">
-                      <dt className="text-xs font-medium text-text-secondary">Impresión</dt>
-                      <dd className="min-w-0 text-right"><PrintStatusBadge status={u.qr_print_status || 'pending_print'} /></dd>
-                    </div>
-                    <div className="flex items-baseline justify-between gap-4">
-                      <dt className="text-xs font-medium text-text-secondary">Generado</dt>
-                      <dd className="min-w-0 text-right text-text-secondary">{formatDate(u.qr_created_at || u.created_at)}</dd>
-                    </div>
-                  </dl>
-                  <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-                    <button
-                      type="button"
-                      onClick={() => u.qr_id && openQrDetail(u.qr_id)}
-                      disabled={!u.qr_id || qrBusy === u.qr_id}
-                      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                        u.qr_id
-                          ? 'border-brand-500/30 bg-brand-50 text-brand-700 hover:bg-brand-100'
-                          : 'border-border text-text-secondary hover:bg-brand-50'
-                      }`}
-                    >
-                      <QrCode size={13} aria-hidden="true" />
-                      {qrBusy === u.qr_id ? <Loader2 size={13} className="animate-spin" /> : u.qr_id ? 'Ver QR' : 'Sin QR'}
-                    </button>
-                    {u.qr_id && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const url = `http://localhost:5173/e/${u.qr_value}`;
-                          navigator.clipboard.writeText(url);
-                          toast.success('Enlace QR copiado al portapapeles');
-                        }}
-                        disabled={qrBusy === u.qr_id}
-                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-brand-50 hover:text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={`Copiar enlace del QR de ${u.email}`}
-                        title="Copiar enlace permanente del QR"
-                      >
-                        <Copy size={15} aria-hidden="true" />
-                      </button>
-                    )}
-                    <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} className="ml-auto" />
-                  </div>
-                </motion.li>
-              ))}
+                    <dl className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-border bg-brand-50/50 p-3 text-xs">
+                      <div>
+                        <dt className="font-medium text-text-secondary">QR</dt>
+                        <dd className="mt-1">{u.qr_id ? <QrStatusBadge status={u.qr_status || 'pending_activation'} /> : <Badge tone="neutral" size="sm">Sin QR</Badge>}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-text-secondary">Impresión</dt>
+                        <dd className="mt-1"><PrintStatusBadge status={u.qr_print_status || 'pending_print'} /></dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-text-secondary">Generado</dt>
+                        <dd className="mt-1 text-neutral-900">{formatDate(u.qr_created_at || u.created_at)}</dd>
+                      </div>
+                    </dl>
+                    <div className="mt-3 border-t border-border pt-3"><RowActions u={u} /></div>
+                  </motion.li>
+                );
+              })}
             </ul>
 
             {/* Paginación */}
             {pagination && (
               <div className="flex flex-col items-center justify-between gap-3 text-xs text-text-secondary sm:flex-row">
                 <span>
-                  <span className="font-semibold text-neutral-900">{pagination.total}</span>{' '}
-                  {pagination.total === 1 ? 'usuario' : 'usuarios'} · Página {pagination.page} de {pagination.pages}
+                  Mostrando <span className="font-semibold text-neutral-900">{from}–{to}</span> de{' '}
+                  <span className="font-semibold text-neutral-900">{pagination.total}</span> · Página {pagination.page} de {pagination.pages}
                 </span>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={pagination.page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="btn-outline px-3 py-2 text-sm"
-                  >
+                  <button type="button" disabled={pagination.page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="btn-outline px-3 py-2 text-sm">
                     <ChevronLeft size={16} aria-hidden="true" /> Anterior
                   </button>
-                  <button
-                    type="button"
-                    disabled={pagination.page >= pagination.pages}
-                    onClick={() => setPage((p) => p + 1)}
-                    className="btn-outline px-3 py-2 text-sm"
-                  >
+                  <button type="button" disabled={pagination.page >= pagination.pages} onClick={() => setPage((p) => p + 1)} className="btn-outline px-3 py-2 text-sm">
                     Siguiente <ChevronRight size={16} aria-hidden="true" />
                   </button>
                 </div>
@@ -961,6 +862,50 @@ export const AdminUsers = () => {
           </>
         )}
 
+        {/* Barra de acciones masivas */}
+        <AnimatePresence>
+          {selectedCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 28 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              role="region"
+              aria-label="Acciones sobre la selección"
+              className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-4xl"
+            >
+              <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-brand-900/95 p-3 text-white shadow-card backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 min-w-8 items-center justify-center rounded-lg bg-white/15 px-2 text-sm font-bold tabular-nums">{selectedCount}</span>
+                  <span className="text-sm font-medium">{selectedCount === 1 ? 'usuario seleccionado' : 'usuarios seleccionados'}</span>
+                  <button type="button" onClick={clearSelection} className="text-xs font-semibold text-white/70 underline underline-offset-2 hover:text-white">Limpiar</button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value=""
+                    onChange={(e) => e.target.value && setBulkConfirm(e.target.value)}
+                    disabled={printBusyUser === 'bulk'}
+                    aria-label="Cambiar estado de impresión de la selección"
+                    className="focus-ring h-9 rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white"
+                  >
+                    <option value="" className="text-neutral-900">Marcar impresión…</option>
+                    {PRINT_STEPS.map((s) => <option key={s.id} value={s.id} className="text-neutral-900">{s.long}</option>)}
+                  </select>
+                  <button type="button" onClick={() => handleExport('csv')} disabled={busyExport} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-semibold transition-colors hover:bg-white/20 disabled:opacity-50">
+                    <FileText size={14} aria-hidden="true" /> CSV
+                  </button>
+                  <button type="button" onClick={() => handleExport('zip')} disabled={busyExport} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-semibold transition-colors hover:bg-white/20 disabled:opacity-50">
+                    <Download size={14} aria-hidden="true" /> ZIP
+                  </button>
+                  <button type="button" onClick={() => handleExport('pdf')} disabled={busyExport} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-50 disabled:opacity-50">
+                    {busyExport ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} aria-hidden="true" />} PDF impresión
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Confirmación de cambio de rol */}
         <Modal
           isOpen={!!confirm}
@@ -968,26 +913,14 @@ export const AdminUsers = () => {
           title={confirm?.role === 'admin' ? 'Dar permisos de administrador' : 'Quitar permisos de administrador'}
         >
           <div className="mb-6 flex items-start gap-3">
-            <span
-              className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ring-1 ${
-                confirm?.role === 'admin'
-                  ? 'bg-brand-500/10 text-brand-500 ring-brand-500/15'
-                  : 'bg-amber-50 text-amber-600 ring-amber-600/15'
-              }`}
-            >
+            <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ring-1 ${confirm?.role === 'admin' ? 'bg-brand-500/10 text-brand-500 ring-brand-500/15' : 'bg-amber-50 text-amber-600 ring-amber-600/15'}`}>
               {confirm?.role === 'admin' ? <ShieldCheck size={18} aria-hidden="true" /> : <ShieldOff size={18} aria-hidden="true" />}
             </span>
             <p className="text-sm leading-relaxed text-text-secondary">
               {confirm?.role === 'admin' ? (
-                <>
-                  <span className="break-all font-semibold text-neutral-900">{confirm?.user.email}</span> podrá gestionar
-                  usuarios, pedidos y la auditoría de la plataforma.
-                </>
+                <><span className="break-all font-semibold text-neutral-900">{confirm?.user.email}</span> podrá gestionar usuarios, pedidos y la auditoría de la plataforma.</>
               ) : (
-                <>
-                  <span className="break-all font-semibold text-neutral-900">{confirm?.user.email}</span> perderá el
-                  acceso al panel administrativo.
-                </>
+                <><span className="break-all font-semibold text-neutral-900">{confirm?.user.email}</span> perderá el acceso al panel administrativo.</>
               )}
             </p>
           </div>
@@ -1000,6 +933,31 @@ export const AdminUsers = () => {
           </div>
         </Modal>
 
+        {/* Confirmación de estado de impresión masivo */}
+        <Modal
+          isOpen={!!bulkConfirm}
+          onClose={() => (printBusyUser === 'bulk' ? null : setBulkConfirm(null))}
+          title="Actualizar estado de impresión"
+        >
+          <div className="mb-6 flex items-start gap-3">
+            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
+              <Printer size={18} aria-hidden="true" />
+            </span>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Se marcará como <span className="font-semibold text-neutral-900">{PRINT_LABEL[bulkConfirm]}</span> el estado de impresión de{' '}
+              <span className="font-semibold text-neutral-900">{selectedCount} {selectedCount === 1 ? 'usuario' : 'usuarios'}</span>.
+              El identificador y la URL de cada QR no se modifican.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setBulkConfirm(null)} disabled={printBusyUser === 'bulk'}>Cancelar</Button>
+            <Button onClick={doBulkPrint} disabled={printBusyUser === 'bulk'}>
+              {printBusyUser === 'bulk' && <Loader2 size={16} className="animate-spin" />}
+              {printBusyUser === 'bulk' ? 'Guardando...' : 'Aplicar'}
+            </Button>
+          </div>
+        </Modal>
+
         {/* Modal detalle QR */}
         <QrDetailModal
           isOpen={qrModal}
@@ -1008,7 +966,8 @@ export const AdminUsers = () => {
           user={qrUser}
           history={qrHistory}
           loading={qrLoading}
-          busy={qrBusy}
+          busy={!!qrBusy}
+          printBusy={!!printBusyUser}
           onRegenerate={handleRegenerateQr}
           onSetPrintStatus={(status) => handleSetPrintStatus(qrUser?.id, status)}
         />
