@@ -405,6 +405,8 @@ export const AdminUsers = () => {
 
   // Selección y detalle de QR
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
   const [selectAllChecked, setSelectAllChecked] = useState(false);
   const [qrModal, setQrModal] = useState(false);
   const [qrDetail, setQrDetail] = useState(null);
@@ -425,7 +427,7 @@ export const AdminUsers = () => {
       setPagination(data.pagination);
       // Mantener selección solo si sigue presente en la página
       const present = new Set((data.users || []).map((u) => u.id));
-      const next = new Set([...selectedIds].filter((id) => present.has(id)));
+      const next = new Set([...selectedIdsRef.current].filter((id) => present.has(id)));
       setSelectedIds(next);
       setSelectAllChecked(next.size > 0 && next.size === (data.users || []).length);
     } catch (e) {
@@ -433,7 +435,7 @@ export const AdminUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, page, selectedIds]);
+  }, [filters, page]);
 
   useEffect(() => {
     const t = setTimeout(load, 0);
