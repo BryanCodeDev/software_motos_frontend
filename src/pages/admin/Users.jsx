@@ -128,28 +128,6 @@ const Avatar = ({ email, admin }) => (
   </span>
 );
 
-/* Acción rápida: abrir detalle del QR de un usuario */
-const QrLink = ({ u, busy }) => {
-  const hasQr = !!(u.qr_id && u.qr_value);
-  if (!hasQr) {
-    return (
-      <Badge tone="neutral" size="sm">Sin QR</Badge>
-    );
-  }
-  return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={() => {}}
-      className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-brand-500/30 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-      aria-label={`Ver detalle del QR de ${u.email}`}
-    >
-      <QrCode size={13} aria-hidden="true" />
-      {busy ? <Loader2 size={13} className="animate-spin" /> : 'Ver QR'}
-    </button>
-  );
-};
-
 const ErrorBanner = ({ message, onRetry }) => (
   <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 text-sm text-rose-700" role="alert">
     <AlertTriangle size={18} className="flex-none" aria-hidden="true" />
@@ -180,7 +158,7 @@ const QrDetailModal = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get(`/admin/identifiers/${qr.id}/qr`, { responseType: 'blob' });
+        const res = await api.get(`/identifiers/${qr.id}/qr`, { responseType: 'blob' });
         if (cancelled) return;
         const blob = new Blob([res.data], { type: 'image/png' });
         setImageObjectUrl(URL.createObjectURL(blob));
@@ -216,7 +194,7 @@ const QrDetailModal = ({
 
   const handleDownload = () => {
     if (!qr?.id) return;
-    window.location.href = `${api.defaults.baseURL || '/api'}/admin/identifiers/${qr.id}/qr`;
+    window.location.href = `${api.defaults.baseURL || '/api'}/identifiers/${qr.id}/qr`;
   };
 
   const handlePreview = () => {
@@ -228,7 +206,7 @@ const QrDetailModal = ({
     if (!onRegenerate || !qr?.id) return;
     await onRegenerate(qr.id);
     try {
-      const res = await api.get(`/admin/identifiers/${qr.id}/qr`, { responseType: 'blob' });
+      const res = await api.get(`/identifiers/${qr.id}/qr`, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: 'image/png' });
       setImageObjectUrl(URL.createObjectURL(blob));
     } catch {
@@ -406,7 +384,9 @@ export const AdminUsers = () => {
   // Selección y detalle de QR
   const [selectedIds, setSelectedIds] = useState(new Set());
   const selectedIdsRef = useRef(selectedIds);
-  selectedIdsRef.current = selectedIds;
+  useEffect(() => {
+    selectedIdsRef.current = selectedIds;
+  }, [selectedIds]);
   const [selectAllChecked, setSelectAllChecked] = useState(false);
   const [qrModal, setQrModal] = useState(false);
   const [qrDetail, setQrDetail] = useState(null);
@@ -512,13 +492,13 @@ export const AdminUsers = () => {
     try {
       const idParam = ids.join(',');
       if (format === 'zip') {
-        await downloadBlob(`/admin/identifiers/export/zip?ids=${idParam}`, 'qrs-export.zip');
+        await downloadBlob(`/identifiers/export/zip?ids=${idParam}`, 'qrs-export.zip');
         toast.success(`${ids.length} código(s) QR descargado(s) en ZIP`);
       } else if (format === 'csv') {
-        await downloadBlob(`/admin/identifiers/export/csv?ids=${idParam}`, 'qr-export.csv');
+        await downloadBlob(`/identifiers/export/csv?ids=${idParam}`, 'qr-export.csv');
         toast.success(`CSV de ${ids.length} código(s) QR descargado`);
       } else if (format === 'pdf') {
-        await downloadBlob(`/admin/identifiers/export/pdf?ids=${idParam}&columns=3&rows=5&size_mm=25&gap_mm=8&margin_mm=12`, 'qrs-impresion.pdf');
+        await downloadBlob(`/identifiers/export/pdf?ids=${idParam}&columns=3&rows=5&size_mm=25&gap_mm=8&margin_mm=12`, 'qrs-impresion.pdf');
         toast.success(`PDF de impresión de ${ids.length} código(s) QR descargado`);
       }
       setSelectedIds(new Set());
@@ -538,7 +518,7 @@ export const AdminUsers = () => {
     }
     setPrintBusyUser('bulk');
     try {
-      await api.post('/admin/identifiers/bulk-print-status', { user_ids: ids, print_status: printStatus });
+      await api.post('/identifiers/bulk-print-status', { user_ids: ids, print_status: printStatus });
       toast.success(`Estado de impresión actualizado a "${PRINT_STATUS_LABEL[printStatus]}" para ${ids.length} usuario(s)`);
       setSelectedIds(new Set());
       setSelectAllChecked(false);
@@ -554,7 +534,7 @@ export const AdminUsers = () => {
   const openQrDetail = async (qrId) => {
     setQrLoading(true);
     try {
-      const { data } = await api.get(`/admin/identifiers/${qrId}`);
+      const { data } = await api.get(`/identifiers/${qrId}`);
       setQrDetail(data.identifier);
       setQrUser(data.user);
       setQrHistory(data.history || []);
@@ -569,7 +549,7 @@ export const AdminUsers = () => {
   const handleRegenerateQr = async (qrId) => {
     setQrBusy(qrId);
     try {
-      await api.get(`/admin/identifiers/${qrId}/qr`);
+      await api.get(`/identifiers/${qrId}/qr`);
       toast.success('Imagen QR regenerada (mismo identificador y URL)');
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo regenerar la imagen');
@@ -581,7 +561,7 @@ export const AdminUsers = () => {
   const handleSetPrintStatus = async (userId, printStatus) => {
     setPrintBusyUser(userId);
     try {
-      await api.post('/admin/identifiers/bulk-print-status', { user_ids: [userId], print_status: printStatus });
+      await api.post('/identifiers/bulk-print-status', { user_ids: [userId], print_status: printStatus });
       toast.success(`Estado de impresión actualizado a "${PRINT_STATUS_LABEL[printStatus]}"`);
       load();
     } catch (e) {
@@ -820,18 +800,40 @@ export const AdminUsers = () => {
                         <td className="px-6 py-4"><PrintStatusBadge status={u.qr_print_status || 'pending_print'} /></td>
                         <td className="px-6 py-4 whitespace-nowrap text-text-secondary">{formatDate(u.qr_created_at || u.created_at)}</td>
                         <td className="px-6 py-4 text-right">
-                          <QrLink u={u} busy={qrBusy === u.qr_id} />
-                          <button
-                            type="button"
-                            onClick={() => u.qr_id && openQrDetail(u.qr_id)}
-                            disabled={!u.qr_id || qrBusy === u.qr_id}
-                            className="ml-2 focus-ring inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:bg-brand-50 hover:text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            aria-label={`Ver detalle del QR de ${u.email}`}
-                            title="Ver detalle del QR"
-                          >
-                            <QrCode size={16} aria-hidden="true" />
-                          </button>
-                          <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} />
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => u.qr_id && openQrDetail(u.qr_id)}
+                              disabled={!u.qr_id || qrBusy === u.qr_id}
+                              className={`focus-ring inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                u.qr_id
+                                  ? 'border-brand-500/30 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                                  : 'border-border text-text-secondary hover:bg-brand-50'
+                              }`}
+                              aria-label={`Gestionar el QR de ${u.email}`}
+                              title={u.qr_id ? 'Ver detalle del QR' : 'Sin código QR asignado'}
+                            >
+                              <QrCode size={13} aria-hidden="true" />
+                              {qrBusy === u.qr_id ? <Loader2 size={13} className="animate-spin" /> : u.qr_id ? 'Ver QR' : 'Sin QR'}
+                            </button>
+                            {u.qr_id && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const url = `http://localhost:5173/e/${u.qr_value}`;
+                                  navigator.clipboard.writeText(url);
+                                  toast.success('Enlace QR copiado al portapapeles');
+                                }}
+                                disabled={qrBusy === u.qr_id}
+                                className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-brand-50 hover:text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                aria-label={`Copiar enlace del QR de ${u.email}`}
+                                title="Copiar enlace permanente del QR"
+                              >
+                                <Copy size={15} aria-hidden="true" />
+                              </button>
+                            )}
+                          </div>
+                          <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} className="ml-auto mt-2 lg:mt-0" />
                         </td>
                       </motion.tr>
                     ))}
@@ -898,10 +900,31 @@ export const AdminUsers = () => {
                       type="button"
                       onClick={() => u.qr_id && openQrDetail(u.qr_id)}
                       disabled={!u.qr_id || qrBusy === u.qr_id}
-                      className="flex items-center gap-1.5 rounded-lg border border-brand-500/30 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        u.qr_id
+                          ? 'border-brand-500/30 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                          : 'border-border text-text-secondary hover:bg-brand-50'
+                      }`}
                     >
-                      <QrCode size={13} aria-hidden="true" /> {qrBusy === u.qr_id ? <Loader2 size={13} className="animate-spin" /> : 'Ver QR'}
+                      <QrCode size={13} aria-hidden="true" />
+                      {qrBusy === u.qr_id ? <Loader2 size={13} className="animate-spin" /> : u.qr_id ? 'Ver QR' : 'Sin QR'}
                     </button>
+                    {u.qr_id && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `http://localhost:5173/e/${u.qr_value}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success('Enlace QR copiado al portapapeles');
+                        }}
+                        disabled={qrBusy === u.qr_id}
+                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-brand-50 hover:text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label={`Copiar enlace del QR de ${u.email}`}
+                        title="Copiar enlace permanente del QR"
+                      >
+                        <Copy size={15} aria-hidden="true" />
+                      </button>
+                    )}
                     <RoleAction u={u} meId={me?.id} busy={busyId === u.id} onChange={askChangeRole} className="ml-auto" />
                   </div>
                 </motion.li>
