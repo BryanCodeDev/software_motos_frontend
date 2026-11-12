@@ -1,6 +1,5 @@
 import {
   LegalPage,
-  COMPANY,
   Callout,
   DefList,
   Lead,
@@ -10,6 +9,7 @@ import {
   Note,
   Value,
 } from '../../components/LegalPage';
+import { COMPANY } from '../../components/legalConstants';
 
 const TITLE = 'Términos y Condiciones de Uso';
 const DESCRIPTION =

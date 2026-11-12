@@ -1,7 +1,6 @@
 import { CreditCard, Database, Eye, EyeOff, HeartPulse, KeyRound, ShieldCheck, User, Users } from 'lucide-react';
 import {
   LegalPage,
-  COMPANY,
   Callout,
   CardGrid,
   DefList,
@@ -12,6 +11,7 @@ import {
   Note,
   Value,
 } from '../../components/LegalPage';
+import { COMPANY } from '../../components/legalConstants';
 
 const TITLE = 'Política de Privacidad y Tratamiento de Datos Personales';
 const DESCRIPTION =
