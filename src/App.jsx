@@ -18,6 +18,8 @@ const Home = lazy(() => import('./pages/Home'));
 const Products = lazy(() => import('./pages/Products'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/legal/TermsAndConditions'));
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -56,6 +58,8 @@ const App = () => (
                 <Route path="/productos" element={<Products />} />
                 <Route path="/como-funciona" element={<HowItWorks />} />
                 <Route path="/privacidad" element={<Privacy />} />
+                <Route path="/terminos-y-condiciones" element={<Terms />} />
+                <Route path="/politica-de-privacidad" element={<PrivacyPolicy />} />
                 <Route path="/preguntas-frecuentes" element={<FAQ />} />
                 <Route path="/contacto" element={<Contact />} />
                 <Route path="/e/:identifier" element={<PublicEmergency />} />

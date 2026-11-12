@@ -147,6 +147,13 @@ export const Login = () => {
         <UserPlus size={18} className="text-brand-500" />
         Crear cuenta gratis
       </Link>
+
+      <p className="mt-5 text-center text-xs text-text-secondary">
+        Al acceder aceptas los{' '}
+        <Link to={routes.terms} className="text-brand-500 hover:underline">Términos y Condiciones</Link>{' '}
+        y la{' '}
+        <Link to={routes.privacyPolicy} className="text-brand-500 hover:underline">Política de Privacidad</Link>.
+      </p>
     </AuthShell>
   );
 };

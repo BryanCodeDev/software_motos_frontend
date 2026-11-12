@@ -3,6 +3,8 @@ export const routes = {
   products: '/productos',
   howItWorks: '/como-funciona',
   privacy: '/privacidad',
+  terms: '/terminos-y-condiciones',
+  privacyPolicy: '/politica-de-privacidad',
   faq: '/preguntas-frecuentes',
   contact: '/contacto',
   login: '/auth/login',

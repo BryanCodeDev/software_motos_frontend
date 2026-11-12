@@ -1,13 +1,13 @@
 import React from 'react';
 import { routes } from '../utils/routes';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Database, EyeOff, Trash2, AlertTriangle, ArrowRight, SlidersHorizontal, QrCode } from 'lucide-react';
+import { ShieldCheck, Lock, Database, EyeOff, Trash2, AlertTriangle, ArrowRight, SlidersHorizontal, QrCode, FileText, User, HeartPulse, Mail, Phone } from 'lucide-react';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
 import { Reveal, PageHeader } from '../components/Section';
 
 const principles = [
-  { icon: SlidersHorizontal, t: 'Tú decides', d: 'Cada dato es público o privado, campo por campo.' },
+  { icon: SlidersHorizontal, t: 'Tú decides', d: 'Cada dato es público o privado, campo por campo, desde tu centro de privacidad.' },
   { icon: QrCode, t: 'El QR no guarda datos', d: 'Solo contiene un código aleatorio, nunca datos personales ni médicos.' },
   { icon: Lock, t: 'Control total', d: 'Edita, oculta o elimina tu información cuando quieras.' },
 ];
@@ -57,7 +57,6 @@ const sections = [
       'Es una herramienta de apoyo: no garantiza atención médica ni sustituye a los servicios oficiales de emergencia.',
       'No podemos asegurar que alguien escanee tu código ni que la respuesta sea inmediata.',
       'Abrir el perfil requiere conexión a internet.',
-      'Estamos validando la durabilidad del material del sticker físico; colócalo en un lugar visible y protegido del desgaste.',
     ],
   },
 ];
@@ -66,12 +65,13 @@ export const Privacy = () => (
   <main className="min-h-screen">
     <Seo
       title="Privacidad y seguridad"
-      description="Qué datos se almacenan, quién puede verlos, cómo configurar la visibilidad y cómo eliminar tu información."
+      description="Qué datos se almacenan, quién puede verlos, cómo configurar la visibilidad y cómo gestionar tus derechos de privacidad."
+      noindex
     />
     <PageHeader
       eyebrow="Privacidad y seguridad"
       title="Tú decides qué compartes"
-      subtitle="Tu información está bajo tu control. Aquí te explicamos, sin tecnicismos, qué guardamos, quién puede verla y cómo gestionarla."
+      subtitle="Tu información está bajo tu control. Aquí te explicamos, sin tecnicismos, qué guardamos, quién puede verla y cómo gestionarla. Consulta también nuestros documentos legales completos."
     />
 
     <section className="pb-20">
@@ -118,30 +118,53 @@ export const Privacy = () => (
             <Card className="h-full border-brand-500/30 p-7">
               <div className="mb-5 flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
-                  <Lock className="h-5 w-5" />
+                  <FileText className="h-5 w-5" />
                 </span>
-                <h2 className="font-semibold text-neutral-900">Seguridad de tu cuenta y registros</h2>
+                <h2 className="font-semibold text-neutral-900">Documentos legales</h2>
               </div>
-              <p className="text-sm leading-relaxed text-text-secondary">
-                Tu sesión se protege con cookies seguras, limitamos las solicitudes repetidas y confirmamos
-                los pagos desde nuestro servidor. También registramos las acciones sensibles para poder
-                auditarlas, sin guardar copias innecesarias de datos médicos ni de información privada.
-              </p>
+              <ul className="space-y-3 text-sm leading-relaxed text-text-secondary">
+                <li className="flex items-start gap-3">
+                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-neutral-900">Términos y Condiciones de Uso</p>
+                    <p className="text-xs text-text-secondary">Reglas de uso de la plataforma, compras y responsabilidad.</p>
+                  </div>
+                  <Link
+                    to={routes.terms}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-500 hover:underline"
+                  >
+                    Leer <ArrowRight size={12} />
+                  </Link>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-neutral-900">Política de Privacidad y Tratamiento de Datos Personales</p>
+                    <p className="text-xs text-text-secondary">Qué datos recopilamos, cómo se protegen y cómo ejercer tus derechos.</p>
+                  </div>
+                  <Link
+                    to={routes.privacyPolicy}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-500 hover:underline"
+                  >
+                    Leer <ArrowRight size={12} />
+                  </Link>
+                </li>
+              </ul>
             </Card>
           </Reveal>
-        </div>
 
-        <Reveal className="mt-12">
-          <div className="flex flex-col items-start justify-between gap-5 rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-8 text-white shadow-glow sm:flex-row sm:items-center">
-            <div>
-              <h2 className="mb-1 text-xl font-bold">¿Tienes dudas sobre tus datos?</h2>
-              <p className="text-sm text-white/80">Escríbenos y te ayudamos a resolverlas.</p>
+          <Reveal className="mt-12">
+            <div className="flex flex-col items-start justify-between gap-5 rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-8 text-white shadow-glow sm:flex-row sm:items-center">
+              <div>
+                <h2 className="mb-1 text-xl font-bold">¿Tienes dudas sobre tus datos?</h2>
+                <p className="text-sm text-white/80">Escríbenos y te ayudamos a resolverlas.</p>
+              </div>
+              <Link to={routes.contact} className="btn flex-shrink-0 bg-white px-5 py-2.5 text-sm text-brand-500 hover:bg-brand-50">
+                Contactar con soporte <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <Link to={routes.contact} className="btn flex-shrink-0 bg-white px-5 py-2.5 text-sm text-brand-500 hover:bg-brand-50">
-              Contactar con soporte <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </div>
     </section>
   </main>

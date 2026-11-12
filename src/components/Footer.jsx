@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ShieldCheck, ArrowRight, ArrowUp } from 'lucide-react';
 import { routes } from '../utils/routes';
-
 const EASE = [0.22, 1, 0.36, 1];
 
 const columns = [
@@ -17,6 +16,8 @@ const columns = [
     title: 'Plataforma',
     links: [
       { label: 'Cómo funciona', to: routes.howItWorks },
+      { label: 'Términos y Condiciones', to: routes.terms },
+      { label: 'Política de Privacidad', to: routes.privacyPolicy },
       { label: 'Privacidad y seguridad', to: routes.privacy },
       { label: 'Preguntas frecuentes', to: routes.faq },
       { label: 'Contacto', to: routes.contact },
@@ -27,6 +28,7 @@ const columns = [
     links: [
       { label: 'Iniciar sesión', to: routes.login },
       { label: 'Crear cuenta', to: routes.register },
+      { label: 'Mi privacidad', to: routes.dashboardPrivacy },
     ],
   },
 ];

@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
+import { CheckField } from '../../components/DashPage';
 import {
   UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, QrCode, ClipboardList, ShieldCheck,
+  FileText, AlertTriangle, HeartPulse, Bell,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
@@ -44,6 +46,43 @@ const getStrength = (p) => {
 const fieldIcon = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary';
 const inputCls = 'h-11 pl-10 text-base sm:text-sm';
 
+const CONSENTS = [
+  {
+    key: 'terms',
+    label: 'Acepto los Términos y Condiciones de Uso',
+    hint: 'Reglas de uso de la plataforma, compras, pagos y responsabilidad. Lee el documento completo.',
+    required: true,
+    link: routes.terms,
+    linkText: 'Ver Términos y Condiciones',
+  },
+  {
+    key: 'privacy',
+    label: 'Conozco la Política de Privacidad y Tratamiento de Datos Personales',
+    hint: 'Constancia de conocimiento de cómo se recopilan, usan y protegen tus datos.',
+    required: true,
+    link: routes.privacyPolicy,
+    linkText: 'Ver Política de Privacidad',
+  },
+  {
+    key: 'data_processing',
+    label: 'Autorizo el tratamiento de mis datos personales',
+    hint: 'Autorizas el tratamiento de los datos necesarios para operar el servicio (cuenta, perfil, contactos, pagos).',
+    required: true,
+  },
+  {
+    key: 'sensitive_data',
+    label: 'Autorizo expresamente el tratamiento de mis datos de salud',
+    hint: 'Autorizas el tratamiento de información médica sensible (alergias, condiciones, medicamentos). Es voluntario y no condiciona el uso básico del servicio.',
+    required: false,
+  },
+  {
+    key: 'notifications',
+    label: 'Autorizo notificaciones de emergencia',
+    hint: 'Autorizas el uso de tus contactos de emergencia para enviar notificaciones cuando estén habilitadas.',
+    required: false,
+  },
+];
+
 export const Register = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -51,15 +90,26 @@ export const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [consents, setConsents] = useState(() => Object.fromEntries(CONSENTS.map((c) => [c.key, false])));
 
   const strength = getStrength(form.password);
   const level = STRENGTH[strength];
 
+  const toggleConsent = (key) => {
+    setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const allRequiredConsents = CONSENTS.filter((c) => c.required).every((c) => consents[c.key] === true);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!allRequiredConsents) {
+      toast.error('Debes aceptar todas las autorizaciones requeridas para continuar.');
+      return;
+    }
     setLoading(true);
     try {
-      await register({ ...form, role: 'user' });
+      await register({ ...form, role: 'user', consents });
       toast.success('¡Cuenta creada! Ahora completa tu perfil');
       navigate(routes.home);
     } catch (error) {
@@ -162,7 +212,41 @@ export const Register = () => {
           </div>
         </div>
 
-        <Button type="submit" variant="primary" disabled={loading} className="h-11 w-full">
+        {/* Consentimientos separados */}
+        <section className="rounded-xl border border-border bg-white p-5 sm:p-6">
+          <h2 className="mb-4 text-base font-semibold text-neutral-900">Autorizaciones y consentimientos</h2>
+          <p className="mb-4 text-sm text-text-secondary">
+            Lee y marca cada autorización por separado. Ninguna casilla está premarcada. La aceptación de los
+            Términos y Condiciones no implica automáticamente autorización para publicar datos médicos.
+          </p>
+          <div className="space-y-4">
+            {CONSENTS.map((c) => (
+              <div key={c.key} className="space-y-1">
+                <CheckField
+                  id={`consent-${c.key}`}
+                  checked={consents[c.key] === true}
+                  onChange={() => toggleConsent(c.key)}
+                  label={c.label}
+                  hint={c.hint}
+                  required={c.required}
+                />
+                {c.link && (
+                  <p className="ml-8 mt-1 text-xs text-brand-500">
+                    <Link to={c.link} className="font-medium hover:underline">
+                      {c.linkText}
+                    </Link>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-text-secondary">
+            La información médica es opcional: no condicionamos el uso básico del servicio a proporcionarla.
+            Todas las autorizaciones quedan registradas con fecha, hora y versión del documento.
+          </p>
+        </section>
+
+        <Button type="submit" variant="primary" disabled={loading || !allRequiredConsents} className="h-11 w-full">
           {loading ? (
             <>
               <Loader2 size={18} className="animate-spin" /> Creando tu cuenta...

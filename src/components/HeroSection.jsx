@@ -82,9 +82,9 @@ const ScanView = ({ reduce }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.04 }}
     transition={{ duration: 0.35, ease: EASE }}
-    className="flex min-h-[272px] flex-col items-center justify-center"
+    className="flex min-h-[220px] flex-col items-center justify-center sm:min-h-[260px]"
   >
-    <div className="relative h-44 w-44 rounded-2xl bg-white p-3 ring-1 ring-border">
+    <div className="relative h-28 w-28 rounded-2xl bg-white p-2.5 ring-1 ring-border sm:h-40 sm:w-40 sm:p-3">
       <QrGlyph />
       {CORNERS.map((c) => (
         <span key={c} aria-hidden="true" className={`absolute h-5 w-5 border-brand-500 ${c}`} />
@@ -99,7 +99,7 @@ const ScanView = ({ reduce }) => (
         />
       )}
     </div>
-    <p className="mt-5 flex items-center gap-2 text-sm font-semibold text-neutral-900">
+    <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-neutral-900 sm:mt-5">
       <ScanLine className="h-4 w-4 text-brand-500" aria-hidden="true" /> Apunta la cámara al QR
     </p>
     <p className="mt-1 text-xs text-text-secondary">No necesitas instalar nada</p>
@@ -123,27 +123,31 @@ const ProfileView = ({ reduce }) => (
     initial={reduce ? false : 'hidden'}
     animate="show"
     exit={{ opacity: 0, transition: { duration: 0.25 } }}
-    className="min-h-[272px]"
+    className="min-h-[220px] sm:min-h-[260px]"
   >
-    <motion.div variants={profileRow} className="mb-3 rounded-xl border border-border bg-brand-50/70 p-4">
+    <motion.div variants={profileRow} className="mb-2 rounded-xl border border-border bg-brand-50/70 p-3 sm:mb-2.5 sm:p-4">
       <div className="mb-1 text-[11px] uppercase tracking-wider text-text-secondary">Nombre</div>
       <div className="font-semibold text-neutral-900">Nombre del propietario</div>
     </motion.div>
 
-    <div className="mb-3 grid gap-3 sm:grid-cols-2">
+    <div className="mb-2 space-y-2 sm:mb-2.5 sm:space-y-2.5">
       {['Grupo sanguíneo', 'Alergias'].map((label) => (
-        <motion.div key={label} variants={profileRow} className="rounded-xl border border-border bg-brand-50/70 p-4">
-          <div className="mb-1 text-[11px] uppercase tracking-wider text-text-secondary">{label}</div>
-          <div className="flex items-center gap-1.5 font-semibold text-neutral-900">
+        <motion.div
+          key={label}
+          variants={profileRow}
+          className="flex items-center justify-between gap-2 rounded-xl border border-border bg-brand-50/70 px-3 py-2.5 sm:px-4 sm:py-3"
+        >
+          <span className="text-[11px] uppercase tracking-wider text-text-secondary">{label}</span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-900">
             <Lock className="h-3.5 w-3.5 text-text-secondary" aria-hidden="true" /> Si lo autorizas
-          </div>
+          </span>
         </motion.div>
       ))}
     </div>
 
     <motion.div
       variants={profileRow}
-      className="flex items-center justify-between rounded-xl border border-border bg-brand-50/70 p-4"
+      className="flex items-center justify-between rounded-xl border border-border bg-brand-50/70 p-3 sm:p-4"
     >
       <div>
         <div className="mb-1 text-[11px] uppercase tracking-wider text-text-secondary">Contacto de emergencia</div>
@@ -199,16 +203,16 @@ const PhonePreview = () => {
     <motion.div
       initial={reduce ? false : { opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
+      transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
       style={reduce ? undefined : { rotateX, rotateY, transformPerspective: 900 }}
       className="relative mx-auto w-full max-w-sm"
     >
-      <div className="absolute -inset-6 rounded-[2.5rem] bg-brand-900/20 blur-3xl" aria-hidden="true" />
+      <div className="absolute -inset-6 rounded-[2.5rem] bg-brand-500/25 blur-3xl" aria-hidden="true" />
       <div className={reduce ? '' : 'animate-float'}>
-        <div className="relative rounded-[2rem] border border-border bg-neutral-50 p-5 shadow-glow">
-          <div className="mb-5 flex items-center justify-between">
+        <div className="relative rounded-[2rem] border border-white/40 bg-neutral-50 p-4 shadow-glow ring-1 ring-black/5 sm:p-5">
+          <div className="mb-3 flex items-center justify-between sm:mb-5">
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-brand-500 animate-pulse-ring" />
@@ -227,7 +231,7 @@ const PhonePreview = () => {
             </AnimatePresence>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-1.5" aria-hidden="true">
+          <div className="mt-3 flex items-center justify-center gap-1.5 sm:mt-4" aria-hidden="true">
             {['scan', 'profile'].map((p) => (
               <span
                 key={p}
@@ -237,7 +241,7 @@ const PhonePreview = () => {
               />
             ))}
           </div>
-          <p className="mt-3 text-center text-[11px] text-text-secondary">
+          <p className="mt-2 text-center text-[10px] text-text-secondary sm:mt-3 sm:text-[11px]">
             Ejemplo ilustrativo. Los datos reales los define el propietario.
           </p>
         </div>
@@ -264,6 +268,11 @@ const HeadlineLine = ({ children, delay, className = '', reduce }) => (
   </span>
 );
 
+/**
+ * Fondo con opacidad negra: la imagen (póster vertical en móvil, horizontal en
+ * escritorio) queda de textura y el contenido completo va encima, igual en todos
+ * los tamaños. El teléfono animado se muestra desde lg.
+ */
 export const HeroSection = () => {
   const reduce = useReducedMotion();
   const sectionRef = useRef(null);
@@ -282,26 +291,43 @@ export const HeroSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate flex w-full items-center overflow-hidden min-h-[640px] lg:min-h-0 lg:aspect-video lg:max-h-[100svh] pt-24 pb-16 lg:pt-20 lg:pb-0 bg-[url('/herosection-movil.webp')] bg-contain bg-center md:bg-[url('/herosection.webp')] md:bg-cover"
+      className="relative isolate flex min-h-[100svh] w-full items-center overflow-hidden bg-neutral-950 pb-10 pt-24 sm:pb-16 sm:pt-28 lg:min-h-[max(760px,100svh)] lg:pb-24 lg:pt-28"
     >
-      {/* Degradado superior: asegura legibilidad del navbar transparente */}
-      <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-black/60 to-transparent" aria-hidden="true" />
-      {/* Degradado lateral: legibilidad del texto sin tapar la moto/QR a la derecha */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/75 via-black/45 to-black/10" aria-hidden="true" />
-      <div className="absolute inset-x-0 bottom-0 -z-10 h-32 bg-gradient-to-t from-black/40 to-transparent" aria-hidden="true" />
+      {/* IMAGEN DE FONDO (secundaria) */}
+      <picture>
+        <source media="(min-width: 768px)" srcSet="/herosection.webp" />
+        <img
+          src="/herosection-movil.webp"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 -z-20 h-full w-full select-none object-cover object-center"
+          decoding="async"
+          draggable="false"
+        />
+      </picture>
+      {/* Opacidad negra */}
+      <div className="absolute inset-0 -z-10 bg-black/75" aria-hidden="true" />
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/50 via-transparent to-black/60"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-r from-brand-900/40 via-transparent to-transparent"
+        aria-hidden="true"
+      />
 
       <div className="container-page relative z-10 w-full">
-        <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
+        <div className="grid items-center gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="relative z-20">
             <motion.span
               {...fade(0)}
-              className="mb-5 inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/90"
+              className="mb-3 inline-flex items-center gap-3 text-xs sm:mb-5 font-semibold uppercase tracking-[0.22em] text-white/90"
             >
               <span className="h-px w-8 bg-brand-400" aria-hidden="true" />
               Identificación de emergencia
             </motion.span>
 
-            <h1 className="mb-6 text-4xl font-extrabold leading-[1.08] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.45)] sm:text-5xl xl:text-6xl">
+            <h1 className="mb-4 text-3xl font-extrabold leading-[1.1] sm:mb-6 sm:leading-[1.08] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.45)] [text-wrap:balance] sm:text-5xl xl:text-6xl">
               <HeadlineLine delay={0.1} reduce={reduce} className="text-brand-400">
                 Si tú no puedes hablar,
               </HeadlineLine>
@@ -312,26 +338,27 @@ export const HeroSection = () => {
 
             <motion.p
               {...fade(0.45)}
-              className="mb-8 max-w-xl text-base leading-relaxed text-white/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.5)] lg:text-lg xl:text-xl"
+              className="mb-6 max-w-xl text-sm leading-relaxed sm:mb-8 sm:text-base text-white/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.5)] lg:text-lg xl:text-xl"
             >
               Crea un perfil digital de emergencia, decide qué datos compartir y vincúlalo a un código
               QR que cualquier persona puede escanear, sin instalar aplicaciones.
             </motion.p>
 
-            <motion.div {...fade(0.6)} className="flex flex-col gap-3 sm:flex-row">
-              <Link to={routes.register} className="btn-primary group px-6 py-3 text-sm lg:text-base">
+            <motion.div {...fade(0.6)} className="flex gap-2.5 sm:gap-3">
+              <Link to={routes.register} className="btn-primary group flex-[1.7] whitespace-nowrap px-4 py-3 text-sm sm:flex-none sm:px-6 lg:text-base">
                 Crear perfil gratuito
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
               </Link>
               <Link
                 to={routes.products}
-                className="btn border border-white/50 bg-white/10 px-6 py-3 text-sm text-white backdrop-blur-sm hover:bg-white hover:text-neutral-900 active:scale-[0.98] lg:text-base"
+                className="btn flex-1 whitespace-nowrap border border-white/50 bg-white/10 px-4 py-3 text-sm sm:flex-none sm:px-6 text-white backdrop-blur-sm hover:bg-white hover:text-neutral-900 active:scale-[0.98] lg:text-base"
               >
-                Conocer el sticker
+                <span className="sm:hidden">Sticker</span>
+                <span className="hidden sm:inline">Conocer el sticker</span>
               </Link>
             </motion.div>
 
-            <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
+            <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs sm:mt-7 sm:gap-x-6 sm:gap-y-2 sm:text-sm text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
               {['Sin costo por escaneo', 'Sin aplicaciones', 'Privacidad bajo tu control'].map((t, i) => (
                 <motion.li key={t} {...fade(0.8 + i * 0.1)} className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-brand-400" aria-hidden="true" /> {t}
@@ -340,7 +367,10 @@ export const HeroSection = () => {
             </ul>
           </div>
 
-          <PhonePreview />
+          {/* En móvil va compacta para no alargar el hero */}
+          <div>
+            <PhonePreview />
+          </div>
         </div>
       </div>
 

@@ -11,7 +11,8 @@ const navItems = [
   { label: 'Inicio', href: routes.home },
   { label: 'Productos', href: routes.products },
   { label: 'Cómo funciona', href: routes.howItWorks },
-  { label: 'Privacidad', href: routes.privacy },
+  { label: 'Términos', href: routes.terms },
+  { label: 'Privacidad', href: routes.privacyPolicy },
   { label: 'Preguntas', href: routes.faq },
 ];
 
