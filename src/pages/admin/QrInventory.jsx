@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MotionConfig, motion } from 'framer-motion';
 import {
-  Barcode3, Box, CheckCircle2, Download, Loader2, Package, Plus, QrCode, RefreshCw, Search, Users, AlertTriangle,
+  Barcode, Box, CheckCircle2, Download, Loader2, Package, Plus, QrCode, RefreshCw, Search, Users, AlertTriangle,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
@@ -223,7 +223,7 @@ export const AdminQrInventory = () => {
           <StatCard label="Paquetes disponibles" value={fmt(statsMemo.pkgs.available)} icon={Box} tone="bg-emerald-500" hint="Listos para venta" />
           <StatCard label="Paquetes reservados" value={fmt(statsMemo.pkgs.reserved)} icon={Package} tone="bg-amber-500" hint="En checkout pendiente" />
           <StatCard label="Paquetes asignados" value={fmt(statsMemo.pkgs.assigned)} icon={CheckCircle2} tone="bg-sky-500" hint="Asociados a un usuario" />
-          <StatCard label="En producción" value={fmt(statsMemo.pkgs.in_production)} icon={Barcode3} tone="bg-brand-500" hint="Imprimiéndose" />
+          <StatCard label="En producción" value={fmt(statsMemo.pkgs.in_production)} icon={Barcode} tone="bg-brand-500" hint="Imprimiéndose" />
           <StatCard label="QR activos" value={fmt(statsMemo.ids.active)} icon={Users} tone="bg-brand-500" hint="Identificadores en uso" />
         </motion.div>
 
