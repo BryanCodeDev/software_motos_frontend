@@ -17,6 +17,7 @@ export const routes = {
   dashboardPrivacy: '/panel/privacidad',
   dashboardQr: '/panel/qr',
   dashboardOrders: '/panel/pedidos',
+  checkout: '/panel/checkout',
   admin: '/admin',
   publicEmergency: (id) => `/e/${id}`,
 };

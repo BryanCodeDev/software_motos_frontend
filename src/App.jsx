@@ -39,6 +39,7 @@ const OrdersPage = lazy(() => import('./pages/dashboard/OrdersPage'));
 
 // Admin pages
 const Help = lazy(() => import('./pages/admin/help'));
+const Checkout = lazy(() => import('./pages/Checkout'));
 
 const App = () => (
   <HelmetProvider>
@@ -78,6 +79,7 @@ const App = () => (
                   <Route path="privacidad" element={<PrivacyPage />} />
                   <Route path="qr" element={<QrPage />} />
                   <Route path="pedidos" element={<OrdersPage />} />
+                  <Route path="checkout" element={<Checkout />} />
                 </Route>
               </Route>
 

@@ -186,9 +186,14 @@ const OrderCard = ({ order: o, index }) => {
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
           <Icon size={20} aria-hidden="true" />
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{o.product_name}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-text-secondary">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{o.product_name}</p>
+            {o.design_name && (
+              <p className="mt-0.5 text-xs text-text-secondary">
+                Diseño: {o.design_name} · {o.sticker_quantity || 2} stickers
+              </p>
+            )}
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-text-secondary">
             <span className="font-mono font-semibold text-neutral-900">{o.order_number}</span>
             <span aria-hidden="true">·</span>
             <span>{formatDate(o.created_at)}</span>

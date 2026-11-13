@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MotionConfig, motion } from 'framer-motion';
 import {
-  Search, AlertTriangle, Loader2, PackageOpen, Package, Clock, Wrench, Wallet, X, ArrowRight,
+  Search, AlertTriangle, Loader2, PackageOpen, Package, Clock, Wrench, Wallet, X, ArrowRight, Image as ImageIcon, QrCode, Sticker,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
@@ -28,8 +28,6 @@ const STATUS_OPTIONS = [
   'pending_confirmation', 'pending_payment', 'paid', 'preparing', 'shipped',
   'delivered', 'cancelled', 'refund_requested', 'refunded',
 ];
-
-// Tonos soportados por <Badge>: success | info | warn | danger | neutral
 const COMMERCIAL = {
   draft: ['Borrador', 'neutral'],
   pending_confirmation: ['Por confirmar', 'warn'],
@@ -162,7 +160,7 @@ export const AdminOrders = () => {
     return orders.filter((o) => {
       if (filter !== 'all' && o.commercial_status !== filter) return false;
       if (!q) return true;
-      return [o.order_number, o.customer_email, o.product_name].some((v) => String(v || '').toLowerCase().includes(q));
+      return [o.order_number, o.customer_email, o.product_name, o.design_name].some((v) => String(v || '').toLowerCase().includes(q));
     });
   }, [orders, query, filter]);
 
@@ -275,6 +273,9 @@ export const AdminOrders = () => {
                       <th scope="col" className="px-6 py-4">pedido</th>
                       <th scope="col" className="px-6 py-4">Cliente</th>
                       <th scope="col" className="px-6 py-4">Producto</th>
+                      <th scope="col" className="px-6 py-4">Diseño</th>
+                      <th scope="col" className="px-6 py-4 text-center">Cantidad</th>
+                      <th scope="col" className="px-6 py-4">QR asociado</th>
                       <th scope="col" className="px-6 py-4 text-right">Total</th>
                       <th scope="col" className="px-6 py-4">Estado</th>
                       <th scope="col" className="px-6 py-4">Pago</th>
@@ -291,8 +292,41 @@ export const AdminOrders = () => {
                         className="transition-colors hover:bg-brand-50/50"
                       >
                         <td className="whitespace-nowrap px-6 py-4 font-mono text-xs font-semibold text-neutral-900">{o.order_number}</td>
-                        <td className="max-w-[220px] truncate px-6 py-4 text-text-secondary" title={o.customer_email}>{o.customer_email}</td>
+                        <td className="max-w-[220px] truncate px-6 py-4 text-text-secondary" title={o.customer_email}>
+                          {o.customer_email}
+                          {o.shipping_address && (
+                            <p className="mt-0.5 text-[10px] text-text-muted" title={String(o.shipping_address.address || '')}>
+                              {String(o.shipping_address.city || '')}{o.shipping_address.city && o.shipping_address.department ? ', ' : ''}{o.shipping_address.department || ''}
+                            </p>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-neutral-900">{o.product_name}</td>
+                        <td className="px-6 py-4">
+                          {o.design_name ? (
+                            <div className="flex items-center gap-2.5">
+                              <span className="relative flex h-6 w-6 flex-none shrink-0">
+                                <img
+                                  src={o.design_image_url || ''}
+                                  alt=""
+                                  className="h-6 w-6 rounded object-cover bg-neutral-100"
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                                {!o.design_image_url && <ImageIcon className="h-4 w-4 text-neutral-400" aria-hidden="true" />}
+                              </span>
+                              <span className="text-sm text-neutral-900 truncate max-w-[150px]" title={o.design_name}>{o.design_name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-text-secondary">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center text-xs font-semibold text-neutral-900 whitespace-nowrap">
+                          {o.sticker_quantity || 1} sticker{o.sticker_quantity !== 1 ? 's' : ''}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-mono text-xs text-neutral-900 truncate max-w-[140px]" title={o.qr_value || '—'}>
+                            {o.qr_value || '—'}
+                          </span>
+                        </td>
                         <td className="whitespace-nowrap px-6 py-4 text-right font-semibold text-neutral-900">{money(o.total_amount, o.currency)}</td>
                         <td className="px-6 py-4"><BadgeStatus map={COMMERCIAL} value={o.commercial_status} /></td>
                         <td className="px-6 py-4"><BadgeStatus map={PAYMENT} value={o.payment_status} /></td>
@@ -318,11 +352,32 @@ export const AdminOrders = () => {
                     <div className="min-w-0">
                       <p className="font-mono text-xs font-semibold text-neutral-900">{o.order_number}</p>
                       <p className="mt-1 text-sm font-semibold text-neutral-900">{o.product_name}</p>
+                      {o.design_name && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <span className="relative flex h-5 w-5 flex-none shrink-0">
+                            <img
+                              src={o.design_image_url || ''}
+                              alt=""
+                              className="h-5 w-5 rounded object-cover bg-neutral-100"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                            {!o.design_image_url && <ImageIcon className="h-3 w-3 text-neutral-400" aria-hidden="true" />}
+                          </span>
+                          <span className="truncate text-xs text-neutral-900" title={o.design_name}>{o.design_name}</span>
+                        </div>
+                      )}
                       <p className="break-all text-xs text-text-secondary">{o.customer_email}</p>
+                      {o.qr_value && (
+                        <p className="mt-0.5 break-all text-xs text-text-secondary" title={o.qr_value}>
+                          QR: {o.qr_value}
+                        </p>
+                      )}
                     </div>
                     <p className="whitespace-nowrap text-sm font-bold text-neutral-900">{money(o.total_amount, o.currency)}</p>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
+                    <span className="text-[10px] font-semibold text-neutral-500">Cantidad:</span>
+                    <span className="text-xs font-semibold text-neutral-900">{o.sticker_quantity || 1} stickers</span>
                     <BadgeStatus map={COMMERCIAL} value={o.commercial_status} />
                     <BadgeStatus map={PAYMENT} value={o.payment_status} />
                   </div>
