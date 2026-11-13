@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, User, Users, ShieldCheck, QrCode, Package, ClipboardList, HelpCircle,
+  LayoutDashboard, User, Users, ShieldCheck, QrCode, Package, ClipboardList, HelpCircle, Barcode,
 } from 'lucide-react';
 import { routes } from './routes';
 
@@ -19,6 +19,7 @@ export const adminNav = [
   { label: 'Resumen', to: '/admin', icon: LayoutDashboard, end: true },
   { label: 'Usuarios', to: '/admin/usuarios', icon: Users },
   { label: 'Pedidos', to: '/admin/pedidos', icon: Package },
+  { label: 'Inventario QR', to: routes.adminInventory, icon: Barcode },
   { label: 'Auditoría', to: '/admin/auditoria', icon: ClipboardList },
   { label: 'Ayuda', to: '/admin/ayuda', icon: HelpCircle },
 ];

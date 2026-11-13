@@ -40,6 +40,7 @@ const OrdersPage = lazy(() => import('./pages/dashboard/OrdersPage'));
 // Admin pages
 const Help = lazy(() => import('./pages/admin/help'));
 const Checkout = lazy(() => import('./pages/Checkout'));
+const AdminQrInventory = lazy(() => import('./pages/admin/QrInventory'));
 
 const App = () => (
   <HelmetProvider>
@@ -91,6 +92,7 @@ const App = () => (
                   <Route path="pedidos" element={<RequireAdmin><AdminOrders /></RequireAdmin>} />
                   <Route path="auditoria" element={<RequireAdmin><AdminAudit /></RequireAdmin>} />
                   <Route path="ayuda" element={<RequireAdmin><Help /></RequireAdmin>} />
+                  <Route path="inventario-qr" element={<RequireAdmin><AdminQrInventory /></RequireAdmin>} />
                   <Route path="*" element={<RequireAdmin><AdminHome /></RequireAdmin>} />
                 </Route>
               </Route>

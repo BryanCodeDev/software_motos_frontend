@@ -662,6 +662,21 @@ export const Checkout = () => {
                 </table>
 
                 <div className="space-y-3">
+                  {order?.production_required && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                      <AlertTriangle className="mr-2 h-5 w-5" aria-hidden="true" />
+                      <strong>Producción bajo pedido.</strong> Tu diseño no tiene paquetes impresos disponibles.
+                      Generaremos tu código QR y enviaremos tu paquete a fabricación. El tiempo de despacho
+                      dependerá de la programación de producción; no es inmediato.
+                    </div>
+                  )}
+                  {!order?.production_required && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                      <CheckCircle2 className="mr-2 h-5 w-5" aria-hidden="true" />
+                      <strong>Disponible.</strong> Tu paquete incluye dos stickers personalizados con el mismo
+                      código QR y estará listo para despacho tras el pago.
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => createOrderAndPay(true)}

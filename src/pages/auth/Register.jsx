@@ -4,7 +4,7 @@ import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
 import { CheckField } from '../../components/DashPage';
 import {
-  UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, QrCode, ClipboardList, ShieldCheck,
+  UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, ClipboardList, ShieldCheck,
   FileText, AlertTriangle, HeartPulse, Bell,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
@@ -21,7 +21,7 @@ const ASIDE = {
   items: [
     { icon: UserPlus, title: '1. Crea tu cuenta', desc: 'Solo necesitas tu correo' },
     { icon: ClipboardList, title: '2. Completa tu perfil', desc: 'Contactos y datos médicos, si quieres' },
-    { icon: QrCode, title: '3. Descarga tu QR', desc: 'Ponlo a la vista y listo' },
+    { icon: ShieldCheck, title: '3. Compra tus stickers', desc: 'El QR definitivo se asigna al comprar.' },
   ],
 };
 
