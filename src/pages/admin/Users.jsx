@@ -739,17 +739,17 @@ export const AdminUsers = () => {
             {/* Escritorio */}
             <div className={`${panel} hidden overflow-hidden md:block`}>
               <div className="custom-scrollbar overflow-x-auto">
-                <table className="w-full min-w-[860px] text-left text-sm">
+                <table className="w-full min-w-[860px] table-fixed text-left text-sm">
                   <thead className="border-b border-border bg-brand-50/70 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">
                     <tr>
-                      <th scope="col" className="w-12 py-3 pl-4 pr-2">
+                      <th scope="col" className="w-[52px] py-3 pl-4 pr-2">
                         <Checkbox checked={allPageSelected} indeterminate={somePageSelected} onChange={toggleSelectPage} label="Seleccionar todos los de la página" />
                       </th>
-                      <th scope="col" className="px-3 py-3">Usuario</th>
-                      <th scope="col" className="px-3 py-3">Código QR</th>
-                      <th scope="col" className="px-3 py-3">Impresión</th>
-                      <th scope="col" className="px-3 py-3">Generación</th>
-                      <th scope="col" className="px-4 py-3 text-right">Acciones</th>
+                      <th scope="col" className="min-w-[0] py-3">Usuario</th>
+                      <th scope="col" className="w-[200px] px-3 py-3">Código QR</th>
+                      <th scope="col" className="w-[150px] px-3 py-3">Impresión</th>
+                      <th scope="col" className="w-[170px] px-3 py-3">Generación</th>
+                      <th scope="col" className="w-[200px] px-4 py-3 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -766,11 +766,11 @@ export const AdminUsers = () => {
                           <td className="py-3 pl-4 pr-2">
                             <Checkbox checked={selected} onChange={() => toggleSelect(u.id)} label={`Seleccionar a ${u.email}`} />
                           </td>
-                          <td className="px-3 py-3">
+                          <td className="min-w-[0] px-3 py-3">
                             <div className="flex items-center gap-3">
                               <Avatar email={u.email} admin={u.role === 'admin'} />
                               <div className="min-w-0">
-                                <p className="max-w-[280px] truncate font-semibold text-neutral-900" title={u.email}>{u.email}</p>
+                                <p className="truncate font-semibold text-neutral-900" title={u.email}>{u.email}</p>
                                 <p className="mt-1 flex items-center gap-2 text-xs text-text-secondary">
                                   <RoleBadge role={u.role} />
                                   <span>Registrado {formatDate(u.created_at)}</span>
