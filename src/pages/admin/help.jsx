@@ -27,63 +27,68 @@ const SECTIONS = [
 const SECTION_IDS = SECTIONS.map((s) => s.id);
 
 const STEPS = [
-  { title: 'Crea su cuenta', text: 'Se registra, completa su perfil y agrega contactos de emergencia.' },
-  { title: 'Configura la privacidad', text: 'Decide, campo por campo, qué información puede verse públicamente.' },
-  { title: 'Obtiene su QR', text: 'Se genera un identificador único y aleatorio. El QR no contiene datos personales ni médicos.' },
-  { title: 'Alguien lo escanea', text: 'El QR abre una página pública, sin login ni instalación de apps.' },
-  { title: 'Se consultan los datos', text: 'Se muestra solo lo autorizado, con accesos directos para llamar o escribir a los contactos.' },
+  { title: 'Crea su cuenta', text: 'Se registra y completa su perfil. No se genera un QR automáticamente; la cuenta funciona sin identificador.' },
+  { title: 'Compra y selecciona diseño', text: 'Elige uno de los diseños de sticker disponible y paga. La preferencia de diseño se guarda en su pedido.' },
+  { title: 'Se activa su QR', text: 'Al confirmarse el pago, se genera o reutiliza su único identificador QR permanente. La URL /e/:identifier nunca cambia.' },
+  { title: 'Producción del sticker', text: 'El administrador gestiona la impresión del sticker con su QR y diseño seleccionados. El estado de impresión es independiente de la activación del QR.' },
+  { title: 'Alguien lo escanea', text: 'El QR abre una página pública, sin login ni instalación de apps, mostrando solo lo autorizado.' },
 ];
 
 const STACK = [
   { icon: Layers, name: 'Frontend', tech: 'React + Vite', detail: 'Tailwind CSS, React Router, Axios, Framer Motion, Lucide React.', host: 'Netlify' },
-  { icon: Server, name: 'Backend', tech: 'Node.js + Express', detail: 'API REST (CommonJS): autenticación, validaciones, permisos, QR, pedidos y pagos.', host: 'Railway' },
-  { icon: Database, name: 'Base de datos', tech: 'MySQL 8.0', detail: 'Usuarios, perfiles, contactos, identificadores, pedidos y pagos (puerto local 3307).', host: 'Railway' },
-  { icon: Plug, name: 'Integraciones', tech: 'Mercado Pago · Resend', detail: 'Pagos con preferencia y webhook; correos transaccionales desde el backend.', host: 'Servicios externos' },
+  { icon: Server, name: 'Backend', tech: 'Node.js + Express', detail: 'API REST (CommonJS): autenticación, perfiles, contactos, QR únicos por usuario, pedidos y pagos.', host: 'Railway' },
+  { icon: Database, name: 'Base de datos', tech: 'MySQL 8.0', detail: 'Usuarios, perfiles, contactos, identificadores QR, pedidos y pagos (puerto local 3307).', host: 'Railway' },
+  { icon: Plug, name: 'Integraciones', tech: 'Mercado Pago · Resend', detail: 'Pagos con preferencia y webhook (idempotente); correos transaccionales desde el backend.', host: 'Servicios externos' },
 ];
 
 const MODULES = [
-  ['auth', 'Registro, login, refresh, logout, recuperación y reseteo de contraseña (JWT en cookies httpOnly).'],
-  ['email', 'Envío de correos transaccionales con Resend.'],
-  ['emergency-profiles', 'CRUD del perfil de emergencia y configuración de privacidad por campo.'],
+  ['auth', 'Registro, login, refresh, logout, recuperación y reseteo de contraseña (JWT).'],
+  ['email', 'Envío de correos transaccionales con Resend (solo backend).'],
+  ['emergency-profiles', 'Perfil de emergencia y configuración de privacidad por campo.'],
   ['contacts', 'Contactos de emergencia asociados al perfil, con prioridades.'],
-  ['identifiers', 'Códigos QR / identificadores vinculados a perfiles; desactivar o reemplazar.'],
-  ['products', 'Catálogo de productos (QR físicos, etc.).'],
-  ['orders', 'Pedidos de compra y seguimiento de su estado comercial.'],
+  ['identifiers', 'Códigos QR únicos por usuario: activación, estado de impresión, vinculación y desvinculación, historial de auditoría.'],
+  ['products', 'Catálogo de productos y diseños de sticker.'],
+  ['orders', 'Pedidos de compra con preferencia de diseño y seguimiento de estado comercial.'],
   ['payments', 'Preferencia de Mercado Pago y webhook de confirmación (verificación en servidor, idempotente).'],
   ['admin', 'Bootstrap del administrador, métricas, gestión de usuarios y pedidos, auditoría.'],
+  ['qr-inventory', 'Administración centralizada de QR (/admin/qrs): listado, estadísticas, vinculación a usuarios, estados de impresión y exportación para proveedor (CSV/ZIP/PDF).'],
 ];
 
 // tone: tonos soportados por <Badge>
 const ROLES = [
   { role: 'Público', tone: 'neutral', access: 'Sin cuenta', can: 'Consulta la página pública de emergencia al escanear un QR activo. Solo ve los campos autorizados.' },
-  { role: 'user', tone: 'info', access: 'Autenticado', can: 'Gestiona su perfil, contactos, privacidad, QR y pedidos.' },
-  { role: 'admin', tone: 'warn', access: 'Autenticado + rol', can: 'Accede a /admin: métricas, gestión de usuarios y pedidos y registro de auditoría.' },
+  { role: 'user', tone: 'info', access: 'Autenticado', can: 'Gestiona su perfil, contactos, privacidad, QR y pedidos. Un único QR por usuario.' },
+  { role: 'admin', tone: 'warn', access: 'Autenticado + rol', can: 'Accede a /admin: métricas, usuarios, pedidos, administración QR (/admin/qrs) y registro de auditoría.' },
 ];
 
 const ENDPOINTS = [
   ['GET', '/api/health', 'Estado del servicio', 'Pública'],
-  ['POST', '/api/auth/register', 'Crear cuenta', 'Pública'],
+  ['POST', '/api/auth/register', 'Crear cuenta (sin QR automático)', 'Pública'],
   ['POST', '/api/auth/login', 'Iniciar sesión', 'Pública'],
   ['POST', '/api/auth/logout', 'Cerrar sesión', 'Sesión'],
   ['GET', '/api/auth/me', 'Usuario autenticado', 'Sesión'],
   ['*', '/api/emergency-profiles', 'Perfil de emergencia y privacidad', 'Sesión'],
   ['*', '/api/contacts', 'Contactos de emergencia', 'Sesión'],
-  ['*', '/api/identifiers', 'Identificadores QR', 'Sesión'],
-  ['*', '/api/products', 'Catálogo de productos', 'Variable'],
-  ['*', '/api/orders', 'Pedidos', 'Sesión'],
-  ['*', '/api/payments', 'Preferencia y webhook de pago', 'Sesión / Webhook'],
-  ['*', '/api/admin/*', 'Panel administrativo', 'Solo admin'],
+  ['*', '/api/identifiers', 'Identificador QR propio', 'Sesión'],
+  ['GET', '/api/e/:identifier', 'Página pública de emergencia', 'Pública'],
+  ['*', '/api/products', 'Catálogo de productos y diseños', 'Variable'],
+  ['*', '/api/orders', 'Pedidos con preferencia de diseño', 'Sesión'],
+  ['*', '/api/payments', 'Preferencia y webhook de pago (idempotente)', 'Sesión / Webhook'],
+  ['*', '/api/admin/qrs', 'Administración QR: listado, stats, detalle, vinculación, impresión, exportación', 'Solo admin'],
+  ['*', '/api/admin/*', 'Panel administrativo restante', 'Solo admin'],
 ];
 
 const SECURITY = [
-  'Identificadores QR aleatorios, difíciles de adivinar.',
+  'Un único QR por usuario; nunca se genera uno nuevo por cambio de diseño, perfil o pedido.',
+  'Identificadores QR aleatorios, difíciles de adivinar; nunca se modifican tras asignarse.',
   'Autenticación con JWT en cookies httpOnly.',
   'Roles separados para usuarios y administradores.',
   'Validación de datos y limitación de solicitudes (rate limiting).',
-  'La respuesta pública excluye siempre los campos privados.',
-  'El propietario puede desactivar o reemplazar su QR.',
+  'La respuesta pública excluye siempre los campos privados y médicos.',
+  'Estado de activación y estado de impresión son independientes.',
+  'Webhooks de pago idempotentes; notificaciones duplicadas se ignoran.',
+  'Vinculación y desvinculación de QR a usuarios son transaccionales y auditadas.',
   'Registro de auditoría para acciones sensibles.',
-  'Pagos verificados desde el servidor y webhooks procesados una sola vez.',
 ];
 
 const ENV_GROUPS = [
@@ -97,7 +102,7 @@ const ENV_GROUPS = [
 const CHECKS = [
   'Compilación del frontend exitosa.',
   'ESLint del backend sin errores.',
-  '13 pruebas automatizadas aprobadas.',
+  '14 pruebas de validación del sistema QR aprobadas (registro sin QR, creación, idempotencia, concurrencia, compra y reposición, ruta pública, admin QR, vinculación, desvinculación, impresión independiente, exportación, protección de rutas).',
 ];
 
 const PENDING = [

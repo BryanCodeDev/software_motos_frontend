@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, useReducedMotion, useMemo, useState } from 'framer-motion';
 import { routes } from '../utils/routes';
+import { useAuth } from '../contexts/useAuth';
+import api from '../api/client';
 import {
   ScanLine,
   SlidersHorizontal,
@@ -111,6 +113,45 @@ const SpotlightCard = ({ children, className = '' }) => {
 
 export const Home = () => {
   const reduce = useReducedMotion();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [hasQr, setHasQr] = useState(null); // null = pendiente, true = tiene, false = no tiene
+
+  // Verificar si el usuario autenticado ya tiene un QR vinculado.
+  useEffect(() => {
+    let mounted = true;
+    const checkQr = async () => {
+      if (!isAuthenticated) {
+        setHasQr(false);
+        return;
+      }
+      try {
+        const { data } = await api.get('/api/identifiers/my');
+        if (!mounted) return;
+        setHasQr(!!data?.identifier);
+      } catch {
+        if (!mounted) return;
+        setHasQr(false);
+      }
+    };
+    checkQr();
+    return () => { mounted = false; };
+  }, [isAuthenticated]);
+
+  // Elegir destino del CTA principal según estado.
+  const primaryHref = useMemo(() => {
+    if (authLoading) return routes.register;
+    if (!isAuthenticated) return routes.register;
+    if (hasQr === false) return routes.products; // obtener QR comprando stickers
+    return routes.dashboard; // ya tiene QR → ir al panel
+  }, [authLoading, isAuthenticated, hasQr]);
+
+  const primaryLabel = useMemo(() => {
+    if (authLoading) return 'Crear cuenta';
+    if (!isAuthenticated) return 'Crear mi perfil gratuito';
+    if (hasQr === false) return 'Obtener tu QR';
+    return 'Ir a mi panel';
+  }, [authLoading, isAuthenticated, hasQr]);
 
   return (
     <main id="contenido" className="flex min-h-screen flex-col">
@@ -362,14 +403,14 @@ export const Home = () => {
                   la carretera, irás con una protección más.
                 </p>
                 <Link
-                  to={routes.register}
+                  to={primaryHref}
                   className="btn group relative inline-flex overflow-hidden bg-white px-6 py-3 text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50"
                 >
                   <span
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-brand-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full motion-reduce:hidden"
                   />
-                  Crear mi perfil gratuito
+                  {primaryLabel}
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
                 </Link>
                 <p className="mx-auto mt-6 max-w-lg text-xs text-white/60">

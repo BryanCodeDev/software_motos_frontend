@@ -52,6 +52,7 @@ export const Products = () => {
   const [error, setError] = useState(null);
   const [continueBusy, setContinueBusy] = useState(false);
   const [selectError, setSelectError] = useState(null);
+  const [hasQr, setHasQr] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -91,6 +92,27 @@ export const Products = () => {
     load();
     return () => { mounted = false; };
   }, []);
+
+  // Verificar si el usuario autenticado ya tiene un QR vinculado.
+  useEffect(() => {
+    let mounted = true;
+    const checkQr = async () => {
+      if (!isAuthenticated) {
+        setHasQr(false);
+        return;
+      }
+      try {
+        const { data } = await api.get('/api/identifiers/my');
+        if (!mounted) return;
+        setHasQr(!!data?.identifier);
+      } catch {
+        if (!mounted) return;
+        setHasQr(false);
+      }
+    };
+    checkQr();
+    return () => { mounted = false; };
+  }, [isAuthenticated]);
 
   const stickerProduct = useMemo(
     () => products.find((p) => p.slug === 'sticker-qr-personalizado'),
@@ -502,6 +524,27 @@ export const Products = () => {
                     : 'La selección de un diseño es obligatoria antes de pasar al resumen de compra.'
                   }
                 </p>
+
+                {/* Mensaje informativo según estado de QR */}
+                {!isAuthenticated && (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                    <AlertCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                    <span>Inicia sesión o crea una cuenta para continuar con la compra.</span>
+                  </div>
+                )}
+                {isAuthenticated && hasQr === false && (
+                  <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                    <QrCode className="mr-2 h-4 w-4" aria-hidden="true" />
+                    <span>Este será tu primer QR. Al confirmar el pago se generará tu identificador permanente.</span>
+                  </div>
+                )}
+                {isAuthenticated && hasQr === true && (
+                  <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                    <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                    <span>Ya tienes un QR vinculado. Esta compra reutilizará tu identificador actual.</span>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <button
                     type="button"
@@ -524,12 +567,20 @@ export const Products = () => {
                     )}
                   </button>
                   {!isAuthenticated && (
-                    <Link
-                      to={routes.login}
-                      className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
-                    >
-                      Iniciar sesión
-                    </Link>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Link
+                        to={routes.login}
+                        className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
+                      >
+                        Iniciar sesión
+                      </Link>
+                      <Link
+                        to={routes.register}
+                        className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
+                      >
+                        Crear cuenta
+                      </Link>
+                    </div>
                   )}
                 </div>
                 {!isSelectionValid && !selectError && (
