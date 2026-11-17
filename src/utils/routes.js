@@ -19,6 +19,6 @@ export const routes = {
   dashboardOrders: '/panel/pedidos',
   checkout: '/panel/checkout',
   admin: '/admin',
-  adminInventory: '/admin/inventario-qr',
+  adminQrs: '/admin/qrs',
   publicEmergency: (id) => `/e/${id}`,
 };
