@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion, useMemo, useState } from 'framer-motion';
+import { useEffect, useState, useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
 import api from '../api/client';
