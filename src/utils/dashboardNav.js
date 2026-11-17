@@ -19,7 +19,7 @@ export const adminNav = [
   { label: 'Resumen', to: '/admin', icon: LayoutDashboard, end: true },
   { label: 'Usuarios', to: '/admin/usuarios', icon: Users },
   { label: 'Pedidos', to: '/admin/pedidos', icon: Package },
-  { label: 'Administración QR', to: routes.adminQrs, icon: Barcode3 },
+  { label: 'Administración QR', to: routes.adminQrs, icon: Barcode },
   { label: 'Auditoría', to: '/admin/auditoria', icon: ClipboardList },
   { label: 'Ayuda', to: '/admin/ayuda', icon: HelpCircle },
 ];
