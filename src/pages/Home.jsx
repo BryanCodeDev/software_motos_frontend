@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { routes } from '../utils/routes';
@@ -115,7 +115,6 @@ const SpotlightCard = ({ children, className = '' }) => {
 export const Home = () => {
   const reduce = useReducedMotion();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [hasQr, setHasQr] = useState(null); // null = pendiente, true = tiene, false = no tiene
 
   // Verificar si el usuario autenticado ya tiene un QR vinculado.
