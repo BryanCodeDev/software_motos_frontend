@@ -52,10 +52,10 @@ export const Products = () => {
   const [error, setError] = useState(null);
   const [continueBusy, setContinueBusy] = useState(false);
   const [selectError, setSelectError] = useState(null);
-  const [hasQr, setHasQr] = useState(null);
 
   useEffect(() => {
     let mounted = true;
+    let productsLoaded = false;
 
     const load = async () => {
       try {
@@ -63,27 +63,16 @@ export const Products = () => {
         const list = res.data.products || res.data || [];
         if (!mounted) return;
         setProducts(list);
+        productsLoaded = true;
 
         const stickerProduct = list.find((p) => p.slug === 'sticker-qr-personalizado');
-
-        if (!stickerProduct) {
-          if (!mounted) return;
-          setDesigns([]);
-          setError('El producto de stickers no está disponible.');
-          return;
-        }
-
-        try {
+        if (stickerProduct) {
           const dRes = await api.get('/designs', { params: { product_id: stickerProduct.id } });
           if (!mounted) return;
-          const designsList = dRes.data.designs || dRes.data || [];
-          setDesigns(designsList);
-          if (designsList.length === 0) {
-            setError('No hay diseños disponibles para este producto.');
-          }
-        } catch (designErr) {
-          if (!mounted) return;
-          setError('No se pudieron cargar los diseños de stickers.');
+          setDesigns(dRes.data.designs || []);
+        } else if (!mounted) {
+          return;
+        } else {
           setDesigns([]);
         }
       } catch (err) {
@@ -91,7 +80,6 @@ export const Products = () => {
         if (err.response && err.response.status === 404) {
           setProducts([]);
           setDesigns([]);
-          setError('El catálogo de productos no está disponible.');
         } else {
           setError('No pudimos cargar el catálogo. Inténtalo de nuevo en unos minutos.');
         }
@@ -103,27 +91,6 @@ export const Products = () => {
     load();
     return () => { mounted = false; };
   }, []);
-
-  // Verificar si el usuario autenticado ya tiene un QR vinculado.
-  useEffect(() => {
-    let mounted = true;
-    const checkQr = async () => {
-      if (!isAuthenticated) {
-        setHasQr(false);
-        return;
-      }
-      try {
-        const { data } = await api.get('/identifiers/my');
-        if (!mounted) return;
-        setHasQr(!!data?.identifier);
-      } catch {
-        if (!mounted) return;
-        setHasQr(false);
-      }
-    };
-    checkQr();
-    return () => { mounted = false; };
-  }, [isAuthenticated]);
 
   const stickerProduct = useMemo(
     () => products.find((p) => p.slug === 'sticker-qr-personalizado'),
@@ -511,22 +478,8 @@ export const Products = () => {
           {designs.length === 0 && (
             <Card className="mx-auto max-w-md p-12 text-center">
               <AlertCircle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
-              <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-                {error ? 'No se pudieron cargar los diseños' : 'No hay diseños disponibles'}
-              </h3>
-              <p className="text-sm text-text-secondary">
-                {error || 'Vuelve más tarde o escríbenos por WhatsApp para un diseño personalizado.'}
-              </p>
-              {error && (
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="mt-5 inline-flex items-center gap-2 font-semibold text-brand-500 underline"
-                >
-                  <ArrowRight size={14} className="text-[12px]" aria-hidden="true" />
-                  Reintentar
-                </button>
-              )}
+              <h3 className="mb-2 text-lg font-semibold text-neutral-900">No hay diseños disponibles</h3>
+              <p className="text-sm text-text-secondary">Vuelve más tarde o escríbenos por WhatsApp para un diseño personalizado.</p>
             </Card>
           )}
 
@@ -549,27 +502,6 @@ export const Products = () => {
                     : 'La selección de un diseño es obligatoria antes de pasar al resumen de compra.'
                   }
                 </p>
-
-                {/* Mensaje informativo según estado de QR */}
-                {!isAuthenticated && (
-                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                    <AlertCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                    <span>Inicia sesión o crea una cuenta para continuar con la compra.</span>
-                  </div>
-                )}
-                {isAuthenticated && hasQr === false && (
-                  <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-                    <QrCode className="mr-2 h-4 w-4" aria-hidden="true" />
-                    <span>Este será tu primer QR. Al confirmar el pago se generará tu identificador permanente.</span>
-                  </div>
-                )}
-                {isAuthenticated && hasQr === true && (
-                  <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-                    <Check className="mr-2 h-4 w-4" aria-hidden="true" />
-                    <span>Ya tienes un QR vinculado. Esta compra reutilizará tu identificador actual.</span>
-                  </div>
-                )}
-
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <button
                     type="button"
@@ -592,20 +524,12 @@ export const Products = () => {
                     )}
                   </button>
                   {!isAuthenticated && (
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Link
-                        to={routes.login}
-                        className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
-                      >
-                        Iniciar sesión
-                      </Link>
-                      <Link
-                        to={routes.register}
-                        className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
-                      >
-                        Crear cuenta
-                      </Link>
-                    </div>
+                    <Link
+                      to={routes.login}
+                      className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
+                    >
+                      Iniciar sesión
+                    </Link>
                   )}
                 </div>
                 {!isSelectionValid && !selectError && (
