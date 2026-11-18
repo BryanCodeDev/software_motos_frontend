@@ -12,6 +12,15 @@ const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20
 const STICKER_PRICE_COP = 30000;
 const STICKER_QUANTITY = 2;
 
+const DESIGNS = [
+  { id: 1, name: 'Diseño 1', image_url: '/img/sticker-1.png', description: 'Diseño clásico y discreto' },
+  { id: 2, name: 'Diseño 2', image_url: '/img/sticker-2.png', description: 'Estilo moderno y minimalista' },
+  { id: 3, name: 'Diseño 3', image_url: '/img/sticker-3.png', description: 'Diseño deportivo y dinámico' },
+  { id: 4, name: 'Diseño 4', image_url: '/img/sticker-4.png', description: 'Estilo urbano y actual' },
+  { id: 5, name: 'Diseño 5', image_url: '/img/sticker-5.png', description: 'Diseño elegante y sobrio' },
+  { id: 6, name: 'Diseño 6', image_url: '/img/sticker-6.png', description: 'Estilo aventurero y resistente' },
+];
+
 const formatAmount = (amount, currency) => {
   if (amount === null || amount === undefined || amount === '') return '—';
   try {
@@ -253,7 +262,6 @@ export const OrdersPage = () => {
 
   /* Compra de sticker */
   const [buyOpen, setBuyOpen] = useState(false);
-  const [designs, setDesigns] = useState([]);
   const [selectedDesignId, setSelectedDesignId] = useState(null);
   const [buyLoading, setBuyLoading] = useState(false);
   const [buyError, setBuyError] = useState(null);
@@ -279,41 +287,12 @@ export const OrdersPage = () => {
     }
   }, []);
 
-  const loadDesigns = useCallback(async () => {
-    try {
-      const res = await api.get('/products');
-      const list = res.data.products || res.data || [];
-      const stickerProduct = list.find((p) => p.slug === 'sticker-qr-personalizado');
-      if (stickerProduct) {
-        const dRes = await api.get('/designs', { params: { product_id: stickerProduct.id } });
-        setDesigns(dRes.data.designs || []);
-      } else {
-        setDesigns([]);
-      }
-    } catch {
-      setDesigns([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(load, 0);
-    return () => clearTimeout(t);
-  }, [load]);
-
-  const availableDesigns = useMemo(
-    () => designs.filter((d) => d.is_available === 1 || d.is_available === true),
-    [designs]
-  );
-
-  const selectedDesign = designs.find((d) => d.id === selectedDesignId);
-
   const openBuy = () => {
     setBuyError(null);
     setSelectedDesignId(null);
     setNewOrder(null);
     setStep('select');
     setBuyOpen(true);
-    loadDesigns();
   };
 
   const closeBuy = () => {
@@ -325,8 +304,8 @@ export const OrdersPage = () => {
   };
 
   const handleSelect = (designId) => {
-    const design = designs.find((d) => d.id === designId);
-    if (!design || (design.is_available !== 1 && design.is_available !== true)) {
+    const design = DESIGNS.find((d) => d.id === designId);
+    if (!design) {
       setBuyError('Este diseño no está disponible.');
       return;
     }
@@ -480,13 +459,13 @@ export const OrdersPage = () => {
                     {buyError}
                   </div>
                 )}
-                {availableDesigns.length === 0 && (
+                {DESIGNS.length === 0 && (
                   <div className="rounded-xl border border-border bg-neutral-50 p-6 text-center text-sm text-text-secondary">
                     No hay diseños disponibles en este momento.
                   </div>
                 )}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Diseño del sticker">
-                  {availableDesigns.map((design) => (
+                  {DESIGNS.map((design) => (
                     <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />
                   ))}
                 </div>
@@ -521,15 +500,15 @@ export const OrdersPage = () => {
                 <div className="flex items-start gap-4">
                   <div className="relative flex-shrink-0">
                     <img
-                      src={selectedDesign?.image_url || ''}
-                      alt={selectedDesign?.name || ''}
+                      src={(DESIGNS.find((d) => d.id === selectedDesignId)?.image_url || '')}
+                      alt={(DESIGNS.find((d) => d.id === selectedDesignId)?.name || '')}
                       className="w-24 h-24 rounded-xl object-cover bg-neutral-100 shadow-inner"
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-neutral-900">{selectedDesign?.name}</h3>
-                    {selectedDesign?.description && (
-                      <p className="mt-0.5 text-xs text-text-secondary">{selectedDesign.description}</p>
+                    <h3 className="font-semibold text-neutral-900">{DESIGNS.find((d) => d.id === selectedDesignId)?.name}</h3>
+                    {(DESIGNS.find((d) => d.id === selectedDesignId)?.description) && (
+                      <p className="mt-0.5 text-xs text-text-secondary">{DESIGNS.find((d) => d.id === selectedDesignId)?.description}</p>
                     )}
                   </div>
                 </div>
@@ -542,7 +521,7 @@ export const OrdersPage = () => {
                       </tr>
                       <tr>
                         <td className="py-3 text-text-secondary">Diseño</td>
-                        <td className="py-3 text-right font-semibold text-neutral-900">{selectedDesign?.name}</td>
+                        <td className="py-3 text-right font-semibold text-neutral-900">{DESIGNS.find((d) => d.id === selectedDesignId)?.name}</td>
                       </tr>
                       <tr>
                         <td className="py-3 text-text-secondary">Cantidad</td>
