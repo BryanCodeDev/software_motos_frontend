@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
-  ChevronLeft, ChevronRight, Search, X, ShieldCheck, ShieldOff, Users as UsersIcon, Loader2, AlertTriangle,
+  ChevronLeft, ChevronRight, Search, X, ShieldCheck, User, Users as UsersIcon, Loader2, AlertTriangle, QrCode, ExternalLink,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
@@ -9,9 +10,8 @@ import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 import Modal from '../../components/Modal';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 18;
 const panel = 'rounded-2xl border border-border bg-white';
-const COLS = 'md:grid md:grid-cols-[minmax(0,1fr)_6.5rem_6.5rem_9rem] md:items-center md:gap-4';
 
 const ROLE_TABS = [
   { id: '', label: 'Todos' },
@@ -19,34 +19,90 @@ const ROLE_TABS = [
   { id: 'admin', label: 'Administradores' },
 ];
 
-const formatDate = (d) =>
-  d ? new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-
-const RowAction = ({ u, isMe, busy, onAsk }) => {
-  if (isMe) return <Badge tone="info" size="sm">Tu cuenta</Badge>;
-  const toAdmin = u.role !== 'admin';
-  const Icon = toAdmin ? ShieldCheck : ShieldOff;
-  return (
-    <button type="button" disabled={busy} onClick={() => onAsk(u, toAdmin ? 'admin' : 'user')} className="btn-outline px-3 py-1.5 text-xs">
-      {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Icon size={14} aria-hidden="true" />}
-      {toAdmin ? 'Hacer admin' : 'Quitar admin'}
-    </button>
-  );
+const ROLES = {
+  user: { label: 'Usuario', icon: User, desc: 'Gestiona su perfil, contactos, QR y pedidos.' },
+  admin: { label: 'Administrador', icon: ShieldCheck, desc: 'Accede a este panel: pedidos, códigos QR, usuarios y auditoría.' },
 };
+
+const QR_STATUS = {
+  pending_activation: ['Pendiente de activación', 'warn'],
+  active: ['Activo', 'success'],
+  disabled: ['Deshabilitado', 'danger'],
+  deactivated: ['Desvinculado', 'neutral'],
+  replaced: ['Reemplazado', 'neutral'],
+  retired: ['Retirado', 'neutral'],
+};
+
+const fmtDay = (d) => (d ? new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+const Avatar = ({ email, admin, large = false }) => (
+  <span
+    aria-hidden="true"
+    className={`flex flex-none items-center justify-center rounded-full font-bold ${large ? 'h-14 w-14 text-xl' : 'h-11 w-11 text-base'} ${
+      admin ? 'bg-brand-500 text-white' : 'bg-brand-500/10 text-brand-500'
+    }`}
+  >
+    {(email || '?').charAt(0).toUpperCase()}
+  </span>
+);
+
+const Field = ({ label, children }) => (
+  <div>
+    <dt className="text-xs text-text-secondary">{label}</dt>
+    <dd className="mt-0.5 text-sm font-medium text-neutral-900">{children}</dd>
+  </div>
+);
+
+const RoleBadge = ({ role }) => (
+  <Badge tone={role === 'admin' ? 'brand' : 'neutral'} size="sm">{ROLES[role]?.label || role}</Badge>
+);
+
+/* ───────── Tarjeta ───────── */
+const UserCard = ({ u, isMe, onOpen }) => (
+  <li className="flex flex-col rounded-2xl border border-border bg-white p-4 transition-colors hover:border-brand-500/40">
+    <div className="flex items-center gap-3">
+      <Avatar email={u.email} admin={u.role === 'admin'} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-neutral-900" title={u.email}>{u.email}</p>
+        <p className="mt-0.5 text-xs text-text-secondary">Registrado {fmtDay(u.created_at)}</p>
+      </div>
+    </div>
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <RoleBadge role={u.role} />
+      {isMe && <Badge tone="info" size="sm">Tu cuenta</Badge>}
+    </div>
+    <div className="mt-auto flex gap-2 pt-4">
+      <button type="button" onClick={() => onOpen(u, 'datos')} className="btn-outline flex-1 px-3 py-2 text-xs">Ver detalles</button>
+      {!isMe && (
+        <button type="button" onClick={() => onOpen(u, 'rol')} className="btn-outline flex-1 px-3 py-2 text-xs">Cambiar rol</button>
+      )}
+    </div>
+  </li>
+);
 
 export const AdminUsers = () => {
   const toast = useToast();
   const { user: me } = useAuth();
+  const [params] = useSearchParams();
+  const initialQ = params.get('q') || '';
+
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [input, setInput] = useState('');
-  const [q, setQ] = useState('');
+  const [input, setInput] = useState(initialQ);
+  const [q, setQ] = useState(initialQ);
   const [role, setRole] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [busyId, setBusyId] = useState(null);
-  const [confirm, setConfirm] = useState(null); // { user, role }
+
+  /* Detalle */
+  const [sel, setSel] = useState(null); // usuario abierto
+  const [tab, setTab] = useState('datos');
+  const [newRole, setNewRole] = useState('user');
+  const [saving, setSaving] = useState(false);
+  const [qrs, setQrs] = useState(null); // null = cargando
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,36 +124,68 @@ export const AdminUsers = () => {
   }, [load]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setQ(input.trim());
-      setPage(1);
-    }, 350);
+    const t = setTimeout(() => { setQ(input.trim()); setPage(1); }, 350);
     return () => clearTimeout(t);
   }, [input]);
 
+  /* QR del usuario abierto */
+  useEffect(() => {
+    if (!sel) return undefined;
+    let alive = true;
+    const t = setTimeout(async () => {
+      setQrs(null);
+      try {
+        const { data } = await api.get('/admin/qrs', { params: { q: sel.email, page: 1, limit: 10 } });
+        if (!alive) return;
+        setQrs((data.qrs || []).filter((x) => x.user?.id === sel.id || x.user?.email === sel.email));
+      } catch {
+        if (alive) setQrs([]);
+      }
+    }, 0);
+    return () => { alive = false; clearTimeout(t); };
+  }, [sel]);
+
   const hasFilters = !!(input || role);
   const clearFilters = () => { setInput(''); setQ(''); setRole(''); setPage(1); };
-  const pickRole = (id) => { setRole(id); setPage(1); };
 
-  const changeRole = async () => {
-    if (!confirm) return;
-    const { user: u, role: next } = confirm;
-    setBusyId(u.id);
+  const open = (u, startTab) => {
+    setSel(u);
+    setTab(startTab);
+    setNewRole(u.role === 'admin' ? 'admin' : 'user');
+  };
+  const close = () => { if (!saving) setSel(null); };
+
+  const saveRole = async () => {
+    if (!sel || newRole === sel.role) return;
+    setSaving(true);
     try {
-      await api.patch(`/admin/users/${u.id}/role`, { role: next });
-      toast.success(next === 'admin' ? 'Ahora es administrador' : 'Ya no es administrador');
-      setConfirm(null);
+      await api.patch(`/admin/users/${sel.id}/role`, { role: newRole });
+      toast.success(newRole === 'admin' ? 'Ahora es administrador' : 'Ya no es administrador');
+      setSel((s) => (s ? { ...s, role: newRole } : s));
       load();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo cambiar el rol');
     } finally {
-      setBusyId(null);
+      setSaving(false);
     }
   };
 
-  const confirming = !!confirm && busyId === confirm.user.id;
+  const isMe = (u) => !!u && me?.id === u.id;
   const from = pagination ? (pagination.page - 1) * PAGE_SIZE + 1 : 0;
   const to = pagination ? Math.min(pagination.page * PAGE_SIZE, pagination.total) : 0;
+  const tabBtn = (id, label) => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={tab === id}
+      onClick={() => setTab(id)}
+      className={`focus-ring -mb-px border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
+        tab === id ? 'border-brand-500 text-brand-600' : 'border-transparent text-text-secondary hover:text-neutral-900'
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="space-y-4">
@@ -132,7 +220,7 @@ export const AdminUsers = () => {
                 key={t.id || 'all'}
                 type="button"
                 aria-pressed={active}
-                onClick={() => pickRole(t.id)}
+                onClick={() => { setRole(t.id); setPage(1); }}
                 className={`focus-ring flex-none rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                   active ? 'border-brand-500 bg-brand-500 text-white' : 'border-border bg-white text-text-secondary hover:border-brand-500/40 hover:text-neutral-900'
                 }`}
@@ -153,8 +241,8 @@ export const AdminUsers = () => {
       )}
 
       {loading && users.length === 0 && !error && (
-        <div className={`${panel} animate-pulse space-y-3 p-4`} aria-busy="true">
-          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-lg bg-border/60" />)}
+        <div className="grid animate-pulse gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="h-36 rounded-2xl bg-border/60" />)}
         </div>
       )}
 
@@ -163,7 +251,7 @@ export const AdminUsers = () => {
           <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
             <UsersIcon size={20} aria-hidden="true" />
           </span>
-          <p className="text-sm font-semibold text-neutral-900">Sin resultados</p>
+          <p className="text-sm font-semibold text-neutral-900">Ningún usuario coincide</p>
           {hasFilters && (
             <button type="button" onClick={clearFilters} className="btn-outline mt-4 px-4 py-2 text-sm">
               <X size={16} aria-hidden="true" /> Quitar filtros
@@ -174,38 +262,9 @@ export const AdminUsers = () => {
 
       {users.length > 0 && !error && (
         <>
-          <div className={`${panel} overflow-hidden transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
-            <div className={`hidden border-b border-border bg-brand-50/70 px-4 py-3 text-xs font-semibold text-text-secondary ${COLS}`}>
-              <span>Usuario</span>
-              <span>Rol</span>
-              <span>Registro</span>
-              <span className="text-right">Acción</span>
-            </div>
-            <ul className="divide-y divide-border">
-              {users.map((u) => (
-                <li key={u.id} className={`flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 hover:bg-brand-50/40 ${COLS}`}>
-                  <div className="flex min-w-0 basis-full items-center gap-3 md:basis-auto">
-                    <span
-                      className={`flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold ${
-                        u.role === 'admin' ? 'bg-brand-500 text-white' : 'bg-brand-500/10 text-brand-500'
-                      }`}
-                      aria-hidden="true"
-                    >
-                      {(u.email || '?').charAt(0).toUpperCase()}
-                    </span>
-                    <p className="min-w-0 break-all text-sm font-medium text-neutral-900 md:truncate" title={u.email}>{u.email}</p>
-                  </div>
-                  <Badge tone={u.role === 'admin' ? 'brand' : 'neutral'} size="sm">
-                    {u.role === 'admin' ? 'Administrador' : 'Usuario'}
-                  </Badge>
-                  <span className="text-xs text-text-secondary md:text-sm">{formatDate(u.created_at)}</span>
-                  <div className="ml-auto md:ml-0 md:flex md:justify-end">
-                    <RowAction u={u} isMe={me?.id === u.id} busy={busyId === u.id} onAsk={(user, next) => setConfirm({ user, role: next })} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className={`grid gap-3 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
+            {users.map((u) => <UserCard key={u.id} u={u} isMe={isMe(u)} onOpen={open} />)}
+          </ul>
 
           {pagination && (
             <div className="flex flex-col items-center justify-between gap-3 text-xs text-text-secondary sm:flex-row">
@@ -227,26 +286,116 @@ export const AdminUsers = () => {
         </>
       )}
 
-      <Modal
-        isOpen={!!confirm}
-        onClose={() => (confirming ? null : setConfirm(null))}
-        title={confirm?.role === 'admin' ? 'Hacer administrador' : 'Quitar administrador'}
-      >
-        {confirm && (
+      {/* ───────── Detalle del usuario ───────── */}
+      <Modal isOpen={!!sel} onClose={close} title="Usuario" size="lg">
+        {sel && (
           <div className="space-y-5">
-            <p className="text-sm leading-relaxed text-text-secondary">
-              <span className="font-semibold text-neutral-900">{confirm.user.email}</span>{' '}
-              {confirm.role === 'admin'
-                ? 'podrá gestionar usuarios, pedidos y códigos QR.'
-                : 'perderá el acceso a este panel.'}
-            </p>
-            <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setConfirm(null)} disabled={confirming} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
-              <button type="button" onClick={changeRole} disabled={confirming} className="btn-primary px-4 py-2 text-sm">
-                {confirming && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-                {confirming ? 'Guardando…' : 'Confirmar'}
-              </button>
+            <div className="flex items-center gap-4">
+              <Avatar email={sel.email} admin={sel.role === 'admin'} large />
+              <div className="min-w-0">
+                <p className="break-all text-base font-semibold text-neutral-900">{sel.email}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <RoleBadge role={sel.role} />
+                  {isMe(sel) && <Badge tone="info" size="sm">Tu cuenta</Badge>}
+                </div>
+              </div>
             </div>
+
+            <div role="tablist" aria-label="Secciones del usuario" className="flex border-b border-border">
+              {tabBtn('datos', 'Datos')}
+              {tabBtn('rol', 'Rol')}
+              {tabBtn('qr', `QR${qrs ? ` (${qrs.length})` : ''}`)}
+            </div>
+
+            {tab === 'datos' && (
+              <dl className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
+                <Field label="Correo"><span className="break-all">{sel.email}</span></Field>
+                <Field label="Rol">{ROLES[sel.role]?.label || sel.role}</Field>
+                {sel.name && <Field label="Nombre">{sel.name}</Field>}
+                <Field label="Registro">{fmtDate(sel.created_at)}</Field>
+                {sel.last_login_at && <Field label="Último acceso">{fmtDate(sel.last_login_at)}</Field>}
+                <Field label="ID"><span className="font-mono text-xs">{sel.id}</span></Field>
+              </dl>
+            )}
+
+            {tab === 'rol' && (
+              isMe(sel) ? (
+                <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm text-text-secondary">
+                  No puedes cambiar tu propio rol. Pídeselo a otro administrador.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  <div role="radiogroup" aria-label="Rol" className="grid gap-3 sm:grid-cols-2">
+                    {Object.entries(ROLES).map(([id, r]) => {
+                      const on = newRole === id;
+                      const Icon = r.icon;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="radio"
+                          aria-checked={on}
+                          onClick={() => setNewRole(id)}
+                          className={`focus-ring rounded-xl border p-4 text-left transition-colors ${
+                            on ? 'border-brand-500 bg-brand-500/10' : 'border-border bg-white hover:border-brand-500/40'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+                            <Icon size={16} className={on ? 'text-brand-500' : 'text-text-secondary'} aria-hidden="true" /> {r.label}
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-text-secondary">{r.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {newRole !== sel.role && newRole === 'user' && (
+                    <p className="flex items-start gap-2 text-xs leading-relaxed text-amber-700">
+                      <AlertTriangle size={14} className="mt-0.5 flex-none" aria-hidden="true" />
+                      Perderá el acceso a este panel de inmediato.
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <button type="button" onClick={close} disabled={saving} className="btn-ghost px-4 py-2 text-sm">Cerrar</button>
+                    <button type="button" onClick={saveRole} disabled={saving || newRole === sel.role} className="btn-primary px-4 py-2 text-sm">
+                      {saving && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                      {saving ? 'Guardando…' : 'Guardar rol'}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
+
+            {tab === 'qr' && (
+              <div className="space-y-3">
+                {qrs === null && (
+                  <p className="flex items-center gap-2 text-sm text-text-secondary"><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Buscando…</p>
+                )}
+                {qrs && qrs.length === 0 && (
+                  <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm text-text-secondary">Este usuario no tiene un QR vinculado.</p>
+                )}
+                {qrs && qrs.map((x) => {
+                  const [label, tone] = QR_STATUS[x.status] || [x.status, 'neutral'];
+                  return (
+                    <div key={x.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
+                        <QrCode size={18} aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-mono text-xs font-semibold text-neutral-900">{x.value}</p>
+                        <p className="mt-0.5 text-xs text-text-secondary">{x.order?.order_number ? `Pedido ${x.order.order_number}` : 'Sin pedido'}</p>
+                      </div>
+                      <Badge tone={tone} size="sm">{label}</Badge>
+                    </div>
+                  );
+                })}
+                <Link
+                  to={`/admin/qrs?q=${encodeURIComponent(sel.email)}`}
+                  className="btn-outline inline-flex px-3 py-2 text-xs"
+                >
+                  <ExternalLink size={14} aria-hidden="true" /> Ver en Códigos QR
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </Modal>
