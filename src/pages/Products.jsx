@@ -76,7 +76,7 @@ export const Products = () => {
         try {
           const dRes = await api.get('/designs', { params: { product_id: stickerProduct.id } });
           if (!mounted) return;
-          const designsList = dRes.data.designs || [];
+          const designsList = dRes.data.designs || dRes.data || [];
           setDesigns(designsList);
           if (designsList.length === 0) {
             setError('No hay diseños disponibles para este producto.');
