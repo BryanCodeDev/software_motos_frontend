@@ -1,151 +1,125 @@
-import { useEffect, useState } from 'react';
-import { MotionConfig, motion } from 'framer-motion';
-import {
-  ShieldCheck, Layers, Server, Database, Users, KeyRound, Workflow, Plug, Rocket, ListChecks,
-  AlertTriangle, Info, Lock, CheckCircle2, Circle, Copy, Check, ExternalLink,
-} from 'lucide-react';
+import { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 
 /* ------------------------------------------------------------------ */
-/* Datos de la documentación (editar aquí, no en el JSX)               */
+/* Contenido (editar aquí, no en el JSX)                               */
 /* ------------------------------------------------------------------ */
 
 const SECTIONS = [
-  { id: 'resumen', label: 'Resumen', icon: Info },
-  { id: 'flujo', label: 'Cómo funciona', icon: Workflow },
-  { id: 'arquitectura', label: 'Arquitectura', icon: Layers },
-  { id: 'modulos', label: 'Módulos del backend', icon: Server },
-  { id: 'roles', label: 'Roles y permisos', icon: Users },
-  { id: 'api', label: 'Endpoints clave', icon: Plug },
-  { id: 'seguridad', label: 'Seguridad y privacidad', icon: ShieldCheck },
-  { id: 'entorno', label: 'Variables de entorno', icon: KeyRound },
-  { id: 'estado', label: 'Estado y pendientes', icon: ListChecks },
+  { id: 'flujo', label: 'Cómo funciona' },
+  { id: 'roles', label: 'Roles' },
+  { id: 'arquitectura', label: 'Arquitectura' },
+  { id: 'api', label: 'Endpoints' },
+  { id: 'seguridad', label: 'Seguridad' },
+  { id: 'entorno', label: 'Variables de entorno' },
+  { id: 'pendientes', label: 'Antes de lanzar' },
 ];
 
-const SECTION_IDS = SECTIONS.map((s) => s.id);
-
 const STEPS = [
-  { title: 'Crea su cuenta', text: 'Se registra y completa su perfil. No se genera un QR automáticamente; la cuenta funciona sin identificador.' },
-  { title: 'Compra y selecciona diseño', text: 'Elige uno de los diseños de sticker disponible y paga. La preferencia de diseño se guarda en su pedido.' },
-  { title: 'Se activa su QR', text: 'Al confirmarse el pago, se genera o reutiliza su único identificador QR permanente. La URL /e/:identifier nunca cambia.' },
-  { title: 'Producción del sticker', text: 'El administrador gestiona la impresión del sticker con su QR y diseño seleccionados. El estado de impresión es independiente de la activación del QR.' },
-  { title: 'Alguien lo escanea', text: 'El QR abre una página pública, sin login ni instalación de apps, mostrando solo lo autorizado.' },
+  ['Crea su cuenta', 'Se registra y completa su perfil. La cuenta funciona sin QR.'],
+  ['Compra y elige diseño', 'Elige un diseño de sticker y paga. El diseño queda guardado en el pedido.'],
+  ['Se activa su QR', 'Al confirmarse el pago se genera o reutiliza su único QR. La URL /e/:identifier nunca cambia.'],
+  ['Producción', 'El administrador gestiona la impresión. El estado de impresión es independiente del estado del QR.'],
+  ['Alguien lo escanea', 'Se abre una página pública sin login, con solo los campos autorizados.'],
 ];
 
 const STACK = [
-  { icon: Layers, name: 'Frontend', tech: 'React + Vite', detail: 'Tailwind CSS, React Router, Axios, Framer Motion, Lucide React.', host: 'Netlify' },
-  { icon: Server, name: 'Backend', tech: 'Node.js + Express', detail: 'API REST (CommonJS): autenticación, perfiles, contactos, QR únicos por usuario, pedidos y pagos.', host: 'Railway' },
-  { icon: Database, name: 'Base de datos', tech: 'MySQL 8.0', detail: 'Usuarios, perfiles, contactos, identificadores QR, pedidos y pagos (puerto local 3307).', host: 'Railway' },
-  { icon: Plug, name: 'Integraciones', tech: 'Mercado Pago · Resend', detail: 'Pagos con preferencia y webhook (idempotente); correos transaccionales desde el backend.', host: 'Servicios externos' },
+  ['Frontend', 'React + Vite, Tailwind, React Router, Axios, Framer Motion', 'Netlify'],
+  ['Backend', 'Node.js + Express (API REST, CommonJS)', 'Railway'],
+  ['Base de datos', 'MySQL 8.0 (puerto local 3307)', 'Railway'],
+  ['Integraciones', 'Mercado Pago (pagos y webhook idempotente), Resend (correos)', 'Externos'],
 ];
 
 const MODULES = [
-  ['auth', 'Registro, login, refresh, logout, recuperación y reseteo de contraseña (JWT).'],
-  ['email', 'Envío de correos transaccionales con Resend (solo backend).'],
-  ['emergency-profiles', 'Perfil de emergencia y configuración de privacidad por campo.'],
-  ['contacts', 'Contactos de emergencia asociados al perfil, con prioridades.'],
-  ['identifiers', 'Códigos QR únicos por usuario: activación, estado de impresión, vinculación y desvinculación, historial de auditoría.'],
+  ['auth', 'Registro, login, refresh, logout y recuperación de contraseña (JWT).'],
+  ['email', 'Correos transaccionales con Resend.'],
+  ['emergency-profiles', 'Perfil de emergencia y privacidad por campo.'],
+  ['contacts', 'Contactos de emergencia con prioridad.'],
+  ['identifiers', 'QR únicos por usuario: activación, impresión, vinculación y auditoría.'],
   ['products', 'Catálogo de productos y diseños de sticker.'],
-  ['orders', 'Pedidos de compra con preferencia de diseño y seguimiento de estado comercial.'],
-  ['payments', 'Preferencia de Mercado Pago y webhook de confirmación (verificación en servidor, idempotente).'],
-  ['admin', 'Bootstrap del administrador, métricas, gestión de usuarios y pedidos, auditoría.'],
-  ['qr-inventory', 'Administración centralizada de QR (/admin/qrs): listado, estadísticas, vinculación a usuarios, estados de impresión y exportación para proveedor (CSV/ZIP/PDF).'],
+  ['orders', 'Pedidos con diseño y estado comercial.'],
+  ['payments', 'Preferencia de Mercado Pago y webhook de confirmación.'],
+  ['admin', 'Métricas, usuarios, pedidos y auditoría.'],
+  ['qr-inventory', 'Administración de QR (/admin/qrs): vinculación, impresión y exportación CSV/ZIP/PDF.'],
 ];
 
-// tone: tonos soportados por <Badge>
 const ROLES = [
-  { role: 'Público', tone: 'neutral', access: 'Sin cuenta', can: 'Consulta la página pública de emergencia al escanear un QR activo. Solo ve los campos autorizados.' },
-  { role: 'user', tone: 'info', access: 'Autenticado', can: 'Gestiona su perfil, contactos, privacidad, QR y pedidos. Un único QR por usuario.' },
-  { role: 'admin', tone: 'warn', access: 'Autenticado + rol', can: 'Accede a /admin: métricas, usuarios, pedidos, administración QR (/admin/qrs) y registro de auditoría.' },
+  ['Público', 'neutral', 'Sin cuenta', 'Ve la página de emergencia al escanear un QR activo, solo con los campos autorizados.'],
+  ['user', 'info', 'Autenticado', 'Gestiona su perfil, contactos, privacidad, QR y pedidos. Un solo QR por usuario.'],
+  ['admin', 'warn', 'Autenticado + rol', 'Accede a /admin: métricas, pedidos, QR, usuarios y auditoría.'],
 ];
 
 const ENDPOINTS = [
   ['GET', '/api/health', 'Estado del servicio', 'Pública'],
-  ['POST', '/api/auth/register', 'Crear cuenta (sin QR automático)', 'Pública'],
+  ['POST', '/api/auth/register', 'Crear cuenta (sin QR)', 'Pública'],
   ['POST', '/api/auth/login', 'Iniciar sesión', 'Pública'],
   ['POST', '/api/auth/logout', 'Cerrar sesión', 'Sesión'],
   ['GET', '/api/auth/me', 'Usuario autenticado', 'Sesión'],
-  ['*', '/api/emergency-profiles', 'Perfil de emergencia y privacidad', 'Sesión'],
-  ['*', '/api/contacts', 'Contactos de emergencia', 'Sesión'],
-  ['*', '/api/identifiers', 'Identificador QR propio', 'Sesión'],
   ['GET', '/api/e/:identifier', 'Página pública de emergencia', 'Pública'],
-  ['*', '/api/products', 'Catálogo de productos y diseños', 'Variable'],
-  ['*', '/api/orders', 'Pedidos con preferencia de diseño', 'Sesión'],
-  ['*', '/api/payments', 'Preferencia y webhook de pago (idempotente)', 'Sesión / Webhook'],
-  ['*', '/api/admin/qrs', 'Administración QR: listado, stats, detalle, vinculación, impresión, exportación', 'Solo admin'],
-  ['*', '/api/admin/*', 'Panel administrativo restante', 'Solo admin'],
+  ['CRUD', '/api/emergency-profiles', 'Perfil y privacidad', 'Sesión'],
+  ['CRUD', '/api/contacts', 'Contactos de emergencia', 'Sesión'],
+  ['CRUD', '/api/identifiers', 'QR propio', 'Sesión'],
+  ['CRUD', '/api/products', 'Productos y diseños', 'Variable'],
+  ['CRUD', '/api/orders', 'Pedidos', 'Sesión'],
+  ['CRUD', '/api/payments', 'Pago y webhook', 'Sesión / Webhook'],
+  ['CRUD', '/api/admin/*', 'Panel administrativo y QR', 'Solo admin'],
 ];
 
 const SECURITY = [
-  'Un único QR por usuario; nunca se genera uno nuevo por cambio de diseño, perfil o pedido.',
-  'Identificadores QR aleatorios, difíciles de adivinar; nunca se modifican tras asignarse.',
-  'Autenticación con JWT en cookies httpOnly.',
-  'Roles separados para usuarios y administradores.',
-  'Validación de datos y limitación de solicitudes (rate limiting).',
+  'Un único QR por usuario; no cambia con el diseño, el perfil ni nuevos pedidos.',
+  'Identificadores aleatorios, difíciles de adivinar y nunca modificados.',
+  'JWT en cookies httpOnly, roles separados, validación de datos y rate limiting.',
   'La respuesta pública excluye siempre los campos privados y médicos.',
-  'Estado de activación y estado de impresión son independientes.',
-  'Webhooks de pago idempotentes; notificaciones duplicadas se ignoran.',
-  'Vinculación y desvinculación de QR a usuarios son transaccionales y auditadas.',
-  'Registro de auditoría para acciones sensibles.',
+  'Webhooks de pago idempotentes: los duplicados se ignoran.',
+  'Vincular y desvincular QR es transaccional y queda en auditoría.',
 ];
 
 const ENV_GROUPS = [
-  { group: 'Base de datos', vars: ['DB_HOST', 'DB_PORT (3307 local)', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'] },
-  { group: 'Autenticación', vars: ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'] },
-  { group: 'Mercado Pago', vars: ['MERCADOPAGO_ACCESS_TOKEN', 'MERCADOPAGO_PUBLIC_KEY', 'MERCADOPAGO_WEBHOOK_SECRET'] },
-  { group: 'Correo (Resend)', vars: ['RESEND_API_KEY', 'EMAIL_FROM'] },
-  { group: 'Administración', vars: ['ADMIN_BOOTSTRAP_TOKEN'] },
+  ['Base de datos', ['DB_HOST', 'DB_PORT', 'DB_USER', 'DB_PASSWORD', 'DB_NAME']],
+  ['Autenticación', ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET']],
+  ['Mercado Pago', ['MERCADOPAGO_ACCESS_TOKEN', 'MERCADOPAGO_PUBLIC_KEY', 'MERCADOPAGO_WEBHOOK_SECRET']],
+  ['Correo', ['RESEND_API_KEY', 'EMAIL_FROM']],
+  ['Administración', ['ADMIN_BOOTSTRAP_TOKEN']],
 ];
 
-const CHECKS = [
-  'Compilación del frontend exitosa.',
+const DONE = [
+  'El frontend compila.',
   'ESLint del backend sin errores.',
-  '14 pruebas de validación del sistema QR aprobadas (registro sin QR, creación, idempotencia, concurrencia, compra y reposición, ruta pública, admin QR, vinculación, desvinculación, impresión independiente, exportación, protección de rutas).',
+  '14 pruebas del sistema QR aprobadas (informe interno, no es una auditoría independiente).',
 ];
 
 const PENDING = [
-  'Configurar y probar Mercado Pago en modo de pruebas y luego en producción.',
+  'Probar Mercado Pago en modo de pruebas y luego en producción.',
   'Configurar Resend y verificar el dominio de envío.',
-  'Definir variables de entorno y dominios finales de Netlify y Railway.',
+  'Definir variables de entorno y dominios finales en Netlify y Railway.',
   'Crear de forma segura la primera cuenta administradora.',
   'Verificar persistencia, copias de seguridad y restauración de MySQL.',
-  'Probar permisos, privacidad de datos, QR desactivados y pagos duplicados.',
-  'Validar el prototipo físico y realizar revisión legal y de seguridad.',
+  'Probar permisos, privacidad, QR desactivados y pagos duplicados.',
+  'Validar el prototipo físico y hacer revisión legal y de seguridad.',
 ];
 
 /* ------------------------------------------------------------------ */
-/* Constantes de diseño (alineadas con Home)                           */
+/* Piezas                                                              */
 /* ------------------------------------------------------------------ */
 
-const EASE = [0.22, 1, 0.36, 1];
-const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
-
-const methodTone = (m) => (m === 'GET' ? 'success' : m === 'POST' ? 'info' : 'neutral');
-
-/* ------------------------------------------------------------------ */
-/* Piezas de UI                                                        */
-/* ------------------------------------------------------------------ */
+const panel = 'rounded-2xl border border-border bg-white';
 
 const Code = ({ children }) => (
-  <code className="rounded-md bg-brand-50 px-1.5 py-0.5 font-mono text-xs text-brand-700 ring-1 ring-brand-200/70">
-    {children}
-  </code>
+  <code className="rounded-md bg-brand-50 px-1.5 py-0.5 font-mono text-xs text-brand-700 ring-1 ring-brand-200/70">{children}</code>
 );
 
-/** Variable de entorno: al hacer clic copia solo el nombre. */
-const EnvVar = ({ value }) => {
+const EnvVar = ({ name }) => {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
-  const name = value.split(' ')[0];
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(name);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-      toast.success(`${name} copiado`);
     } catch {
       toast.error('No se pudo copiar');
     }
@@ -156,48 +130,19 @@ const EnvVar = ({ value }) => {
       type="button"
       onClick={copy}
       aria-label={`Copiar ${name}`}
-      className="focus-ring group flex w-full items-center justify-between gap-2 rounded-lg border border-transparent px-2 py-1.5 text-left transition-colors hover:border-border hover:bg-brand-50/60"
+      className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-2 py-1 font-mono text-xs text-neutral-900 transition-colors hover:border-brand-500/40 hover:bg-brand-50"
     >
-      <Code>{value}</Code>
-      <span className="flex-none text-text-muted transition-colors group-hover:text-brand-500">
-        {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-      </span>
+      {name}
+      {copied ? <Check size={12} className="text-emerald-600" aria-hidden="true" /> : <Copy size={12} className="text-text-secondary" aria-hidden="true" />}
     </button>
   );
 };
 
-const Section = ({ id, icon: Icon, title, lead, children }) => (
-  <motion.section
-    id={id}
-    className="scroll-mt-24"
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: '-60px' }}
-    transition={{ duration: 0.55, ease: EASE }}
-  >
-    <div className="mb-4 flex items-start gap-3">
-      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
-        <Icon size={20} aria-hidden="true" />
-      </span>
-      <div>
-        <h3 className="text-lg font-bold tracking-tight text-neutral-900">{title}</h3>
-        {lead && <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{lead}</p>}
-      </div>
-    </div>
+const Section = ({ id, title, children }) => (
+  <section id={id} className="scroll-mt-40">
+    <h2 className="mb-3 text-base font-semibold text-neutral-900">{title}</h2>
     {children}
-  </motion.section>
-);
-
-const CALLOUT = {
-  info: 'border-sky-200 bg-sky-50/70 text-sky-900',
-  warning: 'border-amber-200 bg-amber-50/70 text-amber-900',
-};
-
-const Callout = ({ tone = 'info', icon: Icon = Info, children }) => (
-  <div className={`flex gap-3 rounded-xl border p-4 text-sm leading-relaxed ${CALLOUT[tone] || CALLOUT.info}`} role="note">
-    <Icon size={18} className="mt-0.5 flex-none" aria-hidden="true" />
-    <div>{children}</div>
-  </div>
+  </section>
 );
 
 const DocTable = ({ head, children }) => (
@@ -205,9 +150,7 @@ const DocTable = ({ head, children }) => (
     <div className="custom-scrollbar overflow-x-auto">
       <table className="w-full min-w-[520px] text-left text-sm">
         <thead className="bg-brand-50/70 text-xs font-semibold text-text-secondary">
-          <tr>
-            {head.map((h) => <th key={h} scope="col" className="px-4 py-3.5">{h}</th>)}
-          </tr>
+          <tr>{head.map((h) => <th key={h} scope="col" className="px-4 py-3">{h}</th>)}</tr>
         </thead>
         <tbody className="divide-y divide-border">{children}</tbody>
       </table>
@@ -215,32 +158,7 @@ const DocTable = ({ head, children }) => (
   </div>
 );
 
-const Tr = ({ children }) => <tr className="align-top transition-colors hover:bg-brand-50/50">{children}</tr>;
-
-/** Resalta en el índice la sección que se está leyendo. */
-const useActiveSection = (ids) => {
-  const [active, setActive] = useState(ids[0]);
-
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return undefined;
-    const els = ids.map((id) => document.getElementById(id)).filter(Boolean);
-    if (!els.length) return undefined;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length) setActive(visible[0].target.id);
-      },
-      { rootMargin: '-96px 0px -60% 0px', threshold: 0 },
-    );
-    els.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [ids]);
-
-  return active;
-};
+const methodTone = (m) => (m === 'GET' ? 'success' : m === 'POST' ? 'info' : 'neutral');
 
 const goTo = (e, id) => {
   const el = document.getElementById(id);
@@ -253,301 +171,127 @@ const goTo = (e, id) => {
 /* Página                                                              */
 /* ------------------------------------------------------------------ */
 
-const Help = () => {
-  const active = useActiveSection(SECTION_IDS);
+const Help = () => (
+  <div className="space-y-6">
+    <PageTitle title="Ayuda" description="Tu QR te Cuida: perfil de emergencia con QR para motociclistas en Colombia." />
 
-  return (
-    <MotionConfig reducedMotion="user">
-      <div className="space-y-4 lg:space-y-5">
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
-          <PageTitle title="Documentación" description="Guía de referencia del panel administrativo y arquitectura del sistema." />
-        </motion.div>
-
-        {/* Encabezado */}
-        <motion.header
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: EASE, delay: 0.08 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-5 text-white shadow-glow sm:p-6 lg:p-7"
+    <nav
+      aria-label="Índice"
+      className="custom-scrollbar sticky top-20 z-10 -mx-4 flex gap-2 overflow-x-auto bg-brand-50/95 px-4 py-2 backdrop-blur lg:top-24 lg:mx-0 lg:px-0"
+    >
+      {SECTIONS.map(({ id, label }) => (
+        <a
+          key={id}
+          href={`#${id}`}
+          onClick={(e) => goTo(e, id)}
+          className="focus-ring flex-none whitespace-nowrap rounded-full border border-border bg-white px-3.5 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:border-brand-500/40 hover:text-neutral-900"
         >
-          <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
-          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-400/30 blur-3xl" />
-          <div className="relative max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
-              <Info size={13} aria-hidden="true" /> Documentación
-            </span>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight lg:text-3xl">Tu QR te Cuida</h2>
-            <p className="mt-2 text-sm leading-relaxed text-white/80 sm:text-base">
-              Plataforma de{' '}
-              <a
-                href="https://mastercodecompany.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
-              >
-                MasterCode Company <ExternalLink size={13} aria-hidden="true" />
-              </a>{' '}
-              pensada para motociclistas en Colombia. Conecta un QR físico (calcomanía en la moto, el casco u otro
-              lugar visible) con una página web de emergencia que muestra únicamente la información que el
-              propietario autorizó compartir.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {['React + Vite', 'Node.js + Express', 'MySQL 8', 'Netlify · Railway'].map((t) => (
-                <span key={t} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.header>
+          {label}
+        </a>
+      ))}
+    </nav>
 
-        {/* Índice móvil */}
-        <nav aria-label="Índice de la documentación" className="custom-scrollbar -mx-4 overflow-x-auto px-4 lg:hidden">
-          <ul className="flex gap-2 pb-1">
-            {SECTIONS.map(({ id, label }) => (
-              <li key={id} className="flex-none">
-                <a
-                  href={`#${id}`}
-                  onClick={(e) => goTo(e, id)}
-                  className={`focus-ring block whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    active === id
-                      ? 'border-brand-500 bg-brand-500 text-white'
-                      : 'border-border bg-white text-text-secondary hover:text-neutral-900'
-                  }`}
-                >
-                  {label}
-                </a>
-              </li>
+    <div className="space-y-10">
+      <Section id="flujo" title="Cómo funciona">
+        <ol className={`${panel} divide-y divide-border`}>
+          {STEPS.map(([title, text], i) => (
+            <li key={title} className="flex gap-3 p-4">
+              <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-brand-500/10 text-xs font-bold text-brand-700">{i + 1}</span>
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">{title}</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      <Section id="roles" title="Roles">
+        <DocTable head={['Rol', 'Acceso', 'Puede']}>
+          {ROLES.map(([role, tone, access, can]) => (
+            <tr key={role} className="align-top">
+              <td className="px-4 py-3"><Badge tone={tone} size="sm">{role}</Badge></td>
+              <td className="whitespace-nowrap px-4 py-3 text-neutral-900">{access}</td>
+              <td className="px-4 py-3 text-text-secondary">{can}</td>
+            </tr>
+          ))}
+        </DocTable>
+      </Section>
+
+      <Section id="arquitectura" title="Arquitectura">
+        <div className="space-y-4">
+          <DocTable head={['Capa', 'Tecnología', 'Servicio']}>
+            {STACK.map(([layer, tech, host]) => (
+              <tr key={layer} className="align-top">
+                <td className="whitespace-nowrap px-4 py-3 font-medium text-neutral-900">{layer}</td>
+                <td className="px-4 py-3 text-text-secondary">{tech}</td>
+                <td className="whitespace-nowrap px-4 py-3"><Badge tone="neutral" size="sm">{host}</Badge></td>
+              </tr>
             ))}
-          </ul>
-        </nav>
+          </DocTable>
+          <DocTable head={['Módulo del backend', 'Responsabilidad']}>
+            {MODULES.map(([name, desc]) => (
+              <tr key={name} className="align-top">
+                <td className="whitespace-nowrap px-4 py-3"><Code>{name}</Code></td>
+                <td className="px-4 py-3 text-text-secondary">{desc}</td>
+              </tr>
+            ))}
+          </DocTable>
+        </div>
+      </Section>
 
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-          {/* Índice lateral */}
-          <nav aria-label="Índice de la documentación" className="hidden lg:block">
-            <ul className="sticky top-24 space-y-1">
-              {SECTIONS.map(({ id, label, icon: Icon }) => {
-                const isActive = active === id;
-                return (
-                  <li key={id}>
-                    <a
-                      href={`#${id}`}
-                      onClick={(e) => goTo(e, id)}
-                      aria-current={isActive ? 'true' : undefined}
-                      className={`focus-ring relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive ? 'text-brand-500' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
-                      }`}
-                    >
-                      {isActive && (
-                        <motion.span
-                          layoutId="help-toc-active"
-                          className="absolute inset-0 rounded-lg border border-brand-500/25 bg-brand-500/10"
-                          transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                        />
-                      )}
-                      <Icon size={16} className="relative" aria-hidden="true" />
-                      <span className="relative">{label}</span>
-                    </a>
-                  </li>
-                );
-              })}
+      <Section id="api" title="Endpoints">
+        <DocTable head={['Método', 'Ruta', 'Descripción', 'Acceso']}>
+          {ENDPOINTS.map(([method, path, desc, access]) => (
+            <tr key={path} className="align-top">
+              <td className="px-4 py-3"><Badge tone={methodTone(method)} size="sm">{method}</Badge></td>
+              <td className="whitespace-nowrap px-4 py-3"><Code>{path}</Code></td>
+              <td className="px-4 py-3 text-text-secondary">{desc}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-neutral-900">{access}</td>
+            </tr>
+          ))}
+        </DocTable>
+      </Section>
+
+      <Section id="seguridad" title="Seguridad">
+        <ul className={`${panel} list-disc space-y-2 py-4 pl-9 pr-4 text-sm leading-relaxed text-text-secondary marker:text-brand-500`}>
+          {SECURITY.map((s) => <li key={s}>{s}</li>)}
+        </ul>
+      </Section>
+
+      <Section id="entorno" title="Variables de entorno">
+        <div className={`${panel} divide-y divide-border`}>
+          {ENV_GROUPS.map(([group, vars]) => (
+            <div key={group} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:gap-4">
+              <p className="w-36 flex-none text-sm font-medium text-neutral-900">{group}</p>
+              <div className="flex flex-wrap gap-2">{vars.map((v) => <EnvVar key={v} name={v} />)}</div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section id="pendientes" title="Antes de lanzar">
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className={`${panel} p-4`}>
+            <h3 className="mb-2 text-sm font-semibold text-neutral-900">Hecho</h3>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              {DONE.map((d) => (
+                <li key={d} className="flex items-start gap-2">
+                  <Check size={15} className="mt-0.5 flex-none text-emerald-600" aria-hidden="true" /> {d}
+                </li>
+              ))}
             </ul>
-          </nav>
-
-          <div className="min-w-0 space-y-10">
-            {/* Resumen */}
-            <Section id="resumen" icon={Info} title="Resumen" lead="Qué problema resuelve y cuáles son sus límites.">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className={`${panel} p-4 sm:p-5`}>
-                  <h4 className="mb-2 text-sm font-semibold text-neutral-900">Problema</h4>
-                  <p className="text-sm leading-relaxed text-text-secondary">
-                    En un accidente la persona puede estar inconsciente y no poder indicar a quién contactar.
-                    El QR permite a quienes auxilian consultar los datos que ella decidió compartir.
-                  </p>
-                </div>
-                <div className={`${panel} p-4 sm:p-5`}>
-                  <h4 className="mb-2 text-sm font-semibold text-neutral-900">Propuesta de valor</h4>
-                  <ul className="space-y-2 text-sm text-text-secondary">
-                    {['Acceso inmediato, sin cuenta ni app.', 'Privacidad configurable por campo.', 'Control total: desactivar o reemplazar el QR.'].map((t) => (
-                      <li key={t} className="flex items-start gap-2">
-                        <CheckCircle2 size={15} className="mt-0.5 flex-none text-brand-500" aria-hidden="true" /> {t}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <div className="mt-3">
-                <Callout tone="warning" icon={AlertTriangle}>
-                  <strong className="text-neutral-900">Herramienta de apoyo.</strong> No reemplaza los servicios
-                  de emergencia, no garantiza que alguien escanee el código ni asegura una respuesta inmediata.
-                </Callout>
-              </div>
-            </Section>
-
-            {/* Flujo */}
-            <Section id="flujo" icon={Workflow} title="Cómo funciona" lead="Del registro a la consulta en la página pública.">
-              <ol className="space-y-2.5">
-                {STEPS.map((s, i) => (
-                  <li key={s.title} className="relative">
-                    {i < STEPS.length - 1 && (
-                      <span aria-hidden="true" className="absolute left-[31px] top-[52px] -bottom-3 w-px bg-brand-200" />
-                    )}
-                    <div className={`${panel} flex gap-4 p-4 transition-colors hover:border-brand-500/30`}>
-                      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white shadow-soft">
-                        {i + 1}
-                      </span>
-                      <div>
-                        <p className="font-semibold text-neutral-900">{s.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{s.text}</p>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              <p className="mt-3 text-sm leading-relaxed text-text-secondary">
-                Además, el usuario puede comprar productos físicos con QR mediante Mercado Pago. El modelo
-                contempla un identificador digital básico gratuito y productos físicos personalizados; NFC
-                queda como evolución futura, una vez validado el prototipo físico.
-              </p>
-            </Section>
-
-            {/* Arquitectura */}
-            <Section id="arquitectura" icon={Layers} title="Arquitectura" lead="Tecnologías y servicios previstos; su puesta en producción debe verificarse.">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {STACK.map(({ icon: Icon, name, tech, detail, host }) => (
-                  <article key={name} className={`${panel} p-4 sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_20px_40px_-12px_rgba(159,18,57,0.2)]`}>
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
-                        <Icon size={20} aria-hidden="true" />
-                      </span>
-                      <Badge tone="neutral" size="sm">{host}</Badge>
-                    </div>
-                    <p className="text-xs font-medium text-text-secondary">{name}</p>
-                    <h4 className="mt-0.5 text-base font-semibold text-neutral-900">{tech}</h4>
-                    <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">{detail}</p>
-                  </article>
-                ))}
-              </div>
-            </Section>
-
-            {/* Módulos */}
-            <Section id="modulos" icon={Server} title="Módulos del backend" lead="Cada dominio encapsula su lógica de negocio.">
-              <DocTable head={['Módulo', 'Responsabilidad']}>
-                {MODULES.map(([name, desc]) => (
-                  <Tr key={name}>
-                    <td className="whitespace-nowrap px-4 py-3"><Code>{name}</Code></td>
-                    <td className="px-4 py-3 text-text-secondary">{desc}</td>
-                  </Tr>
-                ))}
-              </DocTable>
-            </Section>
-
-            {/* Roles */}
-            <Section id="roles" icon={Users} title="Roles y permisos">
-              <DocTable head={['Rol', 'Acceso', 'Puede']}>
-                {ROLES.map((r) => (
-                  <Tr key={r.role}>
-                    <td className="px-4 py-3"><Badge tone={r.tone} size="sm">{r.role}</Badge></td>
-                    <td className="whitespace-nowrap px-4 py-3 text-neutral-900">{r.access}</td>
-                    <td className="px-4 py-3 text-text-secondary">{r.can}</td>
-                  </Tr>
-                ))}
-              </DocTable>
-            </Section>
-
-            {/* API */}
-            <Section id="api" icon={Plug} title="Endpoints clave" lead="Prefijo común /api. Los marcados como CRUD agrupan varios métodos.">
-              <DocTable head={['Método', 'Ruta', 'Descripción', 'Acceso']}>
-                {ENDPOINTS.map(([method, path, desc, access]) => (
-                  <Tr key={path}>
-                    <td className="px-4 py-3"><Badge tone={methodTone(method)} size="sm">{method === '*' ? 'CRUD' : method}</Badge></td>
-                    <td className="whitespace-nowrap px-4 py-3"><Code>{path}</Code></td>
-                    <td className="px-4 py-3 text-text-secondary">{desc}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-neutral-900">{access}</td>
-                  </Tr>
-                ))}
-              </DocTable>
-            </Section>
-
-            {/* Seguridad */}
-            <Section id="seguridad" icon={ShieldCheck} title="Seguridad y privacidad" lead="El sistema maneja datos personales y relacionados con emergencias.">
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {SECURITY.map((s) => (
-                  <li key={s} className={`${panel} flex items-start gap-3 p-4 text-sm leading-relaxed text-text-secondary`}>
-                    <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
-                      <Lock size={14} aria-hidden="true" />
-                    </span>
-                    <span className="pt-0.5">{s}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3">
-                <Callout tone="info">
-                  Antes de comercializar, confirma que estas medidas estén correctamente implementadas y revisa
-                  el tratamiento de datos personales conforme a la normativa colombiana, incluidas las
-                  obligaciones sobre datos sensibles.
-                </Callout>
-              </div>
-            </Section>
-
-            {/* Entorno */}
-            <Section id="entorno" icon={KeyRound} title="Variables de entorno (backend)" lead="Nunca las incluyas en el repositorio; configúralas en Railway o en un archivo .env local. Haz clic en una variable para copiar su nombre.">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {ENV_GROUPS.map(({ group, vars }) => (
-                  <div key={group} className={`${panel} p-4`}>
-                    <h4 className="mb-2 px-2 text-sm font-semibold text-neutral-900">{group}</h4>
-                    <ul className="space-y-0.5">
-                      {vars.map((v) => (
-                        <li key={v}><EnvVar value={v} /></li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </Section>
-
-            {/* Estado */}
-            <Section id="estado" icon={ListChecks} title="Estado actual y próximos pasos">
-              <div className="grid gap-3 lg:grid-cols-2">
-                <div className={`${panel} p-4 sm:p-5`}>
-                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-900">
-                    <CheckCircle2 size={16} className="text-emerald-600" aria-hidden="true" />
-                    Verificaciones reportadas
-                  </h4>
-                  <ul className="space-y-2 text-sm text-text-secondary">
-                    {CHECKS.map((c) => (
-                      <li key={c} className="flex items-start gap-2">
-                        <CheckCircle2 size={14} className="mt-1 flex-none text-emerald-600" aria-hidden="true" />
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-                    Resultados del informe interno; no constituyen auditoría independiente ni garantizan que el
-                    sistema esté listo para producción.
-                  </p>
-                </div>
-                <div className={`${panel} p-4 sm:p-5`}>
-                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-900">
-                    <Rocket size={16} className="text-brand-500" aria-hidden="true" />
-                    Pendiente antes del lanzamiento
-                  </h4>
-                  <ul className="space-y-2 text-sm text-text-secondary">
-                    {PENDING.map((p) => (
-                      <li key={p} className="flex items-start gap-2">
-                        <Circle size={14} className="mt-1 flex-none text-text-muted" aria-hidden="true" />
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Section>
+          </div>
+          <div className={`${panel} p-4`}>
+            <h3 className="mb-2 text-sm font-semibold text-neutral-900">Pendiente</h3>
+            <ul className="list-disc space-y-2 pl-5 text-sm text-text-secondary marker:text-brand-500">
+              {PENDING.map((p) => <li key={p}>{p}</li>)}
+            </ul>
           </div>
         </div>
-      </div>
-    </MotionConfig>
-  );
-};
+      </Section>
+    </div>
+  </div>
+);
 
 export default Help;

@@ -1,212 +1,132 @@
-import { useEffect, useState } from 'react';
 import { Routes, Route, NavLink, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
-  LayoutDashboard, Users, Package, ScrollText, HelpCircle, Menu, X as XIcon, ShieldCheck, LogOut, ExternalLink,
+  LayoutDashboard, Package, QrCode, Users, ScrollText, HelpCircle, ExternalLink, LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import Help from './help';
 import AdminHome from './AdminHome';
-import AdminUsers from './Users';
 import AdminOrders from './Orders';
+import AdminQrs from './QrAdmin';
+import AdminUsers from './Users';
 import AdminAudit from './Audit';
 
-const EASE = [0.22, 1, 0.36, 1];
-const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
-
-const NAV = [
-  { to: '/admin', label: 'Resumen', icon: LayoutDashboard, end: true },
-  { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
-  { to: '/admin/pedidos', label: 'Pedidos', icon: Package },
-  { to: '/admin/auditoria', label: 'Auditoría', icon: ScrollText },
-  { to: '/admin/ayuda', label: 'Ayuda', icon: HelpCircle },
+const GROUPS = [
+  {
+    label: 'Operación',
+    items: [
+      { to: '/admin', label: 'Resumen', icon: LayoutDashboard, end: true },
+      { to: '/admin/pedidos', label: 'Pedidos', icon: Package },
+      { to: '/admin/qrs', label: 'Códigos QR', icon: QrCode },
+      { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { to: '/admin/auditoria', label: 'Auditoría', icon: ScrollText },
+      { to: '/admin/ayuda', label: 'Ayuda', icon: HelpCircle },
+    ],
+  },
 ];
+const ALL_ITEMS = GROUPS.flatMap((g) => g.items);
 
-const Sidebar = ({ open, setOpen, user, onLogout }) => {
-  const display = user?.name || user?.email || 'Administrador';
-  const initial = display.charAt(0).toUpperCase();
+const sideLink = ({ isActive }) =>
+  `focus-ring flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+    isActive
+      ? 'bg-brand-500/10 font-semibold text-brand-700'
+      : 'font-medium text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
+  }`;
 
-  return (
-    <>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-brand-900/60 backdrop-blur-sm lg:hidden"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-      </AnimatePresence>
-
-      <aside
-        aria-label="Panel administrativo"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white p-4 shadow-2xl transition-transform duration-300 ease-out lg:sticky lg:top-24 lg:z-auto lg:max-h-[calc(100vh-7rem)] lg:w-60 lg:flex-none lg:translate-x-0 lg:self-start lg:rounded-2xl lg:border lg:border-border lg:shadow-card ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="mb-4 flex items-center justify-between lg:hidden">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
-              <ShieldCheck size={16} aria-hidden="true" />
-            </span>
-            <span className="text-sm font-bold text-neutral-900">Administración</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900"
-            aria-label="Cerrar menú"
-          >
-            <XIcon size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Tarjeta de usuario */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-3.5 text-white shadow-soft">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10 blur-2xl" />
-          <div className="relative flex items-center gap-3">
-            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-white/15 text-sm font-bold ring-1 ring-white/25">
-              {initial}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{display}</p>
-              <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-white/75">
-                <ShieldCheck size={11} aria-hidden="true" /> Administrador
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="custom-scrollbar mt-4 flex-1 space-y-1 overflow-y-auto" aria-label="Secciones de administración">
-          {NAV.map((n) => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.end}
-              onClick={() => setOpen(false)}
-              className="focus-ring relative block rounded-lg"
-            >
-              {({ isActive }) => (
-                <span
-                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                    isActive ? 'text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
-                  }`}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="admin-nav-active"
-                      className="absolute inset-0 rounded-lg bg-brand-500 shadow-soft"
-                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    />
-                  )}
-                  <n.icon size={18} className="relative" aria-hidden="true" />
-                  <span className="relative">{n.label}</span>
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="mt-4 space-y-1 border-t border-border pt-4">
-          <Link
-            to="/"
-            onClick={() => setOpen(false)}
-            className="focus-ring flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-brand-50 hover:text-neutral-900"
-          >
-            <ExternalLink size={18} aria-hidden="true" /> Ver sitio
-          </Link>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="focus-ring flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
-          >
-            <LogOut size={18} aria-hidden="true" /> Cerrar sesión
-          </button>
-        </div>
-      </aside>
-    </>
-  );
-};
+const pill = (active) =>
+  `focus-ring flex flex-none items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+    active
+      ? 'border-brand-500 bg-brand-500 text-white'
+      : 'border-border bg-white text-text-secondary hover:border-brand-500/40 hover:text-neutral-900'
+  }`;
 
 const Admin = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
-    setOpen(false);
     await logout();
     navigate('/', { replace: true });
   };
 
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [open]);
-
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
 
-  const clean = pathname.replace(/\/$/, '') || '/';
-  const current = NAV.find((n) => (n.end ? clean === n.to : clean.startsWith(n.to))) || NAV[0];
+  const display = user?.name || user?.email || 'Administrador';
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
-        {/* Barra superior móvil */}
-        <div className={`${panel} flex items-center justify-between p-3 lg:hidden`}>
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
-              <current.icon size={18} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xs font-medium text-text-secondary">Administración</p>
-              <p className="text-sm font-bold text-neutral-900">{current.label}</p>
-            </div>
+    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+      {/* Móvil: navegación siempre visible, sin menú que abrir */}
+      <nav aria-label="Administración" className="custom-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden">
+        {ALL_ITEMS.map(({ to, label, icon: Icon, end }) => (
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => pill(isActive)}>
+            <Icon size={16} aria-hidden="true" /> {label}
+          </NavLink>
+        ))}
+        <Link to="/" className={pill(false)}>
+          <ExternalLink size={16} aria-hidden="true" /> Ver sitio
+        </Link>
+        <button type="button" onClick={handleLogout} className={`${pill(false)} !text-rose-700`}>
+          <LogOut size={16} aria-hidden="true" /> Salir
+        </button>
+      </nav>
+
+      {/* Escritorio */}
+      <aside
+        aria-label="Administración"
+        className="sticky top-24 hidden max-h-[calc(100vh-7rem)] w-60 flex-none flex-col self-start rounded-2xl border border-border bg-white p-3 lg:flex"
+      >
+        <div className="mb-3 flex items-center gap-3 border-b border-border px-2 pb-3">
+          <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
+            {display.charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-neutral-900">{display}</p>
+            <p className="text-xs text-text-secondary">Administrador</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-border text-neutral-900 transition-colors hover:bg-brand-50"
-            aria-label="Abrir menú"
-            aria-expanded={open}
-          >
-            <Menu size={20} aria-hidden="true" />
-          </button>
         </div>
 
-        <Sidebar open={open} setOpen={setOpen} user={user} onLogout={handleLogout} />
+        <nav aria-label="Secciones" className="custom-scrollbar flex-1 space-y-4 overflow-y-auto">
+          {GROUPS.map((g) => (
+            <div key={g.label}>
+              <p className="px-3 pb-1 text-xs font-medium text-text-secondary">{g.label}</p>
+              <div className="space-y-0.5">
+                {g.items.map(({ to, label, icon: Icon, end }) => (
+                  <NavLink key={to} to={to} end={end} className={sideLink}>
+                    <Icon size={18} aria-hidden="true" /> {label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
 
-        <motion.div
-          key={clean}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: EASE }}
-          className="min-w-0 flex-1"
-        >
-          <Routes>
-            <Route index element={<AdminHome />} />
-            <Route path="usuarios" element={<AdminUsers />} />
-            <Route path="pedidos" element={<AdminOrders />} />
-            <Route path="auditoria" element={<AdminAudit />} />
-            <Route path="ayuda" element={<Help />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
-        </motion.div>
+        <div className="mt-3 space-y-0.5 border-t border-border pt-3">
+          <Link to="/" className={sideLink({ isActive: false })}>
+            <ExternalLink size={18} aria-hidden="true" /> Ver sitio
+          </Link>
+          <button type="button" onClick={handleLogout} className={`${sideLink({ isActive: false })} w-full !text-rose-700 hover:!bg-rose-50`}>
+            <LogOut size={18} aria-hidden="true" /> Cerrar sesión
+          </button>
+        </div>
+      </aside>
+
+      <div key={pathname} className="min-w-0 flex-1 animate-fade-in">
+        <Routes>
+          <Route index element={<AdminHome />} />
+          <Route path="pedidos" element={<AdminOrders />} />
+          <Route path="qrs" element={<AdminQrs />} />
+          <Route path="usuarios" element={<AdminUsers />} />
+          <Route path="auditoria" element={<AdminAudit />} />
+          <Route path="ayuda" element={<Help />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Routes>
       </div>
-    </MotionConfig>
+    </div>
   );
 };
 
