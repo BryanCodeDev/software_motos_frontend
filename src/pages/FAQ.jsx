@@ -65,7 +65,7 @@ export const FAQ = () => {
         return;
       }
       try {
-        const { data } = await api.get('/api/identifiers/my');
+        const { data } = await api.get('/identifiers/my');
         if (!mounted) return;
         setHasQr(!!data?.identifier);
       } catch {
