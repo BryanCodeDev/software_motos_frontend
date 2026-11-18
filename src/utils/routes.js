@@ -17,7 +17,6 @@ export const routes = {
   dashboardPrivacy: '/panel/privacidad',
   dashboardQr: '/panel/qr',
   dashboardOrders: '/panel/pedidos',
-  dashboardBuyStickers: '/panel/comprar-stickers',
   checkout: '/panel/checkout',
   admin: '/admin',
   adminQrs: '/admin/qrs',

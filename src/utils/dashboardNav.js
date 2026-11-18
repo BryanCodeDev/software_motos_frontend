@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, User, Users, ShieldCheck, QrCode, Package, ClipboardList, HelpCircle, Barcode, Sticker,
+  LayoutDashboard, User, Users, ShieldCheck, QrCode, Package, ClipboardList, HelpCircle, Barcode,
 } from 'lucide-react';
 import { routes } from './routes';
 
@@ -13,7 +13,6 @@ export const userNav = [
   { label: 'Privacidad', to: routes.dashboardPrivacy, icon: ShieldCheck },
   { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
   { label: 'Pedidos', to: routes.dashboardOrders, icon: Package },
-  { label: 'Comprar stickers', to: routes.dashboardBuyStickers, icon: Sticker },
 ];
 
 export const adminNav = [
