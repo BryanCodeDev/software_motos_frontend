@@ -56,7 +56,6 @@ export const Products = () => {
 
   useEffect(() => {
     let mounted = true;
-    let productsLoaded = false;
 
     const load = async () => {
       try {
@@ -64,16 +63,27 @@ export const Products = () => {
         const list = res.data.products || res.data || [];
         if (!mounted) return;
         setProducts(list);
-        productsLoaded = true;
 
         const stickerProduct = list.find((p) => p.slug === 'sticker-qr-personalizado');
-        if (stickerProduct) {
+
+        if (!stickerProduct) {
+          if (!mounted) return;
+          setDesigns([]);
+          setError('El producto de stickers no está disponible.');
+          return;
+        }
+
+        try {
           const dRes = await api.get('/designs', { params: { product_id: stickerProduct.id } });
           if (!mounted) return;
-          setDesigns(dRes.data.designs || []);
-        } else if (!mounted) {
-          return;
-        } else {
+          const designsList = dRes.data.designs || [];
+          setDesigns(designsList);
+          if (designsList.length === 0) {
+            setError('No hay diseños disponibles para este producto.');
+          }
+        } catch (designErr) {
+          if (!mounted) return;
+          setError('No se pudieron cargar los diseños de stickers.');
           setDesigns([]);
         }
       } catch (err) {
@@ -81,6 +91,7 @@ export const Products = () => {
         if (err.response && err.response.status === 404) {
           setProducts([]);
           setDesigns([]);
+          setError('El catálogo de productos no está disponible.');
         } else {
           setError('No pudimos cargar el catálogo. Inténtalo de nuevo en unos minutos.');
         }
@@ -500,8 +511,22 @@ export const Products = () => {
           {designs.length === 0 && (
             <Card className="mx-auto max-w-md p-12 text-center">
               <AlertCircle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
-              <h3 className="mb-2 text-lg font-semibold text-neutral-900">No hay diseños disponibles</h3>
-              <p className="text-sm text-text-secondary">Vuelve más tarde o escríbenos por WhatsApp para un diseño personalizado.</p>
+              <h3 className="mb-2 text-lg font-semibold text-neutral-900">
+                {error ? 'No se pudieron cargar los diseños' : 'No hay diseños disponibles'}
+              </h3>
+              <p className="text-sm text-text-secondary">
+                {error || 'Vuelve más tarde o escríbenos por WhatsApp para un diseño personalizado.'}
+              </p>
+              {error && (
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-5 inline-flex items-center gap-2 font-semibold text-brand-500 underline"
+                >
+                  <ArrowRight size={14} className="text-[12px]" aria-hidden="true" />
+                  Reintentar
+                </button>
+              )}
             </Card>
           )}
 
