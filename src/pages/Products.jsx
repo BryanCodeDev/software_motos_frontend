@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../utils/routes';
 import { Card } from '../components/ui';
-import { AlertCircle, Check, Image as ImageIcon, Package, QrCode, ShieldCheck, Sticker, Truck } from 'lucide-react';
+import { AlertCircle, Check, Package, QrCode, ShieldCheck, Sticker, Truck } from 'lucide-react';
 import Seo from '../components/Seo';
 import { PageHeader } from '../components/Section';
 
@@ -214,21 +214,9 @@ export const Products = () => {
                 <div className="relative mb-3">
                   <img
                     src={design.image_url}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    aria-hidden="true"
+                    alt={design.name}
                     className="w-32 h-32 rounded-xl object-cover bg-neutral-100 object-center shadow-inner"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
                   />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-neutral-100">
-                    <ImageIcon className="mb-1.5 h-10 w-10 text-neutral-400" aria-hidden="true" />
-                    <span className="text-[10px] font-medium text-neutral-500 leading-tight text-center px-2">
-                      Imagen pendiente
-                    </span>
-                  </div>
                 </div>
                 <h3 className="mb-1 font-semibold text-center text-neutral-900">{design.name}</h3>
                 {design.description && (
