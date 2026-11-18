@@ -36,6 +36,7 @@ const VIEWS = [
   { id: 'active', label: 'Activos', params: { status: 'active' }, count: (s) => s.by_status?.active },
   { id: 'pending', label: 'Pendientes de activación', params: { status: 'pending_activation' }, count: (s) => s.by_status?.pending_activation },
   { id: 'unlinked', label: 'Sin vincular', params: { linked: 'false' }, count: (s) => s.unlinked },
+  { id: 'archived', label: 'Archivados', params: { archived: 'true' }, count: (s) => s.by_status?.archived },
 ];
 
 const fmtDate = (d) =>
@@ -153,6 +154,7 @@ export const AdminQrInventory = () => {
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [exportBusy, setExportBusy] = useState(false);
+  const [archiveBusy, setArchiveBusy] = useState(false);
 
   /* Crear */
   const [createOpen, setCreateOpen] = useState(false);
@@ -387,6 +389,31 @@ export const AdminQrInventory = () => {
     }
   };
 
+  /* Archivar selección (archivado lógico, no borrado) */
+  const doArchive = async () => {
+    if (!selected.size || archiveBusy) return;
+    setArchiveBusy(true);
+    let ok = 0;
+    let fail = 0;
+    const ids = [...selected];
+    try {
+      for (const id of ids) {
+        try {
+          await api.post(`/admin/qrs/${id}/archive`, { reason: 'Archivado desde el panel de administración' });
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      if (ok) toast.success(`${ok} QR archivado${ok !== 1 ? 's' : ''}`);
+      if (fail) toast.error(`${fail} QR no se pudieron archivar`);
+      setSelected(new Set());
+      refresh();
+    } finally {
+      setArchiveBusy(false);
+    }
+  };
+
   const s = stats || {};
   const exportBtn = 'focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors disabled:opacity-50';
 
@@ -557,6 +584,9 @@ export const AdminQrInventory = () => {
             </button>
             <button type="button" onClick={() => exportAs('pdf')} disabled={exportBusy} className={`${exportBtn} bg-white text-brand-700 hover:bg-brand-50`}>
               {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Printer size={14} aria-hidden="true" />} PDF
+            </button>
+            <button type="button" onClick={doArchive} disabled={archiveBusy} className={`${exportBtn} border border-rose-200/60 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
+              {archiveBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />} Archivar
             </button>
           </div>
         </div>
