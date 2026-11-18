@@ -248,6 +248,7 @@ export const PublicEmergency = () => {
   const [attempt, setAttempt] = useState(0);
   const [showBar, setShowBar] = useState(false);
   const quickRef = useRef(null);
+  const scanRecorded = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -265,6 +266,20 @@ export const PublicEmergency = () => {
         if (!isMounted) return;
         setProfile(res.data.profile || res.data);
         setStatus(res.data.status || 'active');
+
+        // Registro de escaneo QR (métricas). Tolerante a fallos: nunca rompe
+        // la carga del perfil. Sin GPS, sin IP completa, sin datos médicos.
+        if (isMounted && !scanRecorded.current && identifier) {
+          scanRecorded.current = true;
+          try {
+            await api.post('/api/identifiers/scans', {
+              identifier_value: identifier,
+              result: res.data.status === 'active' ? 'active' : 'inactive',
+            });
+          } catch {
+            /* No bloquear la página si falla el registro de escaneo. */
+          }
+        }
       } catch (err) {
         if (!isMounted) return;
         if (axios.isCancel(err) || err.name === 'AbortError' || err.code === 'ERR_CANCELED') {

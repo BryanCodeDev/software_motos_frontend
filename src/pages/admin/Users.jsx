@@ -59,6 +59,13 @@ const RoleBadge = ({ role }) => (
   <Badge tone={role === 'admin' ? 'brand' : 'neutral'} size="sm">{ROLES[role]?.label || role}</Badge>
 );
 
+const Box = ({ title, children }) => (
+  <section className="rounded-xl border border-border p-4">
+    <h3 className="mb-3 text-sm font-semibold text-neutral-900">{title}</h3>
+    {children}
+  </section>
+);
+
 /* ───────── Tarjeta ───────── */
 const UserCard = ({ u, isMe, onOpen }) => (
   <li className="flex flex-col rounded-2xl border border-border bg-white p-4 transition-colors hover:border-brand-500/40">
@@ -102,6 +109,9 @@ export const AdminUsers = () => {
   const [tab, setTab] = useState('datos');
   const [newRole, setNewRole] = useState('user');
   const [saving, setSaving] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendBusy, setSuspendBusy] = useState(false);
   const [qrs, setQrs] = useState(null); // null = cargando
 
   const load = useCallback(async () => {
@@ -153,7 +163,39 @@ export const AdminUsers = () => {
     setTab(startTab);
     setNewRole(u.role === 'admin' ? 'admin' : 'user');
   };
-  const close = () => { if (!saving) setSel(null); };
+  const close = () => { if (!saving && !suspendBusy) setSel(null); };
+
+  const suspendUser = async () => {
+    if (!sel) return;
+    setSuspendBusy(true);
+    try {
+      await api.patch(`/admin/users/${sel.id}/suspend`, { reason: suspendReason || 'Suspendido desde el panel de administración' });
+      toast.success('Cuenta suspendida');
+      setSel((s) => (s ? { ...s, suspended: true } : s));
+      setSuspendOpen(false);
+      setSuspendReason('');
+      load();
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'No se pudo suspender la cuenta');
+    } finally {
+      setSuspendBusy(false);
+    }
+  };
+
+  const reactivateUser = async () => {
+    if (!sel) return;
+    setSuspendBusy(true);
+    try {
+      await api.patch(`/admin/users/${sel.id}/reactivate`);
+      toast.success('Cuenta reactivada');
+      setSel((s) => (s ? { ...s, suspended: false } : s));
+      load();
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'No se pudo reactivar la cuenta');
+    } finally {
+      setSuspendBusy(false);
+    }
+  };
 
   const saveRole = async () => {
     if (!sel || newRole === sel.role) return;
@@ -365,6 +407,54 @@ export const AdminUsers = () => {
               )
             )}
 
+            {tab === 'rol' && (
+              isMe(sel) ? (
+                <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm text-text-secondary">
+                  No puedes cambiar tu propio rol. Pídeselo a otro administrador.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  <div role="radiogroup" aria-label="Rol" className="grid gap-3 sm:grid-cols-2">
+                    {Object.entries(ROLES).map(([id, r]) => {
+                      const on = newRole === id;
+                      const Icon = r.icon;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="radio"
+                          aria-checked={on}
+                          onClick={() => setNewRole(id)}
+                          className={`focus-ring rounded-xl border p-4 text-left transition-colors ${
+                            on ? 'border-brand-500 bg-brand-500/10' : 'border-border bg-white hover:border-brand-500/40'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+                            <Icon size={16} className={on ? 'text-brand-500' : 'text-text-secondary'} aria-hidden="true" /> {r.label}
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-text-secondary">{r.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {newRole !== sel.role && newRole === 'user' && (
+                    <p className="flex items-start gap-2 text-xs leading-relaxed text-amber-700">
+                      <AlertTriangle size={14} className="mt-0.5 flex-none" aria-hidden="true" />
+                      Perderá el acceso a este panel de inmediato.
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <button type="button" onClick={close} disabled={saving} className="btn-ghost px-4 py-2 text-sm">Cerrar</button>
+                    <button type="button" onClick={saveRole} disabled={saving || newRole === sel.role} className="btn-primary px-4 py-2 text-sm">
+                      {saving && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                      {saving ? 'Guardando…' : 'Guardar rol'}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* QR asociados */}
             {tab === 'qr' && (
               <div className="space-y-3">
                 {qrs === null && (
@@ -395,6 +485,63 @@ export const AdminUsers = () => {
                   <ExternalLink size={14} aria-hidden="true" /> Ver en Códigos QR
                 </Link>
               </div>
+            )}
+
+            {/* Suspensión */}
+            {!isMe(sel) && (
+              <Box title="Estado de la cuenta">
+                <div className="flex items-start gap-3">
+                  {sel.suspended_at ? (
+                    <>
+                      <span className="mt-0.5 flex-none text-xs text-rose-600 font-semibold">Suspendida</span>
+                      {sel.suspended_reason && <p className="mt-0.5 text-xs text-text-secondary">{sel.suspended_reason}</p>}
+                      <div className="mt-3 flex justify-end gap-2">
+                        <button type="button" onClick={() => setSuspendOpen(false)} disabled={suspendBusy} className="btn-ghost px-4 py-2 text-sm">Cerrar</button>
+                        <button type="button" onClick={reactivateUser} disabled={suspendBusy} className="btn-primary px-4 py-2 text-sm">
+                          {suspendBusy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : 'Reactivar cuenta'}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="mt-0.5 flex-none text-xs text-text-secondary">Activa</span>
+                      <button type="button" onClick={() => { setSuspendOpen(true); }} disabled={suspendBusy} className="btn-ghost mt-3 flex-none px-4 py-2 text-sm !text-rose-700 hover:!bg-rose-50">
+                        Suspender cuenta
+                      </button>
+                    </>
+                  )}
+                </div>
+                <Modal
+                  isOpen={suspendOpen}
+                  onClose={() => { setSuspendOpen(false); setSuspendReason(''); }}
+                  title="Suspender cuenta"
+                  size="md"
+                >
+                  <div className="space-y-4">
+                    <p className="text-sm text-text-secondary">
+                      Al suspender, el usuario no podrá autenticarse ni realizar operaciones protegidas. Sus pedidos, QR y auditoría se conservan.
+                    </p>
+                    <div>
+                      <label htmlFor="suspend-reason" className="mb-1 block text-xs font-medium text-neutral-900">Motivo</label>
+                      <textarea
+                        id="suspend-reason"
+                        rows={2}
+                        value={suspendReason}
+                        onChange={(e) => setSuspendReason(e.target.value)}
+                        placeholder="Motivo de la suspensión"
+                        className="input !text-sm"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <button type="button" onClick={() => { setSuspendOpen(false); setSuspendReason(''); }} disabled={suspendBusy} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
+                      <button type="button" onClick={suspendUser} disabled={suspendBusy || !suspendReason.trim()} className="btn-danger px-4 py-2 text-sm">
+                        {suspendBusy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                        Suspender
+                      </button>
+                    </div>
+                  </div>
+                </Modal>
+              </Box>
             )}
           </div>
         )}
