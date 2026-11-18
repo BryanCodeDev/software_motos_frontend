@@ -119,7 +119,7 @@ export const ContactsPage = () => {
       name: form.name.trim(),
       relationship: form.relationship.trim(),
       phone: form.phone.trim(),
-      email: form.email.trim(),
+      email: form.email.trim() || null,
     };
     try {
       if (editingId) {
@@ -153,7 +153,7 @@ export const ContactsPage = () => {
         name: c.name,
         relationship: c.relationship ?? '',
         phone: c.phone ?? '',
-        email: c.email ?? '',
+        email: c.email ?? null,
         is_public: makingPublic,
         display_phone: showPhoneByDefault ? true : !!c.display_phone,
         display_email: !!c.display_email,
@@ -322,11 +322,12 @@ export const ContactsPage = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="c_email">Correo</Label>
+              <Label htmlFor="c_email">Correo electrónico (opcional)</Label>
               <div className="relative">
                 <MailIcon size={18} className={iconCls} aria-hidden="true" />
                 <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
               </div>
+              <p className="mt-1 text-xs text-text-secondary">Solo nombre y teléfono son obligatorios. El correo se guarda vacío si no lo proporcionas.</p>
             </div>
           </div>
 

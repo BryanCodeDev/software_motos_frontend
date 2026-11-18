@@ -36,6 +36,7 @@ const ContactsPage = lazy(() => import('./pages/dashboard/ContactsPage'));
 const PrivacyPage = lazy(() => import('./pages/dashboard/PrivacyPage'));
 const QrPage = lazy(() => import('./pages/dashboard/QrPage'));
 const OrdersPage = lazy(() => import('./pages/dashboard/OrdersPage'));
+const BuyStickers = lazy(() => import('./pages/dashboard/BuyStickers'));
 
 // Admin pages
 const Help = lazy(() => import('./pages/admin/help'));
@@ -80,6 +81,7 @@ const App = () => (
                   <Route path="privacidad" element={<PrivacyPage />} />
                   <Route path="qr" element={<QrPage />} />
                   <Route path="pedidos" element={<OrdersPage />} />
+                  <Route path="comprar-stickers" element={<BuyStickers />} />
                   <Route path="checkout" element={<Checkout />} />
                 </Route>
               </Route>

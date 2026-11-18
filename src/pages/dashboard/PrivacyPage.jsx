@@ -9,7 +9,7 @@ import { PageTitle, PageLoader } from '../../components/DashPage';
 import {
   User, Image as ImageIcon, AlertTriangle, Stethoscope, Pill, FileText, Save, Lock, EyeOff, Eye,
   Calendar, Ruler, Scale, Baby, Settings, Phone, Shield, IdCard, Heart, Droplet, Bell,
-  Sparkles, RotateCcw, HeartPulse, Download, Mail, ChevronRight, ArrowRight, Trash2, Loader2,
+  Sparkles, RotateCcw, HeartPulse, ArrowRight, Loader2,
 } from 'lucide-react';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
@@ -50,34 +50,8 @@ const presets = [
   { id: 'all', title: 'Todo visible', icon: Eye, keys: ALL_KEYS },
 ];
 
-const CONSENTS = [
-  { key: 'data_processing', label: 'Tratamiento de datos personales', hint: 'Cuenta, perfil, contactos y pagos.', required: true },
-  { key: 'sensitive_data', label: 'Datos sensibles de salud', hint: 'Alergias, condiciones, medicamentos y similares.' },
-  { key: 'notifications', label: 'Notificaciones de emergencia', hint: 'Usar tus contactos para avisarles.' },
-];
-
-const RIGHTS = [
-  { type: 'access', label: 'Consultar mis datos', hint: 'Solicito una copia de los datos personales que Tu QR te Cuida tiene sobre mí.', icon: User },
-  { type: 'rectification', label: 'Corregir mis datos', hint: 'Solicito que se corrijan datos personales inexactos o incompletos.', icon: Pill },
-  { type: 'suppression', label: 'Eliminar mis datos', hint: 'Solicito la supresión de mis datos personales cuando proceda.', icon: Trash2 },
-  { type: 'portability', label: 'Descargar una copia', hint: 'Solicito una copia de mis datos en formato estructurado.', icon: Download },
-  { type: 'revocation', label: 'Revocar autorizaciones', hint: 'Solicito revocar autorizaciones de tratamiento cuando proceda.', icon: Lock },
-  { type: 'consultation', label: 'Saber cómo se usan mis datos', hint: 'Solicito información sobre las finalidades y destinatarios del tratamiento de mis datos.', icon: Mail },
-];
-
-const requestLabels = Object.fromEntries(RIGHTS.map((r) => [r.type, r.label]));
-const statusLabels = { pending: 'Recibida', in_review: 'En revisión', completed: 'Atendida', rejected: 'Rechazada' };
-const statusCls = {
-  completed: 'bg-emerald-50 text-emerald-700',
-  rejected: 'bg-rose-50 text-rose-700',
-  in_review: 'bg-amber-50 text-amber-700',
-  pending: 'bg-neutral-100 text-neutral-700',
-};
-
 const TABS = [
   { id: 'visibility', label: 'Qué se muestra' },
-  { id: 'consents', label: 'Autorizaciones' },
-  { id: 'rights', label: 'Mis derechos' },
 ];
 
 const sameSet = (a, b) => a.length === b.length && a.every((k) => b.includes(k));
@@ -155,66 +129,6 @@ const ScanPreview = ({ visible, hiddenCount }) => (
   </div>
 );
 
-const RightRequest = ({ right, onSent }) => {
-  const { type, label, hint, icon: Icon } = right;
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState(hint);
-  const [submitting, setSubmitting] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.post('/privacy/requests', { request_type: type, details: text.trim() || hint });
-      setOpen(false);
-      setText(hint);
-      onSent(label);
-    } catch (error) {
-      try { showApiError(error); } catch { /* ya se notificó */ }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <li className="py-1">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-brand-50 focus-ring"
-      >
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
-          <Icon size={16} aria-hidden="true" />
-        </span>
-        <span className="flex-1 text-sm font-medium text-neutral-900">{label}</span>
-        <ChevronRight size={16} className={`text-text-secondary transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
-      </button>
-      {open && (
-        <form onSubmit={submit} className="space-y-3 px-3 pb-3 pt-1">
-          <label htmlFor={`req-${type}`} className="sr-only">Detalles de la solicitud</label>
-          <textarea
-            id={`req-${type}`}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={3}
-            className="input"
-          />
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setOpen(false)} className="btn-ghost px-3 py-2 text-sm">
-              Cancelar
-            </button>
-            <Button type="submit" variant="primary" disabled={submitting} className="px-4 py-2 text-sm">
-              {submitting && <Loader2 size={14} className="animate-spin" />}
-              Enviar solicitud
-            </Button>
-          </div>
-        </form>
-      )}
-    </li>
-  );
-};
-
 /* ───────── Página ───────── */
 export const PrivacyPage = () => {
   const toast = useToast();
@@ -227,8 +141,6 @@ export const PrivacyPage = () => {
   const [saving, setSaving] = useState(false);
   const [toggles, setToggles] = useState({});
   const [dirty, setDirty] = useState(false);
-  const [consentStatus, setConsentStatus] = useState({});
-  const [requests, setRequests] = useState([]);
 
   const loadPrivacy = useCallback(async () => {
     try {
@@ -250,28 +162,10 @@ export const PrivacyPage = () => {
     }
   }, []);
 
-  const loadConsents = useCallback(async () => {
-    try {
-      const res = await api.get('/privacy/consents/me');
-      setConsentStatus(res.data || {});
-    } catch {
-      setConsentStatus({});
-    }
-  }, []);
-
-  const loadRequests = useCallback(async () => {
-    try {
-      const res = await api.get('/privacy/requests/me');
-      setRequests(res.data.requests || []);
-    } catch {
-      setRequests([]);
-    }
-  }, []);
-
   useEffect(() => {
-    const t = setTimeout(() => { loadPrivacy(); loadConsents(); loadRequests(); }, 0);
+    const t = setTimeout(() => { loadPrivacy(); }, 0);
     return () => clearTimeout(t);
-  }, [loadPrivacy, loadConsents, loadRequests]);
+  }, [loadPrivacy]);
 
   useEffect(() => {
     if (!dirty) return undefined;
@@ -287,13 +181,12 @@ export const PrivacyPage = () => {
       savedRef.current = toggles;
       setDirty(false);
       toastRef.current.success('Privacidad guardada');
-      loadConsents();
     } catch (error) {
       try { showApiError(error); } catch (err) { toastRef.current.error(err?.message || 'No pudimos guardar los cambios.'); }
     } finally {
       setSaving(false);
     }
-  }, [toggles, loadConsents]);
+  }, [toggles]);
 
   /* Ctrl/Cmd + S guarda */
   useEffect(() => {
@@ -334,10 +227,6 @@ export const PrivacyPage = () => {
     toast.info('Cambios descartados');
   };
 
-  const onConsentChange = (key, accepted) => {
-    setConsentStatus((prev) => ({ ...prev, [key]: { ...prev[key], accepted } }));
-  };
-
   if (loading) return <PageLoader />;
 
   const visibleDefs = fieldDefs.filter((f) => isPublic(f.key));
@@ -345,7 +234,6 @@ export const PrivacyPage = () => {
   const hiddenCount = fieldDefs.length - visibleDefs.length;
   const activePreset = presets.find((p) => sameSet(p.keys, publicKeys));
   const medicalVisible = visibleDefs.some((f) => f.sensitive);
-  const needsSensitiveConsent = medicalVisible && consentStatus.sensitive_data?.accepted !== true;
 
   return (
     <div className="animate-fade-in space-y-5 pb-28 lg:space-y-6">
@@ -366,9 +254,6 @@ export const PrivacyPage = () => {
               }`}
             >
               {t.label}
-              {t.id === 'consents' && needsSensitiveConsent && (
-                <span className="h-2 w-2 rounded-full bg-amber-500" aria-label="Requiere tu atención" />
-              )}
             </button>
           );
         })}
@@ -403,18 +288,6 @@ export const PrivacyPage = () => {
                 );
               })}
             </section>
-
-            {needsSensitiveConsent && (
-              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                <span className="flex items-center gap-2">
-                  <AlertTriangle size={16} className="flex-none" aria-hidden="true" />
-                  Mostrar datos de salud requiere tu autorización.
-                </span>
-                <button type="button" onClick={() => setTab('consents')} className="font-semibold underline">
-                  Revisar autorizaciones
-                </button>
-              </p>
-            )}
 
             {categories.map((name) => {
               const list = fieldDefs.filter((f) => f.category === name);
@@ -453,75 +326,6 @@ export const PrivacyPage = () => {
           <aside className="lg:sticky lg:top-24">
             <ScanPreview visible={visibleDefs} hiddenCount={hiddenCount} />
           </aside>
-        </div>
-      )}
-
-      {/* ───── Autorizaciones ───── */}
-      {tab === 'consents' && (
-        <div role="tabpanel" className="space-y-5">
-          <section className={`${panel} p-4 sm:p-5`} aria-label="Autorizaciones">
-            <ul className="divide-y divide-border/70">
-              {CONSENTS.map(({ key, label, hint, required }) => {
-                const accepted = consentStatus[key]?.accepted === true;
-                return (
-                  <li key={key} className="flex items-center gap-4 py-3.5">
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-neutral-900">
-                        {label}
-                        {required && <span className="ml-2 text-xs font-normal text-text-secondary">Requerida</span>}
-                      </span>
-                      <span className="block text-xs text-text-secondary">{hint}</span>
-                    </span>
-                    <Switch checked={accepted} onChange={() => onConsentChange(key, !accepted)} label={`${label}: ${accepted ? 'autorizado' : 'sin autorizar'}`} />
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-
-          <nav aria-label="Documentos legales" className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-brand-500">
-            <a href={routes.terms} className="hover:underline">Términos y condiciones</a>
-            <a href={routes.privacyPolicy} className="hover:underline">Política de privacidad</a>
-          </nav>
-        </div>
-      )}
-
-      {/* ───── Mis derechos ───── */}
-      {tab === 'rights' && (
-        <div role="tabpanel" className="space-y-5">
-          <section className={`${panel} p-3 sm:p-4`} aria-label="Solicitar un derecho">
-            <ul className="divide-y divide-border/70">
-              {RIGHTS.map((r) => (
-                <RightRequest
-                  key={r.type}
-                  right={r}
-                  onSent={(label) => {
-                    toast.success(`Solicitud enviada: ${label}`);
-                    loadRequests();
-                  }}
-                />
-              ))}
-            </ul>
-          </section>
-
-          {requests.length > 0 && (
-            <section className={`${panel} p-4 sm:p-5`} aria-labelledby="requests-title">
-              <h2 id="requests-title" className="mb-2 text-base font-semibold text-neutral-900">Tus solicitudes</h2>
-              <ul className="divide-y divide-border/70">
-                {requests.slice(0, 5).map((r) => (
-                  <li key={r.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                    <span>
-                      <span className="block font-medium text-neutral-900">{requestLabels[r.request_type] || r.request_type}</span>
-                      <span className="block text-xs text-text-secondary">{new Date(r.created_at).toLocaleDateString('es-CO')}</span>
-                    </span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusCls[r.status] || statusCls.pending}`}>
-                      {statusLabels[r.status] || r.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </div>
       )}
 

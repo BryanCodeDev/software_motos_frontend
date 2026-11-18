@@ -1,33 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../utils/routes';
-import { useAuth } from '../contexts/useAuth';
 import api from '../api/client';
 import { Card } from '../components/ui';
-import { AlertCircle, ArrowRight, Check, Image as ImageIcon, Package, QrCode, ShieldCheck, Sticker, Truck } from 'lucide-react';
+import { AlertCircle, Check, Image as ImageIcon, Package, QrCode, ShieldCheck, Sticker, Truck } from 'lucide-react';
 import Seo from '../components/Seo';
 import { Reveal, PageHeader } from '../components/Section';
-
-const DESIGN_STORAGE_KEY = 'tqtc_selected_design';
-
-const loadSelectedDesign = () => {
-  try {
-    const raw = localStorage.getItem(DESIGN_STORAGE_KEY);
-    if (!raw) return null;
-    const value = JSON.parse(raw);
-    return value && value.designId ? Number(value.designId) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveSelectedDesign = (designId) => {
-  try {
-    localStorage.setItem(DESIGN_STORAGE_KEY, JSON.stringify({ designId, updatedAt: Date.now() }));
-  } catch {
-    // Sin almacenamiento local: la selección vive solo en la sesión actual.
-  }
-};
 
 const formatAmount = (amount) => {
   try {
@@ -44,18 +22,13 @@ const formatAmount = (amount) => {
 const EASE = [0.22, 1, 0.36, 1];
 
 export const Products = () => {
-  const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState([]);
   const [designs, setDesigns] = useState([]);
-  const [selectedDesignId, setSelectedDesignId] = useState(() => loadSelectedDesign());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [continueBusy, setContinueBusy] = useState(false);
-  const [selectError, setSelectError] = useState(null);
 
   useEffect(() => {
     let mounted = true;
-    let productsLoaded = false;
 
     const load = async () => {
       try {
@@ -63,15 +36,12 @@ export const Products = () => {
         const list = res.data.products || res.data || [];
         if (!mounted) return;
         setProducts(list);
-        productsLoaded = true;
 
         const stickerProduct = list.find((p) => p.slug === 'sticker-qr-personalizado');
         if (stickerProduct) {
           const dRes = await api.get('/designs', { params: { product_id: stickerProduct.id } });
           if (!mounted) return;
           setDesigns(dRes.data.designs || []);
-        } else if (!mounted) {
-          return;
         } else {
           setDesigns([]);
         }
@@ -103,42 +73,6 @@ export const Products = () => {
     () => designs.filter((d) => d.is_available === 1 || d.is_available === true),
     [designs]
   );
-
-  const selectedDesign = designs.find((d) => d.id === selectedDesignId);
-
-  const isSelectionValid = Boolean(
-    selectedDesign && (selectedDesign.is_available === 1 || selectedDesign.is_available === true)
-  );
-
-  const handleSelect = (designId) => {
-    const design = designs.find((d) => d.id === designId);
-    if (!design || (design.is_available !== 1 && design.is_available !== true)) {
-      setSelectError('Este diseño no está disponible.');
-      return;
-    }
-    setSelectedDesignId(designId);
-    saveSelectedDesign(designId);
-    setSelectError(null);
-  };
-
-  const handleContinue = async () => {
-    setSelectError(null);
-    if (!isSelectionValid) {
-      setSelectError('Debes elegir un diseño para continuar.');
-      return;
-    }
-    setContinueBusy(true);
-    try {
-      if (!isAuthenticated) {
-        saveSelectedDesign(selectedDesignId);
-        window.location.href = `${routes.register}?next=${encodeURIComponent(routes.checkout)}`;
-        return;
-      }
-      window.location.href = routes.checkout;
-    } finally {
-      setContinueBusy(false);
-    }
-  };
 
   const unavailableCount = designs.length - availableDesigns.length;
 
@@ -188,7 +122,7 @@ export const Products = () => {
     { label: '2 stickers físicos personalizados', text: 'Ambos con el mismo diseño que elijas, listos para casco, moto o mochila.' },
     { label: '1 código QR único', text: 'Asociado a tu perfil de emergencia y a tu identificador permanente.' },
     { label: 'Acceso a tu perfil de emergencia', text: 'Página pública con solo la información que autorices compartir.' },
-    { label: 'Administración de datos y privacidad', text: 'Edita tu perfil, contactes y qué se ve al escanear, desde tu cuenta.' },
+    { label: 'Administración de datos y privacidad', text: 'Edita tu perfil, contactos y qué se ve al escanear, desde tu cuenta.' },
     { label: 'Un mismo diseño para ambos stickers', text: 'No se combinan diseños diferentes en una misma compra.' },
   ];
 
@@ -207,8 +141,8 @@ export const Products = () => {
   ];
 
   const activationSteps = [
-    { label: 'Elige tu diseño', hint: 'Uno de los diez diseños disponibles.' },
-    { label: 'Confirma envío y pago', hint: 'Datos de contacto, dirección y método de pago.' },
+    { label: 'Elige tu diseño', hint: 'Uno de los seis diseños disponibles en tu panel.' },
+    { label: 'Confirma el pago', hint: 'Pago único de $30.000 COP por sticker mediante Mercado Pago.' },
     { label: 'Tu QR se activa', hint: 'Al confirmarse el pago, se activa tu identificador permanente.' },
     { label: 'Recibe y pega', hint: 'Dos stickers con tu diseño y QR listos para usar.' },
   ];
@@ -340,24 +274,15 @@ export const Products = () => {
                 `}>
                   <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
                   <div className="relative">
-                    <h2 className="mb-3 text-xl font-bold sm:text-2xl">¿Listo para pedir tus stickers?</h2>
+                    <h2 className="mb-3 text-xl font-bold sm:text-2xl">Información del producto</h2>
                     <p className="mb-6 leading-relaxed text-white/80">
-                      Elige tu diseño, confirma tus datos de envío y paga con los métodos disponibles.
+                      Los stickers QR son un producto físico vinculado a tu perfil de emergencia. Para comprar,
+                      ve a tu panel y selecciona &quot;Comprar nuevos stickers&quot;. Allí podrás elegir uno de los seis
+                      diseños disponibles y completar el pago de $30.000 COP por sticker.
                     </p>
-                    {isAuthenticated ? (
-                      <Link to={routes.checkout} className="btn inline-flex bg-white px-6 py-3 text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50">
-                        <ArrowRight className="h-4 w-4" /> Ir al resumen de compra
-                      </Link>
-                    ) : (
-                      <>
-                        <Link to={routes.login} className="btn inline-flex w-full sm:w-auto bg-white px-6 py-3 text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50 mb-3 sm:mb-0">
-                          Iniciar sesión <ArrowRight className="h-4 w-4" />
-                        </Link>
-                        <Link to={routes.register} className="btn inline-flex w-full sm:w-auto border border-white text-white px-6 py-3 shadow-soft hover:bg-white/10">
-                          Crear cuenta <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </>
-                    )}
+                    <p className="mb-4 text-sm text-white/70">
+                      El catálogo de productos es solo informativo. No se pueden realizar pedidos desde esta página.
+                    </p>
                   </div>
                 </div>
               </Reveal>
@@ -366,66 +291,43 @@ export const Products = () => {
         </div>
       </section>
 
-      {/* ───────── Selector de diseños ───────── */}
+      {/* ───────── Selector de diseños (solo visual) ───────── */}
       <section className="pb-24">
         <div className="container-page">
           <Reveal>
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
-                  Elige el diseño de tus stickers
-                </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-                    Diez diseños disponibles. Selecciona uno; los dos stickers de tu paquete llevarán ese mismo diseño.
-                  </p>
-              </div>
-              {unavailableCount > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
-                  {unavailableCount} diseño no disponible
-                </span>
-              )}
+            <div className="mb-8">
+              <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+                Diseños disponibles
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                Seis diseños disponibles. Este catálogo es solo informativo; para comprar, ve a tu panel de usuario.
+              </p>
             </div>
           </Reveal>
 
-          {selectError && (
+          {unavailableCount > 0 && (
             <Reveal>
-              <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">
-                <AlertCircle className="mr-2 h-5 w-5" aria-hidden="true" />
-                {selectError}
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800" role="status">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+                {unavailableCount} diseño no disponible
               </div>
             </Reveal>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Diseño de los stickers">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {designs.map((design) => {
-              const selected = selectedDesignId === design.id;
               const available = design.is_available === 1 || design.is_available === true;
               return (
                 <Reveal key={design.id} delay={Math.min((designs.indexOf(design) % 6) * 0.05, 0.25)}>
                   <div
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={`Diseño ${design.name}${available ? '' : ', no disponible'}`}
-                    tabIndex={available ? 0 : -1}
-                    onClick={() => available && handleSelect(design.id)}
-                    onKeyDown={(e) => {
-                      if ((e.key === 'Enter' || e.key === ' ') && available) {
-                        e.preventDefault();
-                        handleSelect(design.id);
-                      }
-                    }}
                     className={`
                       relative flex flex-col items-center rounded-2xl border p-4 lg:p-6 transition-all duration-300
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2
-                      ${selected
-                        ? 'border-2 border-brand-500 bg-brand-50 shadow-[0_0_0_4px_rgba(159,18,57,0.12)]'
-                        : available
-                          ? 'border-border bg-white hover:border-brand-500/40 hover:shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]'
-                          : 'border-border border-dashed bg-neutral-50/50 text-text-muted opacity-75'
-                      }`}
+                      ${available
+                        ? 'border-border bg-white hover:border-brand-500/40 hover:shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]'
+                        : 'border-border border-dashed bg-neutral-50/50 text-text-muted opacity-75'
+                    }`}
                   >
-                    <div className="relative mb-3 group">
+                    <div className="relative mb-3">
                       <img
                         src={design.image_url || ''}
                         alt=""
@@ -437,19 +339,13 @@ export const Products = () => {
                           e.currentTarget.style.display = 'none';
                         }}
                       />
-                      {(!design.image_url || !available) && (
+                      {!design.image_url && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-neutral-100">
                           <ImageIcon className="mb-1.5 h-10 w-10 text-neutral-400" aria-hidden="true" />
                           <span className="text-[10px] font-medium text-neutral-500 leading-tight text-center px-2">
-                            {!design.image_url ? 'Imagen pendiente' : 'No disponible'}
+                            Imagen pendiente
                           </span>
                         </div>
-                      )}
-                      {selected && (
-                        <span className="absolute right-0 top-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft ring-2 ring-white">
-                          <Check size={14} strokeWidth={2.5} aria-hidden="true" />
-                          <span className="sr-only">Seleccionado</span>
-                        </span>
                       )}
                       {!available && (
                         <span className="absolute left-0 top-0 z-10 inline-flex items-center rounded-bl-xl rounded-tr-xl border border-brand-500 bg-brand-900 px-2 py-0.5 text-xs font-bold text-white ring-1 ring-white">
@@ -459,7 +355,7 @@ export const Products = () => {
                     </div>
                     <h3 className={`
                       mb-1 font-semibold text-center
-                      ${selected ? 'text-brand-700' : available ? 'text-neutral-900' : 'text-neutral-400'}
+                      ${available ? 'text-neutral-900' : 'text-neutral-400'}
                     `}>
                       {design.name}
                     </h3>
@@ -483,63 +379,9 @@ export const Products = () => {
             </Card>
           )}
 
-          {/* ───────── CTA selector ───────── */}
-          <Reveal className="mt-12">
-            <div className={`
-              relative overflow-hidden rounded-2xl border border-border bg-white p-6 lg:p-8 shadow-soft
-            `}>
-              <div aria-hidden="true" className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-brand-500/5 blur-3xl" />
-              <div className="relative">
-                <h3 className="mb-3 text-base font-semibold text-neutral-900 sm:text-lg">
-                  {isSelectionValid
-                    ? `Diseño seleccionado: ${selectedDesign?.name}`
-                    : 'Selecciona un diseño para continuar'
-                  }
-                </h3>
-                <p className="mb-6 text-sm leading-relaxed text-text-secondary sm:mb-0 lg:mb-2">
-                  {isSelectionValid
-                    ? `Recibirás 2 stickers personalizados con el diseño "${selectedDesign?.name}" y tu código QR único. Precio: ${formatAmount(price)}.`
-                    : 'La selección de un diseño es obligatoria antes de pasar al resumen de compra.'
-                  }
-                </p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleContinue}
-                    disabled={!isSelectionValid || continueBusy}
-                    className={`
-                      btn w-full sm:w-auto bg-brand-500 text-white px-6 py-3 text-sm font-semibold shadow-soft
-                      hover:bg-brand-600 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none
-                    `}
-                  >
-                    {continueBusy ? (
-                      <>
-                        <ArrowRight size={16} className="animate-spin" aria-hidden="true" />
-                        Continuando…
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-4 w-4" /> Continuar con este diseño
-                      </>
-                    )}
-                  </button>
-                  {!isAuthenticated && (
-                    <Link
-                      to={routes.login}
-                      className="btn w-full sm:w-auto outline px-6 py-3 text-sm font-semibold"
-                    >
-                      Iniciar sesión
-                    </Link>
-                  )}
-                </div>
-                {!isSelectionValid && !selectError && (
-                  <p className="mt-4 text-xs font-semibold text-rose-600" role="status" aria-live="polite">
-                    Debes elegir un diseño para continuar.
-                  </p>
-                )}
-              </div>
-            </div>
-          </Reveal>
+          <p className="mt-8 text-center text-xs text-text-secondary">
+            Catálogo informativo. Para comprar stickers, ve a tu panel de usuario y selecciona &quot;Comprar nuevos stickers&quot;.
+          </p>
         </div>
       </section>
     </main>

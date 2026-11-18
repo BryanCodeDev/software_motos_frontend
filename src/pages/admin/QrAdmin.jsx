@@ -77,6 +77,11 @@ export const AdminQrInventory = () => {
   const [linkUserId, setLinkUserId] = useState('');
   const [availableUsers, setAvailableUsers] = useState([]);
 
+  // Modal de crear QR
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createdQr, setCreatedQr] = useState(null);
+
   // Modal detalle
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -180,6 +185,21 @@ export const AdminQrInventory = () => {
     }
   };
 
+  const doCreateQr = async () => {
+    setCreateLoading(true);
+    try {
+      const { data } = await api.post('/admin/qrs/create');
+      setCreatedQr(data);
+      setCreateOpen(true);
+      loadQrs();
+      loadStats();
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'No se pudo crear el QR');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const doUnlink = async (qrId) => {
     if (!confirm('¿Desvincular este QR de su usuario? El QR quedará desactivado y sin propietario.')) return;
     const id = qrId;
@@ -278,6 +298,10 @@ export const AdminQrInventory = () => {
             description="Todos los códigos QR del sistema. Un QR por usuario, enlace permanente, diseño de sticker y estado de producción."
             actions={
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
+                <Button variant="outline" size="sm" onClick={doCreateQr} disabled={loading || createLoading}>
+                  {createLoading ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
+                  {createLoading ? 'Creando…' : 'Crear nuevo QR'}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => { loadStats(); loadQrs(); }} disabled={loading}>
                   <RefreshCw size={14} className={loading ? 'animate-spin' : ''} aria-hidden="true" /> Actualizar
                 </Button>
@@ -712,6 +736,45 @@ export const AdminQrInventory = () => {
           </div>
           <div className="border-t border-border p-4 flex justify-end">
             <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>Cerrar</Button>
+          </div>
+        </Modal>
+
+        {/* Modal: Crear nuevo QR */}
+        <Modal isOpen={createOpen} onClose={() => { setCreateOpen(false); setCreatedQr(null); }} title="Crear nuevo código QR">
+          <div className="p-6 space-y-4">
+            {createLoading ? (
+              <div className="flex h-64 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>
+            ) : createdQr ? (
+              <>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+                  <QrCode size={48} className="mx-auto mb-3 text-emerald-600" aria-hidden="true" />
+                  <h3 className="mb-2 text-lg font-semibold text-neutral-900">QR creado correctamente</h3>
+                  <p className="mb-4 text-sm text-text-secondary">
+                    El código QR está disponible y sin asignar. Puede vincularse a un usuario desde la tabla o el botón &quot;Vincular QR a usuario&quot;.
+                  </p>
+                  <div className="font-mono text-sm text-neutral-900 truncate max-w-xs mx-auto break-all" title={createdQr.value}>
+                    {createdQr.value}
+                  </div>
+                  <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button variant="outline" size="sm" onClick={() => copyText(createdQr.value)}>
+                      <Copy size={14} aria-hidden="true" /> Copiar identificador
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => copyText(`${window.location.origin}/e/${createdQr.value}`)}>
+                      <Copy size={14} aria-hidden="true" /> Copiar URL pública
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button variant="outline" onClick={() => { setCreateOpen(false); setCreatedQr(null); }} disabled={createLoading}>
+                    Cerrar
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center text-sm text-text-secondary">
+                Generando código QR…
+              </div>
+            )}
           </div>
         </Modal>
       </motion.div>
