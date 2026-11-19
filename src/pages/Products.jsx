@@ -100,7 +100,7 @@ export const Products = () => {
             </ul>
 
             <Link
-              to={isAuthenticated ? routes.dashboard : routes.register}
+              to={isAuthenticated ? routes.dashboard : routes.register || '/auth/registro'}
               className="btn-primary mt-8 w-full px-5 py-3 text-sm"
             >
               {isAuthenticated ? 'Ir a mi panel' : 'Crear cuenta para pedir'}
@@ -141,51 +141,51 @@ export const Products = () => {
         </div>
       </section>
 
-      {/* ───── Catálogo de todos los planes ───── */}
-      <section className="pb-24">
-        <div className="container-page">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
-            <p className="text-sm text-text-secondary">
-              Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
-            </p>
-          </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {productPlans
-              .filter((p) => !p.coming && !p.whatsapp)
-              .map((plan) => (
-                <li
-                  key={plan.name}
-                  className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
-                >
-                  {plan.badge && (
-                    <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
-                      {plan.badge}
-                    </span>
-                  )}
-                  <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name}</h3>
-                  <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
-                    <span className="text-2xl font-bold text-neutral-900">{plan.price}</span>
-                    {plan.priceNote && (
-                      <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
-                    )}
-                  </div>
-                  <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc}</p>
-                  <ul className="mb-6 space-y-2 text-sm text-text-secondary">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to={routes.register} className="btn-primary w-full py-2.5 text-sm">
-                    {plan.action}
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        </div>
-      </section>
+          {/* ───── Catálogo de todos los planes ───── */}
+          <section className="pb-24">
+            <div className="container-page">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
+                <p className="text-sm text-text-secondary">
+                  Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
+                </p>
+              </div>
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {(productPlans || [])
+                  .filter((p) => !p.coming && !p.whatsapp)
+                  .map((plan) => (
+                    <li
+                      key={plan.name}
+                      className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+                    >
+                      {plan.badge && (
+                        <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                          {plan.badge}
+                        </span>
+                      )}
+                      <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name || 'Plan'}</h3>
+                      <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-2xl font-bold text-neutral-900">{plan.price || 'Consulta precio'}</span>
+                        {plan.priceNote && (
+                          <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
+                        )}
+                      </div>
+                      <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc || ''}</p>
+                      <ul className="mb-6 space-y-2 text-sm text-text-secondary">
+                        {(plan.features || []).map((f) => (
+                          <li key={f} className="flex items-start gap-2">
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <Link to={routes.register || '/auth/registro'} className="btn-primary w-full py-2.5 text-sm">
+                        {plan.action || 'Elegir plan'}
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </section>
 
       {/* ───── Cómo funciona ───── */}
       <section className="pb-24">
