@@ -111,9 +111,6 @@ export const AdminUsers = () => {
   const [tab, setTab] = useState('datos');
   const [newRole, setNewRole] = useState('user');
   const [saving, setSaving] = useState(false);
-  const [suspendOpen, setSuspendOpen] = useState(false);
-  const [suspendReason, setSuspendReason] = useState('');
-  const [suspendBusy, setSuspendBusy] = useState(false);
   const [qrs, setQrs] = useState(null); // null = cargando
 
   const load = useCallback(async () => {
@@ -165,41 +162,7 @@ export const AdminUsers = () => {
     setTab(startTab);
     setNewRole(u.role === 'admin' ? 'admin' : 'user');
   };
-  const close = () => { if (!saving && !suspendBusy) setSel(null); };
-
-  const suspendUser = async () => {
-    if (!sel) return;
-    setSuspendBusy(true);
-    try {
-      await api.patch(`/admin/users/${sel.id}/suspend`, { reason: suspendReason || 'Suspendido desde el panel de administración' });
-      toast.success('Cuenta suspendida');
-      setSel((s) => (s ? { ...s, suspended: true } : s));
-      setSuspendOpen(false);
-      setSuspendReason('');
-      load();
-      refresh();
-    } catch (e) {
-      toast.error(e?.response?.data?.error || 'No se pudo suspender la cuenta');
-    } finally {
-      setSuspendBusy(false);
-    }
-  };
-
-  const reactivateUser = async () => {
-    if (!sel) return;
-    setSuspendBusy(true);
-    try {
-      await api.patch(`/admin/users/${sel.id}/reactivate`);
-      toast.success('Cuenta reactivada');
-      setSel((s) => (s ? { ...s, suspended: false } : s));
-      load();
-      refresh();
-    } catch (e) {
-      toast.error(e?.response?.data?.error || 'No se pudo reactivar la cuenta');
-    } finally {
-      setSuspendBusy(false);
-    }
-  };
+  const close = () => { if (!saving) setSel(null); };
 
   const saveRole = async () => {
     if (!sel || newRole === sel.role) return;
@@ -444,62 +407,36 @@ export const AdminUsers = () => {
                 </Link>
               </div>
             )}
-
-            {/* Suspensión */}
-            {!isMe(sel) && (
-              <Box title="Estado de la cuenta">
-                <div className="flex items-start gap-3">
-                  {sel.suspended_at ? (
-                    <>
-                      <span className="mt-0.5 flex-none text-xs text-rose-600 font-semibold">Suspendida</span>
-                      {sel.suspended_reason && <p className="mt-0.5 text-xs text-text-secondary">{sel.suspended_reason}</p>}
-                      <div className="mt-3 flex justify-end gap-2">
-                        <button type="button" onClick={() => setSuspendOpen(false)} disabled={suspendBusy} className="btn-ghost px-4 py-2 text-sm">Cerrar</button>
-                        <button type="button" onClick={reactivateUser} disabled={suspendBusy} className="btn-primary px-4 py-2 text-sm">
-                          {suspendBusy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : 'Reactivar cuenta'}
-                        </button>
+            {tab === 'qr' && (
+              <div className="space-y-3">
+                {qrs === null && (
+                  <p className="flex items-center gap-2 text-sm text-text-secondary"><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Buscando…</p>
+                )}
+                {qrs && qrs.length === 0 && (
+                  <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm text-text-secondary">Este usuario no tiene un QR vinculado.</p>
+                )}
+                {qrs && qrs.map((x) => {
+                  const [label, tone] = QR_STATUS[x.status] || [x.status, 'neutral'];
+                  return (
+                    <div key={x.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
+                        <QrCode size={18} aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-mono text-xs font-semibold text-neutral-900">{x.value}</p>
+                        <p className="mt-0.5 text-xs text-text-secondary">{x.order?.order_number ? `Pedido ${x.order.order_number}` : 'Sin pedido'}</p>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <span className="mt-0.5 flex-none text-xs text-text-secondary">Activa</span>
-                      <button type="button" onClick={() => { setSuspendOpen(true); }} disabled={suspendBusy} className="btn-ghost mt-3 flex-none px-4 py-2 text-sm !text-rose-700 hover:!bg-rose-50">
-                        Suspender cuenta
-                      </button>
-                    </>
-                  )}
-                </div>
-                <Modal
-                  isOpen={suspendOpen}
-                  onClose={() => { setSuspendOpen(false); setSuspendReason(''); }}
-                  title="Suspender cuenta"
-                  size="md"
+                      <Badge tone={tone} size="sm">{label}</Badge>
+                    </div>
+                  );
+                })}
+                <Link
+                  to={`/admin/qrs?q=${encodeURIComponent(sel.email)}`}
+                  className="btn-outline inline-flex px-3 py-2 text-xs"
                 >
-                  <div className="space-y-4">
-                    <p className="text-sm text-text-secondary">
-                      Al suspender, el usuario no podrá autenticarse ni realizar operaciones protegidas. Sus pedidos, QR y auditoría se conservan.
-                    </p>
-                    <div>
-                      <label htmlFor="suspend-reason" className="mb-1 block text-xs font-medium text-neutral-900">Motivo</label>
-                      <textarea
-                        id="suspend-reason"
-                        rows={2}
-                        value={suspendReason}
-                        onChange={(e) => setSuspendReason(e.target.value)}
-                        placeholder="Motivo de la suspensión"
-                        className="input !text-sm"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3">
-                      <button type="button" onClick={() => { setSuspendOpen(false); setSuspendReason(''); }} disabled={suspendBusy} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
-                      <button type="button" onClick={suspendUser} disabled={suspendBusy || !suspendReason.trim()} className="btn-danger px-4 py-2 text-sm">
-                        {suspendBusy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-                        Suspender
-                      </button>
-                    </div>
-                  </div>
-                </Modal>
-              </Box>
+                  <ExternalLink size={14} aria-hidden="true" /> Ver en Códigos QR
+                </Link>
+              </div>
             )}
           </div>
         )}

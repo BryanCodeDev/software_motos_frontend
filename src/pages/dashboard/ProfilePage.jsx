@@ -114,12 +114,11 @@ const FILTERS_MP = [
   { id: 'pets', label: 'Mascotas', test: (p) => p.profile_type === 'pet' },
 ];
 
-const ProfileCardMP = ({ profile: p, busy, onDelete, onEdit }) => {
+const ProfileCardMP = ({ profile: p, busy, onDelete, onEdit, profileQrMap }) => {
   const cfg = TYPES[p.profile_type] || TYPES.person;
   const Icon = cfg.icon;
   const active = p.is_active !== false;
-  const identifiers = p.identifiers || (p.qr_id ? [{ id: p.qr_id, value: p.qr_value, status: p.qr_status, print_status: p.qr_print_status }] : []);
-  const hasQr = identifiers.some((id) => id.status === 'active' || id.status === 'pending_activation') || Number(p.qr_count || 0) > 0;
+  const hasQr = Boolean(profileQrMap[p.id]);
   const orders = Number(p.order_count || 0) || 0;
   const subtitle = [cfg.label, p.relationship || p.pet_species].filter(Boolean).join(' · ');
   return (
@@ -305,11 +304,27 @@ export const ProfilePage = () => {
   const [createForm, setCreateForm] = useState({ display_name: '', relationship: '', consent_accepted: false, pet_owner_name: user?.name || '', pet_sex: 'no_especificado' });
   const [createErrors, setCreateErrors] = useState({});
 
+  /* Mapa profile_id -> tiene QR activo, para mostrar el estado real por perfil */
+  const [profileQrMap, setProfileQrMap] = useState({});
+
   const loadProfiles = useCallback(async () => {
     setMpError(null);
     try {
       const { data } = await api.get('/profiles/me/profiles');
-      setProfiles(data.profiles || []);
+      const profiles = data.profiles || [];
+      setProfiles(profiles);
+      // Cargar identificadores del usuario para saber qué perfiles tienen QR activo
+      try {
+        const { data: idData } = await api.get('/identifiers/my');
+        const identifiers = idData.identifiers || idData || [];
+        const map = {};
+        identifiers.forEach((id) => {
+          if ((id.status === 'active' || id.status === 'pending_activation') && id.profile_id) {
+            map[id.profile_id] = true;
+          }
+        });
+        setProfileQrMap(map);
+      } catch { /* no críticos */ }
     } catch (err) { setMpError(err?.response?.data?.error || 'No se pudieron cargar los perfiles'); }
     finally { setMpLoading(false); }
   }, []);
@@ -345,7 +360,9 @@ export const ProfilePage = () => {
     setToDelete(null);
     setBusyId(p.id);
     try {
-      await api.delete(`/profiles/me/profiles/${p.id}`);
+      // El backend no expone DELETE para perfiles: la acción disponible es desactivar,
+      // que quita el perfil de la vista operativa (equivalente a eliminar para el usuario).
+      await api.patch(`/profiles/me/profiles/${p.id}/deactivate`);
       toastRef.current.success('Perfil eliminado');
       await loadProfiles();
       await refreshUser();
@@ -512,7 +529,7 @@ export const ProfilePage = () => {
                   <ProfileCardMP key={p.id} profile={p} busy={busyId === p.id} onDelete={(prof) => setToDelete(prof)} onEdit={() => {
                     setEditingProfile(p);
                     setEditForm({ display_name: p.display_name || '', relationship: p.relationship || '' });
-                  }} />
+                  }} profileQrMap={profileQrMap} />
                 ))}
               </ul>
             )}
