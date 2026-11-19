@@ -27,36 +27,13 @@ const Heartbeat = ({ reduce, className = '' }) => (
   </svg>
 );
 
-const Logo = ({ light = false, className = '' }) => (
-  <Link
-    to={routes.home}
-    className={`group flex w-fit items-center gap-3 ${className}`}
-    aria-label="Tu QR te Cuida, ir al inicio"
-  >
-    <span
-      className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 ${
-        light ? 'bg-white text-brand-500 ring-white/40 shadow-soft' : 'bg-brand-500 text-white ring-brand-500/20'
-      }`}
-    >
-      <ShieldCheck size={20} strokeWidth={2.4} />
-    </span>
-    <span
-      className={`text-lg font-bold tracking-tight ${light ? 'text-white drop-shadow lg:drop-shadow-none' : 'text-neutral-900'}`}
-    >
-      Tu <span className={light ? 'text-white' : 'text-brand-500'}>QR</span> te Cuida
-    </span>
-  </Link>
-);
-
 /**
  * Layout compartido de las pantallas de acceso (login, registro, recuperación).
  * aside: { badge, line1, accent, text, items: [{ icon, title, desc }] }
- *
- * - Con bgImage: el formulario va sobre la zona roja de la imagen (izquierda) y la
- *   foto queda libre a la derecha, con chips discretos al pie.
- * - Sin bgImage: panel degradado a la izquierda y formulario a la derecha.
+ * (showFooter se mantiene por compatibilidad, pero ya no se muestra ningún pie.)
  */
-export const AuthShell = ({ aside, children, bgImage, showFooter = true }) => {
+// eslint-disable-next-line no-unused-vars
+export const AuthShell = ({ aside, children, bgImage, showFooter }) => {
   const reduce = useReducedMotion();
   const hasImage = !!bgImage;
 
@@ -66,8 +43,8 @@ export const AuthShell = ({ aside, children, bgImage, showFooter = true }) => {
         <>
           <motion.div
             aria-hidden="true"
-            className="absolute inset-0 z-0 bg-cover bg-no-repeat"
-            style={{ backgroundImage: `url('${bgImage}')`, backgroundPosition: '70% center' }}
+            className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('${bgImage}')` }}
             initial={reduce ? false : { scale: 1.08 }}
             animate={reduce ? undefined : { scale: 1 }}
             transition={{ duration: 2.4, ease: EASE }}
@@ -81,125 +58,104 @@ export const AuthShell = ({ aside, children, bgImage, showFooter = true }) => {
         id="contenido"
         className={`relative z-10 grid min-h-screen lg:grid-cols-[1.05fr_1fr] ${hasImage ? '' : 'bg-brand-50'}`}
       >
-        {/* ───────── Panel lateral ───────── */}
-        {hasImage ? (
-          <aside className="relative hidden flex-col justify-end p-10 lg:order-2 lg:flex xl:p-14">
-            <motion.ul
-              variants={stagger}
-              initial={reduce ? false : 'hidden'}
-              animate="show"
-              className="flex flex-wrap gap-3"
+        {/* ───────── Panel lateral (izquierda) ───────── */}
+        <aside
+          className={`relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16 ${
+            hasImage ? '' : 'bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900'
+          }`}
+        >
+          <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl animate-float" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
+          {!hasImage && (
+            <>
+              <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
+              <Heartbeat reduce={reduce} className="pointer-events-none absolute inset-x-0 top-1/2 w-full -translate-y-1/2 text-white/15" />
+            </>
+          )}
+
+          <motion.div
+            initial={reduce ? false : { opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="relative"
+          >
+            <Link to={routes.home} className="group flex w-fit items-center gap-3" aria-label="Tu QR te Cuida, ir al inicio">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105">
+                <ShieldCheck size={20} strokeWidth={2.4} />
+              </span>
+              <span className="text-lg font-bold tracking-tight">Tu QR te Cuida</span>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial={reduce ? false : 'hidden'}
+            animate="show"
+            className="relative max-w-md"
+          >
+            <motion.span
+              variants={rise}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ring-1 ring-white/20"
             >
-              {aside.items.map(({ icon: Icon, title }) => (
+              <ShieldCheck size={14} /> {aside.badge}
+            </motion.span>
+            <motion.p
+              variants={rise}
+              className="mt-6 text-4xl font-extrabold leading-tight tracking-tight [text-wrap:balance] xl:text-5xl"
+            >
+              {aside.line1} <span className="text-brand-300">{aside.accent}</span>
+            </motion.p>
+            <motion.p variants={rise} className="mt-5 text-base leading-relaxed text-white/80">
+              {aside.text}
+            </motion.p>
+            <ul className="mt-10 grid gap-3">
+              {aside.items.map(({ icon: Icon, title, desc }) => (
                 <motion.li
                   key={title}
                   variants={rise}
-                  whileHover={reduce ? undefined : { y: -3 }}
-                  className="inline-flex items-center gap-2.5 rounded-full bg-brand-900/75 py-2 pl-2 pr-4 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur-md"
+                  whileHover={reduce ? undefined : { x: 6 }}
+                  transition={{ duration: 0.25, ease: EASE }}
+                  className="flex items-center gap-4 rounded-xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-white/15 hover:ring-white/30"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500">
-                    <Icon size={15} />
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/15">
+                    <Icon size={20} />
                   </span>
-                  {title}
+                  <div>
+                    <p className="text-sm font-semibold">{title}</p>
+                    <p className="text-sm text-white/75">{desc}</p>
+                  </div>
                 </motion.li>
               ))}
-            </motion.ul>
-          </aside>
-        ) : (
-          <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-12 text-white lg:flex xl:p-16">
-            <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl animate-float" />
-            <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
-            <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
-            <Heartbeat reduce={reduce} className="pointer-events-none absolute inset-x-0 top-1/2 w-full -translate-y-1/2 text-white/15" />
+            </ul>
+          </motion.div>
 
-            <motion.div
-              initial={reduce ? false : { opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: EASE }}
-              className="relative"
-            >
-              <Logo light />
-            </motion.div>
+          <span aria-hidden="true" />
+        </aside>
 
-            <motion.div
-              variants={stagger}
-              initial={reduce ? false : 'hidden'}
-              animate="show"
-              className="relative max-w-md"
-            >
-              <motion.span
-                variants={rise}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ring-1 ring-white/20"
-              >
-                <ShieldCheck size={14} /> {aside.badge}
-              </motion.span>
-              <motion.p
-                variants={rise}
-                className="mt-6 text-4xl font-extrabold leading-tight tracking-tight [text-wrap:balance] xl:text-5xl"
-              >
-                {aside.line1} <span className="text-brand-300">{aside.accent}</span>
-              </motion.p>
-              <motion.p variants={rise} className="mt-5 text-base leading-relaxed text-white/80">
-                {aside.text}
-              </motion.p>
-              <ul className="mt-10 grid gap-3">
-                {aside.items.map(({ icon: Icon, title, desc }) => (
-                  <motion.li
-                    key={title}
-                    variants={rise}
-                    whileHover={reduce ? undefined : { x: 6 }}
-                    transition={{ duration: 0.25, ease: EASE }}
-                    className="flex items-center gap-4 rounded-xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-white/15 hover:ring-white/30"
-                  >
-                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/15">
-                      <Icon size={20} />
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold">{title}</p>
-                      <p className="text-sm text-white/75">{desc}</p>
-                    </div>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-
-            {showFooter ? (
-              <p className="relative text-xs text-white/60">
-                © {new Date().getFullYear()} Tu QR te Cuida. Herramienta de apoyo: no sustituye a los servicios
-                oficiales de emergencia.
-              </p>
-            ) : (
-              <span />
-            )}
-          </aside>
-        )}
-
-        {/* ───────── Formulario ───────── */}
-        <section className={`relative flex items-center justify-center px-4 py-10 sm:px-8 ${hasImage ? 'lg:order-1' : ''}`}>
-          {hasImage && (
-            <motion.div
-              className="absolute left-8 top-8 hidden lg:block xl:left-14 xl:top-10"
-              initial={reduce ? false : { opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: EASE }}
-            >
-              <Logo light />
-            </motion.div>
-          )}
-
+        {/* ───────── Formulario (derecha) ───────── */}
+        <section className="flex items-center justify-center px-4 py-10 sm:px-8">
           <motion.div
             className="w-full max-w-md"
             initial={reduce ? false : { opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.7, ease: EASE }}
           >
-            <Logo light={hasImage} className="mx-auto mb-6 lg:hidden" />
+            <Link
+              to={routes.home}
+              className="mb-6 flex items-center justify-center gap-2 lg:hidden"
+              aria-label="Tu QR te Cuida, ir al inicio"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
+                <ShieldCheck size={18} strokeWidth={2.4} />
+              </span>
+              <span className={`text-base font-bold tracking-tight ${hasImage ? 'text-white' : 'text-neutral-900'}`}>
+                Tu QR te Cuida
+              </span>
+            </Link>
 
             <div
-              className={`relative rounded-2xl border p-6 shadow-card sm:p-9 ${
-                hasImage
-                  ? 'border-white/60 bg-white/90 backdrop-blur-xl'
-                  : 'border-border bg-white shadow-glow'
+              className={`relative rounded-2xl border p-6 shadow-glow sm:p-10 ${
+                hasImage ? 'border-white/60 bg-white/90 backdrop-blur-xl' : 'border-border bg-white'
               }`}
             >
               <span
@@ -223,7 +179,7 @@ export const AuthShell = ({ aside, children, bgImage, showFooter = true }) => {
 
             <Link
               to={routes.home}
-              className={`group mt-6 flex items-center justify-center gap-2 text-sm transition-colors ${
+              className={`group mt-6 hidden items-center justify-center gap-2 text-sm transition-colors lg:flex ${
                 hasImage ? 'text-white/90 hover:text-white' : 'text-text-secondary hover:text-brand-500'
               }`}
             >

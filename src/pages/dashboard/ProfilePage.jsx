@@ -219,9 +219,10 @@ export const ProfilePage = () => {
     let mounted = true;
     (async () => {
       try {
-        const res = await api.get('/profiles/me');
+        const res = await api.get('/profiles/me/profiles');
         if (!mounted) return;
-        const p = res.data.profile || res.data;
+        const profiles = res.data.profiles || res.data || [];
+        const p = profiles[0] || {};
         const loaded = Object.fromEntries(
           fields.map((f) => {
             let v = p[f.key] ?? '';
