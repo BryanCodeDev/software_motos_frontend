@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
-import axios from 'axios';
-import api from '../../api/client';
 import {
   Phone, Mail, ShieldAlert, ShieldCheck, AlertCircle, Droplet, AlertTriangle,
   FileText, Bell, Stethoscope, Pill, MessageCircle, User, Users,
   Share2, Check, PhoneCall, Calendar, Ruler, Scale, Baby, Settings, Shield, IdCard, Heart, RefreshCw,
 } from 'lucide-react';
+import api from '../../api/client';
 import Seo from '../../components/Seo';
 
 const EMERGENCY_NUMBER = '123';
@@ -282,7 +281,7 @@ export const PublicEmergency = () => {
         }
       } catch (err) {
         if (!isMounted) return;
-        if (axios.isCancel(err) || err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
           return;
         }
         if (err.response) {
