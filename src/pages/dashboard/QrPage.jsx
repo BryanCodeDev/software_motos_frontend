@@ -31,13 +31,16 @@ const formatAmount = (amount) => {
   }
 };
 
-const STEPS = ['Pago', 'Activación', 'QR listo'];
+/* Lógica de negocio unificada: el QR se activa comprando stickers.
+   No existe activación de QR separada ni gratuita. */
+const STEPS = ['Compra', 'Pago', 'QR activo'];
 const STEP_INDEX = {
   no_order: 0,
   unpaid: 0,
-  under_review: 0,
+  under_review: 1,
   rejected: 0,
   approved_no_qr: 1,
+  active: 2,
 };
 
 const TONES = {
@@ -129,7 +132,6 @@ export const QrPage = () => {
   const [attempt, setAttempt] = useState(0);
 
   const deriveState = useCallback((id, ord) => {
-    if (!id && !ord) return 'no_order';
     if (id) {
       if (id.status === 'active') return 'active';
       if (id.status === 'deactivated') return 'deactivated';
@@ -193,9 +195,9 @@ export const QrPage = () => {
         const res = await api.get('/orders');
         if (!mounted) return;
         const orders = res.data.orders || res.data || [];
-        const qrOrder = orders.find((o) => o.product_slug === 'qr-digital-basico');
-        setOrder(qrOrder || null);
-        setState(deriveState(null, qrOrder));
+        const stickerOrder = orders.find((o) => o.product_slug === 'sticker-qr-personalizado');
+        setOrder(stickerOrder || null);
+        setState(deriveState(null, stickerOrder));
       } catch (err) {
         if (mounted) {
           if (err.response && err.response.status === 401) {
@@ -231,9 +233,9 @@ export const QrPage = () => {
         .get('/products')
         .then((res) => {
           const products = res.data.products || res.data || [];
-          const qrProductFound = products.find((p) => p.slug === 'qr-digital-basico') || null;
-          setQrProduct(qrProductFound);
-          if (qrProductFound) setStickerPrice(formatAmount(qrProductFound.price));
+          const stickerProductFound = products.find((p) => p.slug === 'sticker-qr-personalizado') || null;
+          setQrProduct(stickerProductFound);
+          if (stickerProductFound) setStickerPrice(formatAmount(stickerProductFound.price));
         })
         .catch(() => {
           setQrProduct(null);
@@ -241,33 +243,6 @@ export const QrPage = () => {
         });
     }
   }, [qrProduct]);
-
-  const createOrderAndPay = async () => {
-    if (!qrProduct) {
-      toast.error('El producto de activación no está disponible');
-      return;
-    }
-    setActing(true);
-    try {
-      const orderRes = await api.post('/orders', {
-        product_id: qrProduct.id,
-        customization: { tipo: 'activacion_qr_digital', precio_cop: qrProduct?.price },
-      });
-      const newOrder = orderRes.data.order;
-      setOrder(newOrder);
-      setState(deriveState(null, newOrder));
-
-      const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
-      window.location.href = prefRes.data.init_point;
-    } catch (error) {
-      setActing(false);
-      try {
-        showApiError(error);
-      } catch (err) {
-        toast.error(err?.message || 'No se pudo crear el pedido de activación');
-      }
-    }
-  };
 
   const retryPayment = async () => {
     if (!order) return;
@@ -282,36 +257,6 @@ export const QrPage = () => {
       } catch (err) {
         toast.error(err?.message || 'No se pudo iniciar el pago');
       }
-    }
-  };
-
-  const activateQr = async () => {
-    setActing(true);
-    try {
-      const res = await api.post('/identifiers/');
-      if (!res.data.identifier) throw new Error('No se activó el identificador');
-      const data = res.data.identifier;
-      setIdentifier(data);
-      setQrUrl(`${window.location.origin}/e/${encodeURIComponent(data.value)}`);
-      try {
-        const qr = await api.get('/identifiers/my/qr', { responseType: 'blob' });
-        if (qrObjectUrlRef.current) window.URL.revokeObjectURL(qrObjectUrlRef.current);
-        const objectUrl = window.URL.createObjectURL(qr.data);
-        qrObjectUrlRef.current = objectUrl;
-        setQrImage(objectUrl);
-      } catch {
-        toastRef.current.error('No se pudo cargar la imagen del QR');
-      }
-      setState('active');
-      toast.success('QR activado');
-    } catch (error) {
-      try {
-        showApiError(error);
-      } catch (err) {
-        toast.error(err?.message || 'No se pudo activar el QR');
-      }
-    } finally {
-      setActing(false);
     }
   };
 
@@ -351,32 +296,18 @@ export const QrPage = () => {
         i.onerror = reject;
         i.src = qrImage;
       });
-      const W = 1080;
-      const H = 1920;
+
       const canvas = document.createElement('canvas');
-      canvas.width = W;
-      canvas.height = H;
+      canvas.width = 1080;
+      canvas.height = 1920;
       const g = canvas.getContext('2d');
-      const bg = g.createLinearGradient(0, 0, W, H);
-      bg.addColorStop(0, '#3f0617');
-      bg.addColorStop(1, '#9F1239');
-      g.fillStyle = bg;
-      g.fillRect(0, 0, W, H);
-
-      g.fillStyle = '#ffffff';
-      g.textAlign = 'center';
-      g.font = '700 68px Inter, system-ui, sans-serif';
-      g.fillText('Si me pasa algo,', W / 2, 760);
-      g.fillText('escanea este QR', W / 2, 850);
-      g.fillStyle = 'rgba(255,255,255,0.8)';
-      g.font = '400 40px Inter, system-ui, sans-serif';
-      g.fillText('Verás mis datos de emergencia', W / 2, 920);
-
-      const size = 700;
-      const x = (W - size) / 2;
-      const y = 990;
-      const r = 48;
-      g.fillStyle = '#ffffff';
+      if (!g) throw new Error('canvas');
+      g.fillStyle = '#0b1120';
+      g.fillRect(0, 0, 1080, 1920);
+      const size = 560;
+      const x = (1080 - size) / 2;
+      const y = (1920 - size) / 2;
+      const r = 40;
       g.beginPath();
       g.moveTo(x + r, y);
       g.arcTo(x + size, y, x + size, y + size, r);
@@ -403,18 +334,16 @@ export const QrPage = () => {
     }
   };
 
-  if (loading) return <PageLoader />;
-
   const price = stickerPrice || (qrProduct ? formatAmount(qrProduct.price) : 'Consulta el catálogo');
   const stepCurrent = STEP_INDEX[state];
 
-  const waPay = 'Hola, quiero pagar mi pedido de activación de QR por WhatsApp.';
-  const waActivate = 'Hola, quiero activar mi QR de emergencia por WhatsApp.';
+  const waPay = 'Hola, quiero pagar mi pedido de stickers y activar mi QR de emergencia por WhatsApp.';
+  const waActivate = 'Hola, quiero comprar stickers para activar mi QR de emergencia.';
   const waHelp = 'Hola, mi QR de emergencia aparece desactivado y necesito ayuda.';
   const shareHref = `https://wa.me/?text=${encodeURIComponent(`Mi perfil de emergencia: ${qrUrl}`)}`;
 
   const payButton = (label, busyLabel) => (
-    <Button onClick={order ? retryPayment : createOrderAndPay} disabled={acting} variant="primary">
+    <Button onClick={retryPayment} disabled={acting} variant="primary">
       {acting && <Spinner />}
       {acting ? busyLabel : label}
     </Button>
@@ -424,12 +353,12 @@ export const QrPage = () => {
     <div className="animate-fade-in space-y-5 lg:space-y-6">
       <PageTitle
         title="Mi QR"
-        description={state === 'active' ? 'Descárgalo y ponlo donde se vea rápido.' : `Se activa con un pago único de ${price}.`}
+        description={state === 'active' ? 'Descárgalo y ponlo donde se vea rápido.' : `Compra tus stickers para activar tu QR digital de emergencia (${price}).`}
       />
 
       {stepCurrent !== undefined && <Stepper current={stepCurrent} />}
 
-      {/* ───── Sin pedido: oferta de activación ───── */}
+      {/* ───── Sin pedido: oferta de stickers para activar el QR ───── */}
       {state === 'no_order' && (
         <section className={`${panel} overflow-hidden`}>
           <div className="grid lg:grid-cols-5">
@@ -453,23 +382,21 @@ export const QrPage = () => {
                 ))}
               </ul>
               <p className="mt-6 text-xs leading-relaxed text-text-secondary">
-                El sticker físico se pide aparte, con costo y envío propios.
+                Para activar tu QR, compra tu paquete de stickers físicos. Al aprobarse el pago, tu QR se activa automáticamente.
               </p>
             </div>
-
             <div className="flex flex-col bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-6 text-white sm:p-8 lg:col-span-2">
-              <p className="text-sm font-medium text-white/75">QR digital</p>
+              <p className="text-sm font-medium text-white/75">Stickers físicos + QR digital</p>
               <p className="mt-2 text-5xl font-extrabold tracking-tight">{price}</p>
               <div className="mt-8 space-y-3 lg:mt-auto">
-                <button
-                  type="button"
-                  onClick={createOrderAndPay}
-                  disabled={acting}
+                <Link
+                  to={routes.dashboardOrders}
                   className="btn w-full bg-white px-5 py-3 text-sm text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50"
                 >
+                  <Package size={16} aria-hidden="true" />
                   {acting ? <Spinner /> : <CreditCard size={16} aria-hidden="true" />}
-                  {acting ? 'Redirigiendo...' : 'Pagar con Mercado Pago'}
-                </button>
+                  {acting ? 'Redirigiendo...' : 'Comprar stickers'}
+                </Link>
                 <WhatsAppButton message={waActivate} onDark className="w-full py-3" />
                 <p className="flex items-center justify-center gap-1.5 pt-1 text-xs text-white/65">
                   <Lock size={12} aria-hidden="true" /> Pago seguro con Mercado Pago
@@ -495,7 +422,7 @@ export const QrPage = () => {
         >
           <p>
             {state === 'under_review'
-              ? 'Mercado Pago está procesando tu pago. Cuando lo apruebe, podrás activar tu QR.'
+              ? 'Mercado Pago está procesando tu pago. Cuando lo apruebe, tu QR se activará automáticamente.'
               : order
                 ? `Completa el pago de ${price} para activar tu QR.`
                 : `Crea tu pedido de ${price} para continuar.`}
@@ -508,20 +435,20 @@ export const QrPage = () => {
         </StateCard>
       )}
 
-      {/* ───── Pago aprobado ───── */}
+      {/* ───── Pago aprobado, activando QR ───── */}
       {state === 'approved_no_qr' && (
         <StateCard
           icon={CheckCircle2}
           tone="emerald"
           title="Pago aprobado"
           actions={
-            <Button onClick={activateQr} disabled={acting} variant="primary" className="sm:px-8">
-              {acting && <Spinner />}
-              {acting ? 'Activando...' : 'Activar mi QR'}
-            </Button>
+            <>
+              {payButton('Reintentar activación', 'Procesando...')}
+              <WhatsAppButton message={waPay} />
+            </>
           }
         >
-          Activa tu QR para generar el código y descargarlo.
+          Tu pago fue aprobado. Tu QR se está activando automáticamente. Si no aparece en unos momentos, intenta de nuevo.
         </StateCard>
       )}
 
@@ -575,7 +502,7 @@ export const QrPage = () => {
                 ))}
               </ul>
               <Link to={routes.dashboardOrders} className="btn-primary mt-5 px-5 py-2.5 text-sm">
-                <Package size={16} aria-hidden="true" /> Pedir stickers
+                <Package size={16} aria-hidden="true" /> Pedir más stickers
               </Link>
             </section>
 
@@ -620,7 +547,7 @@ export const QrPage = () => {
             </>
           }
         >
-          El pago no fue aprobado, así que tu QR sigue inactivo.
+          El pago no fue aprobado, así que tu QR sigue inactivo. Compra tus stickers nuevamente para activarlo.
         </StateCard>
       )}
 

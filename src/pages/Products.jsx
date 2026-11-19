@@ -17,7 +17,7 @@ const formatAmount = (amount) => {
       maximumFractionDigits: 0,
     }).format(Number(amount));
   } catch {
-    return '$30.000';
+    return '$29.900';
   }
 };
 

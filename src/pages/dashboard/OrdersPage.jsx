@@ -509,7 +509,7 @@ export const OrdersPage = () => {
       <Modal isOpen={buyOpen} onClose={buyLoading ? () => null : closeBuy} title={step === 'select' ? 'Elige el diseño' : step === 'confirm' ? 'Confirmar compra' : 'Redirigiendo al pago'} size="lg">
         {step === 'select' && (
           <div className="space-y-5">
-            <p className="text-sm text-text-secondary">Pack de {STICKER_QUANTITY} stickers con el mismo diseño:{' '}<span className="font-semibold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>.</p>
+            <p className="text-sm text-text-secondary">Pack de {STICKER_QUANTITY} stickers con el mismo diseño:{' '}<span className="font-semibold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>. Al pagar, tu QR de emergencia se activa automáticamente.</p>
             {buyError && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">{buyError}</div>}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Diseño del sticker">
               {DESIGNS.map((design) => <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />)}
@@ -534,7 +534,7 @@ export const OrdersPage = () => {
               <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">Cantidad</dt><dd className="text-right font-semibold text-neutral-900">{STICKER_QUANTITY} stickers, mismo diseño</dd></div>
               <div className="flex justify-between gap-4 py-3"><dt className="font-semibold text-neutral-900">Total a pagar</dt><dd className="text-right text-lg font-bold text-neutral-900">{totalLabel}</dd></div>
             </dl>
-            <p className="text-xs leading-relaxed text-text-secondary">El pago se procesa de forma segura con Mercado Pago.</p>
+            <p className="text-xs leading-relaxed text-text-secondary">El pago se procesa de forma segura con Mercado Pago. Al aprobarse el pago, tu QR de emergencia se activa automáticamente.</p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => { setBuyError(null); setStep('select'); }} disabled={buyLoading} className="btn-outline px-6 py-2.5 text-sm"><ArrowRight size={16} className="rotate-180" aria-hidden="true" /> Elegir otro diseño</button>
               <button type="button" onClick={proceedToPayment} disabled={buyLoading} className="btn-primary px-6 py-2.5 text-sm">{buyLoading ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Redirigiendo…</>) : (<><CreditCard size={16} aria-hidden="true" /> Pagar con Mercado Pago</>)}</button>
