@@ -9,6 +9,7 @@ import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 import Modal from '../../components/Modal';
+import { useAdminSync } from '../../contexts/AdminSyncProvider';
 
 const PAGE_SIZE = 24;
 const panel = 'rounded-2xl border border-border bg-white';
@@ -143,6 +144,8 @@ export const AdminQrInventory = () => {
   const [params] = useSearchParams();
   const initialQ = params.get('q') || '';
 
+  const { refreshKey, refresh: globalRefresh } = useAdminSync();
+
   const [stats, setStats] = useState(null);
   const [qrs, setQrs] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 0, total: 0 });
@@ -183,7 +186,7 @@ export const AdminQrInventory = () => {
   const [detailImage, setDetailImage] = useState(null);
   const [printBusy, setPrintBusy] = useState(false);
 
-  const refresh = () => setTick((t) => t + 1);
+  const refreshLocal = () => setTick((t) => t + 1);
 
   const loadStats = useCallback(async () => {
     try {
@@ -214,12 +217,12 @@ export const AdminQrInventory = () => {
   useEffect(() => {
     const t = setTimeout(loadQrs, 0);
     return () => clearTimeout(t);
-  }, [loadQrs, tick]);
+  }, [loadQrs, tick, refreshKey]);
 
   useEffect(() => {
     const t = setTimeout(loadStats, 0);
     return () => clearTimeout(t);
-  }, [loadStats, tick]);
+  }, [loadStats, tick, refreshKey]);
 
   useEffect(() => {
     const t = setTimeout(() => { setQ(input.trim()); setPage(1); }, 350);
@@ -285,7 +288,8 @@ export const AdminQrInventory = () => {
     }
     if (!made) return;
     setInput(''); setQ(''); setPrint(''); setView('unlinked'); setPage(1);
-    refresh();
+    refreshLocal();
+    globalRefresh();
     if (made === 1 && last?.id && last?.value) {
       setCreated({ id: last.id, value: last.value });
     } else {
@@ -313,7 +317,8 @@ export const AdminQrInventory = () => {
       toast.success(`QR vinculado a ${pickedUser.email}`);
       setLinkQr(null);
       setPickedUser(null);
-      refresh();
+      refreshLocal();
+      globalRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo vincular el QR');
     } finally {
@@ -330,7 +335,8 @@ export const AdminQrInventory = () => {
       await api.post('/admin/qrs/unlink', { qr_id: unlinkQr.id });
       toast.success('QR desvinculado');
       setUnlinkQr(null);
-      refresh();
+      refreshLocal();
+      globalRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo desvincular el QR');
     } finally {
@@ -368,7 +374,8 @@ export const AdminQrInventory = () => {
       await api.post(`/admin/qrs/${detail.id}/print-status`, { print_status: status });
       toast.success(`Impresión: ${PRINT_STATUS[status][0]}`);
       setDetail((d) => (d ? { ...d, print_status: status } : d));
-      refresh();
+      refreshLocal();
+      globalRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el estado');
     } finally {
@@ -416,7 +423,8 @@ export const AdminQrInventory = () => {
       if (fail) toast.error(`${fail} QR no se pudieron archivar`);
       if (skippedCount) toast.info(`${skippedCount} QR con usuario vinculado no se archivaron`);
       setSelected(new Set());
-      refresh();
+      refreshLocal();
+      globalRefresh();
     } finally {
       setArchiveBusy(false);
     }
@@ -431,7 +439,7 @@ export const AdminQrInventory = () => {
         title="Códigos QR"
         actions={
           <div className="flex gap-2">
-            <button type="button" onClick={refresh} disabled={loading} className="btn-outline px-3.5 py-2 text-sm" aria-label="Actualizar">
+            <button type="button" onClick={refreshLocal} disabled={loading} className="btn-outline px-3.5 py-2 text-sm" aria-label="Actualizar">
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} aria-hidden="true" />
             </button>
             <button type="button" onClick={openCreate} className="btn-primary px-4 py-2 text-sm">
@@ -499,7 +507,7 @@ export const AdminQrInventory = () => {
         <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 text-sm text-rose-700" role="alert">
           <AlertTriangle size={18} className="flex-none" aria-hidden="true" />
           <span className="min-w-0 flex-1">{error}</span>
-          <button type="button" onClick={refresh} className="flex-none font-semibold underline underline-offset-2">Reintentar</button>
+          <button type="button" onClick={refreshLocal} className="flex-none font-semibold underline underline-offset-2">Reintentar</button>
         </div>
       )}
 

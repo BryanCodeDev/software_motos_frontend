@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  User, Users, ShieldCheck, QrCode, Package, ArrowRight, Check, ChevronRight, AlertTriangle, RefreshCw, Lock,
-  Download, Link as LinkIcon, ExternalLink, MessageCircle,
+  User, Users, ShieldCheck, QrCode, Package, ArrowRight, Check, ChevronRight, AlertTriangle, Lock,
+  RefreshCw,
 } from 'lucide-react';
 import { routes } from '../../utils/routes';
 import { useAuth } from '../../contexts/useAuth';
@@ -138,7 +138,7 @@ export const DashboardIndex = () => {
     {
       key: 'profile',
       label: 'Perfil',
-      to: routes.dashboardProfile,
+      to: routes.dashboardMiPerfil,
       icon: User,
       done: profileDone,
       desc: !profileDone
@@ -286,36 +286,9 @@ export const DashboardIndex = () => {
           </ol>
         </section>
 
-        {/* Estado del QR y pedidos */}
+        {/* Estado del QR y acceso a pedidos */}
         <aside className="space-y-3" aria-label="Estado del QR">
-          {qrActive ? (
-            <div className={`${panel} p-5 sm:p-6`}>
-              <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-xl border border-border bg-white p-2">
-                {qrImage
-                  ? <img src={qrImage} alt="Tu código QR" className="h-full w-full" />
-                  : <QrCode size={40} className="text-text-secondary/50" aria-hidden="true" />}
-              </div>
-              <h2 className="mt-4 text-center text-base font-semibold text-neutral-900">Tu QR está activo</h2>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button type="button" onClick={downloadQr} disabled={!qrImage} className="btn-primary px-3 py-2 text-xs">
-                  <Download size={14} aria-hidden="true" /> Descargar
-                </button>
-                <button type="button" onClick={copyLink} className="btn-outline px-3 py-2 text-xs">
-                  {copied ? <Check size={14} aria-hidden="true" /> : <LinkIcon size={14} aria-hidden="true" />}
-                  {copied ? 'Copiado' : 'Copiar enlace'}
-                </button>
-                <a href={qrUrl} target="_blank" rel="noopener noreferrer" className="btn-outline px-3 py-2 text-xs">
-                  <ExternalLink size={14} aria-hidden="true" /> Probarlo
-                </a>
-                <a href={shareHref} target="_blank" rel="noopener noreferrer" className="btn-outline px-3 py-2 text-xs">
-                  <MessageCircle size={14} aria-hidden="true" /> Compartir
-                </a>
-              </div>
-              <Link to={routes.dashboardQr} className="mt-3 block text-center text-xs font-semibold text-brand-500 hover:text-brand-600">
-                Más opciones
-              </Link>
-            </div>
-          ) : (
+          {!qrActive && (
             <div className={`${panel} p-5 sm:p-6`}>
               <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
                 <Lock size={22} aria-hidden="true" />

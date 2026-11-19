@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../contexts/useAuth';
+import { useAdminSync } from '../../contexts/AdminSyncProvider';
 
 const EASE = [0.22, 1, 0.36, 1];
 const panel = 'rounded-2xl border border-border bg-white';
@@ -142,10 +143,10 @@ const Skeleton = () => (
 export const AdminHome = () => {
   const reduce = !!useReducedMotion();
   const { user } = useAuth();
+  const { refreshKey } = useAdminSync();
   const [stats, setStats] = useState(null);
   const [qr, setQr] = useState(null);
   const [logs, setLogs] = useState(null);
-  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatedAt, setUpdatedAt] = useState(null);
@@ -153,11 +154,10 @@ export const AdminHome = () => {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [dash, qrStats, audit, alr] = await Promise.allSettled([
+    const [dash, qrStats, audit] = await Promise.allSettled([
       api.get('/admin/dashboard'),
       api.get('/admin/qrs/stats'),
       api.get('/admin/audit'),
-      api.get('/admin/alerts'),
     ]);
     if (dash.status === 'rejected') {
       setError(dash.reason?.response?.data?.error || 'No se pudieron cargar las estadísticas');
@@ -165,7 +165,6 @@ export const AdminHome = () => {
       setStats(dash.value.data);
       setQr(qrStats.status === 'fulfilled' ? qrStats.value.data : null);
       setLogs(audit.status === 'fulfilled' ? audit.value.data?.logs || [] : null);
-      setAlerts(alr.status === 'fulfilled' ? alr.value.data?.alerts || [] : []);
       setUpdatedAt(new Date());
     }
     setLoading(false);
@@ -174,7 +173,7 @@ export const AdminHome = () => {
   useEffect(() => {
     const t = setTimeout(load, 0);
     return () => clearTimeout(t);
-  }, [load]);
+  }, [load, refreshKey]);
 
   if (loading && !stats) return <Skeleton />;
 
@@ -285,54 +284,6 @@ export const AdminHome = () => {
             </div>
           </div>
         </motion.section>
-
-        {/* Alertas operativas (datos reales del backend) */}
-        {alerts.length > 0 && (
-          <motion.section variants={item} aria-labelledby="alerts-h" className="rounded-2xl border border-border bg-white p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 id="alerts-h" className="text-sm font-semibold text-neutral-900">Alertas operativas</h2>
-              <span className="text-xs font-semibold text-neutral-900">
-                {alerts.filter((a) => a.severity === 'high').length} de alta prioridad
-              </span>
-            </div>
-            <ul className="divide-y divide-border">
-              {alerts.map((a) => {
-                const high = a.severity === 'high';
-                const medium = a.severity === 'medium';
-                return (
-                  <li key={a.id} className="focus-ring group p-3 rounded-xl border border-transparent transition-colors hover:border-brand-500/40 cursor-pointer">
-                    <a
-                      href={a.link}
-                      className="block h-full"
-                      onClick={(e) => {
-                        // Abrir en la misma pestaña; el enlace es interno del panel.
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle size={16} className={`mt-1 flex-none ${high ? 'text-rose-600' : medium ? 'text-amber-600' : 'text-brand-600'}`} aria-hidden="true" />
-                        <div className="min-w-0 flex-1">
-                          <p className="flex items-baseline gap-1.5 text-sm font-semibold text-neutral-900">
-                            {a.title}
-                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${high ? 'bg-rose-100 text-rose-700' : medium ? 'bg-amber-100 text-amber-800' : 'bg-brand-100 text-brand-700'}`}>
-                              {a.count}
-                            </span>
-                          </p>
-                          <p className="text-xs text-text-secondary">{a.description}</p>
-                          {a.oldest && (
-                            <p className="mt-1 text-xs text-text-secondary">
-                              Desde {new Date(a.oldest).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </p>
-                          )}
-                        </div>
-                        <span className="flex-none text-xs font-semibold text-brand-600 underline-offset-2 hover:underline">Ir al módulo</span>
-                      </div>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </motion.section>
-        )}
 
         {/* KPIs */}
         <div className={`grid gap-3 sm:grid-cols-2 ${kpis.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>

@@ -6,6 +6,7 @@ import {
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useAuth } from '../../contexts/useAuth';
+import { useAdminSync } from '../../contexts/AdminSyncProvider';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 import Modal from '../../components/Modal';
@@ -92,6 +93,7 @@ const UserCard = ({ u, isMe, onOpen }) => (
 export const AdminUsers = () => {
   const toast = useToast();
   const { user: me } = useAuth();
+  const { refreshKey, refresh } = useAdminSync();
   const [params] = useSearchParams();
   const initialQ = params.get('q') || '';
 
@@ -131,7 +133,7 @@ export const AdminUsers = () => {
   useEffect(() => {
     const t = setTimeout(load, 0);
     return () => clearTimeout(t);
-  }, [load]);
+  }, [load, refreshKey]);
 
   useEffect(() => {
     const t = setTimeout(() => { setQ(input.trim()); setPage(1); }, 350);
@@ -175,6 +177,7 @@ export const AdminUsers = () => {
       setSuspendOpen(false);
       setSuspendReason('');
       load();
+      refresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo suspender la cuenta');
     } finally {
@@ -190,6 +193,7 @@ export const AdminUsers = () => {
       toast.success('Cuenta reactivada');
       setSel((s) => (s ? { ...s, suspended: false } : s));
       load();
+      refresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo reactivar la cuenta');
     } finally {
@@ -205,6 +209,7 @@ export const AdminUsers = () => {
       toast.success(newRole === 'admin' ? 'Ahora es administrador' : 'Ya no es administrador');
       setSel((s) => (s ? { ...s, role: newRole } : s));
       load();
+      refresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo cambiar el rol');
     } finally {

@@ -597,7 +597,7 @@ export const QrPage = () => {
                 <Link to={routes.dashboardPrivacy} className="btn-outline px-4 py-2 text-sm">
                   <ShieldCheck size={16} aria-hidden="true" /> Elegir qué se muestra
                 </Link>
-                <Link to={routes.dashboardProfile} className="btn-outline px-4 py-2 text-sm">
+                <Link to={routes.dashboardMiPerfil} className="btn-outline px-4 py-2 text-sm">
                   <User size={16} aria-hidden="true" /> Editar mi perfil
                 </Link>
               </div>

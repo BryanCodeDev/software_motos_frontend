@@ -9,6 +9,7 @@ import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import Modal from '../../components/Modal';
 import { Badge } from '../../components/ui-kit';
+import { useAdminSync } from '../../contexts/AdminSyncProvider';
 
 const EASE = [0.22, 1, 0.36, 1];
 const panel = 'rounded-2xl border border-border bg-white';
@@ -231,6 +232,7 @@ const OrderCard = ({ o, index, busy, onOpen, onPick }) => {
 /* ───────── Página ───────── */
 export const AdminOrders = () => {
   const toast = useToast();
+  const { refreshKey, refresh } = useAdminSync();
   const [params, setParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -314,6 +316,7 @@ export const AdminOrders = () => {
       await api.patch(`/admin/orders/${openId}/carrier`, carrierEdit);
       toast.success('Información de envío actualizada');
       setDetail((d) => (d ? { ...d, ...carrierEdit } : d));
+      refresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el envío');
     } finally {
@@ -324,7 +327,7 @@ export const AdminOrders = () => {
   useEffect(() => {
     const t = setTimeout(load, 0);
     return () => clearTimeout(t);
-  }, [load]);
+  }, [load, refreshKey]);
 
   const applyStatus = async (o, status) => {
     setBusyId(o.id);
@@ -333,6 +336,7 @@ export const AdminOrders = () => {
       toast.success(`${o.order_number}: ${COMMERCIAL[status][0]}`);
       setPending(null);
       load();
+      refresh();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el pedido');
     } finally {

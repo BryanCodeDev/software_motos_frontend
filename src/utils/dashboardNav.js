@@ -8,13 +8,11 @@ export const PANEL_LABEL = { user: 'Mi panel', admin: 'Administración' };
 
 export const userNav = [
   { label: 'Resumen', to: routes.dashboard, icon: LayoutDashboard, end: true },
-  { label: 'Perfil', to: routes.dashboardProfile, icon: User },
-  { label: 'Perfiles', to: routes.dashboardProfiles, icon: Users },
+  { label: 'Mi perfil', to: routes.dashboardMiPerfil, icon: User },
   { label: 'Contactos', to: routes.dashboardContacts, icon: Users },
   { label: 'Privacidad', to: routes.dashboardPrivacy, icon: ShieldCheck },
   { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
-  { label: 'Pedidos', to: routes.dashboardOrders, icon: Package },
-  { label: 'Paquetes', to: routes.dashboardPackages, icon: Package },
+  { label: 'Pedidos y compras', to: routes.dashboardPedidos, icon: Package },
 ];
 
 export const adminNav = [

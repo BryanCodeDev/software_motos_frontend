@@ -1,13 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import api from '../../api/client';
 import { routes } from '../../utils/routes';
 import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
 import { Button, Input, Label, Textarea } from '../../components/ui';
-import { PageTitle, PageLoader } from '../../components/DashPage';
-import { Camera, Check, ArrowLeft, ArrowRight, Eye, EyeOff, RotateCcw, Save, Trash2, User } from 'lucide-react';
+import { PageTitle, PageLoader, EmptyState, CheckField } from '../../components/DashPage';
+import { Badge } from '../../components/ui-kit';
+import Modal from '../../components/Modal';
+import {
+  User, Users, Dog, Plus, QrCode, Package, AlertTriangle, RefreshCw, Loader2, Power, ArrowRight,
+  Camera, Check, ArrowLeft, ArrowRight as ArrowRight2, Eye, EyeOff, RotateCcw, Save, Trash2,
+} from 'lucide-react';
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -15,12 +20,8 @@ const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
-/**
- * Campos que el backend guarda al pulsar "Guardar" (PUBLIC_FIELDS en profile.service.js).
- * Para agregar un dato nuevo: súmalo aquí, en PUBLIC_FIELDS del backend y en fieldDefs de PrivacyPage.
- *  - recommended: cuenta para el avance de "datos esenciales".
- *  - none: muestra el atajo "No tengo" (así se distingue "sin dato" de "ninguno").
- */
+/* ───────── Mi cuenta: campos del perfil médico (público) ───────── */
+/* Coincide con PUBLIC_FIELDS del backend y con fieldDefs de Privacidad. */
 const fields = [
   { key: 'display_name', label: 'Nombre completo', category: 'identificacion', input: 'text', placeholder: 'Tu nombre y apellido', required: true, wide: true, recommended: true },
   { key: 'blood_type', label: 'Tipo de sangre', category: 'identificacion', input: 'select', options: BLOOD_TYPES, recommended: true },
@@ -43,7 +44,6 @@ const fields = [
 ];
 
 const SAVED_KEYS = fields.map((f) => f.key);
-
 const sections = [
   { id: 'identificacion', title: 'Identificación' },
   { id: 'medico', title: 'Salud' },
@@ -52,122 +52,119 @@ const sections = [
 
 const emptyForm = {
   ...Object.fromEntries(fields.map((f) => [f.key, f.input === 'checkbox' ? false : ''])),
-  photo_url: '',
-  photoFile: null,
+  photo_url: '', photoFile: null,
 };
-
 const isWide = (f) => f.wide || f.input === 'textarea' || f.input === 'checkbox';
 
-/* ───────── Visibilidad junto al dato ───────── */
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+/* Visibilidad junto al dato (cuenta) */
 const VisToggle = ({ on, busy, onToggle, label }) => (
-  <button
-    type="button"
-    onClick={onToggle}
-    disabled={busy}
-    aria-pressed={on}
-    aria-label={`${label}: ${on ? 'visible al escanear. Pulsa para ocultar' : 'oculto. Pulsa para mostrar'}`}
-    className={`focus-ring inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-60 ${
-      on ? 'bg-brand-500/10 text-brand-600' : 'bg-neutral-100 text-text-secondary hover:bg-brand-50'
-    }`}
-  >
-    {on ? <Eye size={12} aria-hidden="true" /> : <EyeOff size={12} aria-hidden="true" />}
-    {on ? 'Visible' : 'Oculto'}
+  <button type="button" onClick={onToggle} disabled={busy} aria-pressed={on} aria-label={`${label}: ${on ? 'visible al escanear. Pulsa para ocultar' : 'oculto. Pulsa para mostrar'}`} className={`focus-ring inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-60 ${on ? 'bg-brand-500/10 text-brand-600' : 'bg-neutral-100 text-text-secondary hover:bg-brand-50'}`}>
+    {on ? <Eye size={12} aria-hidden="true" /> : <EyeOff size={12} aria-hidden="true" />}{on ? 'Visible' : 'Oculto'}
   </button>
 );
 
 const Field = ({ f, value, error, onValue, vis }) => {
-  const id = `f_${f.key}`;
-  const errId = `err_${f.key}`;
+  const id = `ac_${f.key}`;
+  const errId = `ac_err_${f.key}`;
   const empty = String(value ?? '').trim() === '';
   const toggle = vis && (
     <VisToggle on={vis.map[f.key] === true} busy={vis.busy === f.key} onToggle={() => vis.toggle(f.key)} label={f.label} />
   );
-
   if (f.input === 'checkbox') {
     return (
-      <div className="sm:col-span-2">
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3.5 transition-colors hover:border-brand-500/30">
-          <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
-            <input
-              id={id}
-              type="checkbox"
-              checked={Boolean(value)}
-              onChange={(e) => onValue(e.target.checked)}
-              className="h-5 w-5 flex-none rounded border-border accent-brand-500"
-            />
-            <span className="text-sm text-neutral-900">{f.checkLabel}</span>
-          </label>
-          {toggle}
-        </div>
-      </div>
+      <div className="sm:col-span-2"><div className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+        <input id={id} type="checkbox" checked={Boolean(value)} onChange={(e) => onValue(e.target.checked)} className="h-5 w-5 flex-none rounded border-border accent-brand-500" /><span className="text-sm text-neutral-900">{f.checkLabel}</span>{toggle}
+      </div></div>
     );
   }
-
   return (
     <div className={isWide(f) ? 'sm:col-span-2' : ''}>
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <Label htmlFor={id} className="!mb-0">
-          {f.label}
-          {f.required && <span className="ml-1 text-brand-500" aria-hidden="true">*</span>}
-        </Label>
+        <Label htmlFor={id} className="!mb-0">{f.label}{f.required && <span className="ml-1 text-brand-500" aria-hidden="true">*</span>}</Label>
         <div className="flex items-center gap-2">
-          {f.none && empty && (
-            <button
-              type="button"
-              onClick={() => onValue('Ninguna')}
-              className="focus-ring rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-text-secondary transition-colors hover:border-brand-500/40 hover:text-neutral-900"
-            >
-              No tengo
-            </button>
-          )}
+          {f.none && empty && <button type="button" onClick={() => onValue('Ninguna')} className="focus-ring rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-text-secondary transition-colors hover:border-brand-500/40 hover:text-neutral-900">No tengo</button>}
           {toggle}
         </div>
       </div>
-
       {f.input === 'textarea' ? (
-        <Textarea
-          id={id}
-          value={value}
-          onChange={(e) => onValue(e.target.value)}
-          placeholder={f.placeholder}
-          rows={3}
-          className="text-base sm:text-sm"
-        />
+        <Textarea id={id} value={value} onChange={(e) => onValue(e.target.value)} placeholder={f.placeholder} rows={3} className="text-base sm:text-sm" />
       ) : f.input === 'select' ? (
-        <select id={id} value={value} onChange={(e) => onValue(e.target.value)} className="input h-11">
-          <option value="">Elige una opción</option>
-          {/* Si ya había un valor escrito a mano, no se pierde */}
-          {value && !f.options.includes(value) && <option value={value}>{value}</option>}
-          {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
+        <select id={id} value={value} onChange={(e) => onValue(e.target.value)} className="input h-11"><option value="">Elige una opción</option>{value && !f.options.includes(value) && <option value={value}>{value}</option>}{f.options.map((o) => <option key={o} value={o}>{o}</option>)}</select>
       ) : (
-        <Input
-          id={id}
-          type={f.input}
-          value={value}
-          onChange={(e) => onValue(e.target.value)}
-          placeholder={f.placeholder}
-          aria-invalid={error ? 'true' : undefined}
-          aria-describedby={error ? errId : undefined}
-          className="h-11 text-base sm:text-sm"
-        />
+        <Input id={id} type={f.input} value={value} onChange={(e) => onValue(e.target.value)} placeholder={f.placeholder} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? errId : undefined} className="h-11 text-base sm:text-sm" />
       )}
-      {error && (
-        <p id={errId} role="alert" className="mt-1.5 text-xs font-medium text-rose-700">
-          {error}
-        </p>
-      )}
+      {error && <p id={errId} role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{error}</p>}
     </div>
   );
 };
 
+/* ───────── Mis perfiles: tarjeta de perfil de emergencia ───────── */
+const TYPES = {
+  person: { label: 'Persona', icon: User },
+  managed_person: { label: 'A mi cargo', icon: Users },
+  pet: { label: 'Mascota', icon: Dog },
+};
+
+const FILTERS_MP = [
+  { id: 'all', label: 'Todos', test: () => true },
+  { id: 'people', label: 'Personas', test: (p) => p.profile_type !== 'pet' },
+  { id: 'pets', label: 'Mascotas', test: (p) => p.profile_type === 'pet' },
+];
+
+const ProfileCardMP = ({ profile: p, busy, onDeactivate, onReactivate, onEdit }) => {
+  const cfg = TYPES[p.profile_type] || TYPES.person;
+  const Icon = cfg.icon;
+  const active = p.is_active !== false;
+  const qrCount = Number(p.qr_count) || 0;
+  const orders = Number(p.order_count) || 0;
+  const subtitle = [cfg.label, p.relationship || p.pet_species].filter(Boolean).join(' · ');
+  return (
+    <li className={`flex flex-col rounded-2xl border p-5 transition-colors ${active ? 'border-border bg-white hover:border-brand-500/40' : 'border-border bg-neutral-50'}`}>
+      <div className="flex items-start gap-3">
+        <span className={`flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full ${active ? 'bg-brand-500/10 text-brand-500' : 'bg-neutral-200 text-text-secondary'}`}>
+          {p.photo_url ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Icon size={22} aria-hidden="true" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-semibold text-neutral-900">{p.display_name || 'Sin nombre'}</p>
+          <p className="truncate text-xs text-text-secondary">{subtitle}</p>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {!active && <Badge tone="neutral" size="sm">Inactivo</Badge>}
+        {p.pet_lost && <Badge tone="danger" size="sm">Perdido</Badge>}
+        {active && (qrCount > 0 ? <Badge tone="success" size="sm">{plural(qrCount, 'QR activo', 'QR activos')}</Badge> : <Badge tone="warn" size="sm">Sin QR</Badge>)}
+      </div>
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-text-secondary"><Package size={13} aria-hidden="true" /> {plural(orders, 'pedido', 'pedidos')}</p>
+      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+        <Link to={`${routes.dashboardMiPerfil}#perfil-${p.id}`} onClick={onEdit} className="btn-outline flex-1 px-3 py-2 text-xs">Ver y editar</Link>
+        {active && qrCount === 0 && <Link to={routes.dashboardPedidos} className="btn-primary flex-1 px-3 py-2 text-xs"><QrCode size={14} aria-hidden="true" /> Conseguir QR</Link>}
+        {active ? (
+          <button type="button" onClick={() => onDeactivate(p)} disabled={busy} aria-label={`Desactivar a ${p.display_name || 'este perfil'}`} title="Desactivar" className="btn-outline h-8 w-8 flex-none !text-rose-700 hover:!bg-rose-50">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Power size={14} aria-hidden="true" />}</button>
+        ) : (
+          <button type="button" onClick={() => onReactivate(p)} disabled={busy} className="btn-outline flex-1 px-3 py-2 text-xs">{busy && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}Reactivar</button>
+        )}
+      </div>
+    </li>
+  );
+};
+
+/* ====================================================================== */
+/* Página principal: Mi perfil                                            */
+/* ====================================================================== */
 export const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
+  const toastRef = useRef(toast);
+  useEffect(() => { toastRef.current = toast; });
+
   const fileRef = useRef(null);
   const formRef = useRef(null);
   const snapshotRef = useRef({ form: { ...emptyForm }, photo: null });
 
+  /* ── Estado: Mi cuenta ── */
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
@@ -175,36 +172,19 @@ export const ProfilePage = () => {
   const [dirty, setDirty] = useState(false);
   const [errors, setErrors] = useState({});
   const [tab, setTab] = useState(sections[0].id);
-
-  /* Visibilidad: se guarda al instante, aparte del formulario */
   const [visMap, setVisMap] = useState({});
   const [visReady, setVisReady] = useState(false);
   const [visBusy, setVisBusy] = useState(null);
+  const [accountEdit, setAccountEdit] = useState(false);
 
   const markDirty = useCallback(() => setDirty(true), []);
 
-  /* Avisa si intentan salir con cambios sin guardar */
   useEffect(() => {
     if (!dirty) return undefined;
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
+    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty]);
-
-  /* Ctrl/Cmd + S guarda */
-  useEffect(() => {
-    const onKey = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        if (dirty && !saving) formRef.current?.requestSubmit();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [dirty, saving]);
 
   useEffect(() => {
     const onUnauthorized = () => {
@@ -215,324 +195,360 @@ export const ProfilePage = () => {
     return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
   }, [toast]);
 
+  /* Carga cuenta + perfiles de emergencia */
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await api.get('/profiles/me/profiles');
+        const [profRes, privRes] = await Promise.allSettled([
+          api.get('/profiles/me'),
+          api.get('/privacy/me'),
+        ]);
         if (!mounted) return;
-        const profiles = res.data.profiles || res.data || [];
-        const p = profiles[0] || {};
-        const loaded = Object.fromEntries(
-          fields.map((f) => {
+        if (profRes.status === 'fulfilled') {
+          const p = profRes.value.data.profile || profRes.value.data || {};
+          const loaded = Object.fromEntries(fields.map((f) => {
             let v = p[f.key] ?? '';
             if (f.input === 'date' && v) v = String(v).slice(0, 10);
             return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
-          }),
-        );
-        const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
-        setForm(next);
-        snapshotRef.current = { form: next, photo: p.photo_url || null };
-        if (p.photo_url) setPhotoPreview(p.photo_url);
-        setDirty(false);
-      } catch (error) {
-        if (!mounted) return;
-        if (!(error.response && error.response.status === 404)) {
-          toast.error('No pudimos cargar tu perfil. Recarga la página.');
+          }));
+          const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
+          setForm(next);
+          snapshotRef.current = { form: next, photo: p.photo_url || null };
+          if (p.photo_url) setPhotoPreview(p.photo_url);
+          setDirty(false);
         }
-      } finally {
-        if (mounted) setLoading(false);
-      }
+        if (privRes.status === 'fulfilled') {
+          const list = privRes.value.data.settings || privRes.value.data || [];
+          const map = {};
+          if (Array.isArray(list)) list.forEach((s) => { if (s.field_name) map[s.field_name] = s.is_public; });
+          setVisMap(map);
+          setVisReady(true);
+        }
+      } catch (error) {
+        if (!(error.response && error.response.status === 404)) toast.error('No pudimos cargar tu cuenta. Recarga la página.');
+      } finally { if (mounted) setLoading(false); }
     })();
     return () => { mounted = false; };
   }, [toast]);
 
-  /* Visibilidad actual de cada dato (un 404 significa "aún nada visible") */
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get('/privacy/me');
-        if (!mounted) return;
-        const list = res.data.settings || res.data || [];
-        const map = {};
-        if (Array.isArray(list)) list.forEach((s) => { if (s.field_name) map[s.field_name] = s.is_public; });
-        setVisMap(map);
-        setVisReady(true);
-      } catch (error) {
-        if (mounted && error.response && error.response.status === 404) setVisReady(true);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
   const toggleVis = async (key) => {
     const prevMap = visMap;
     const nextMap = { ...visMap, [key]: !visMap[key] };
-    setVisMap(nextMap);
-    setVisBusy(key);
-    try {
-      await api.patch('/privacy/me', { settings: nextMap });
-    } catch {
-      setVisMap(prevMap);
-      toast.error('No se pudo cambiar la visibilidad.');
-    } finally {
-      setVisBusy(null);
-    }
+    setVisMap(nextMap); setVisBusy(key);
+    try { await api.patch('/privacy/me', { settings: nextMap }); }
+    catch { setVisMap(prevMap); toast.error('No se pudo cambiar la visibilidad.'); }
+    finally { setVisBusy(null); }
   };
-
-  const vis = visReady ? { map: visMap, busy: visBusy, toggle: toggleVis } : null;
 
   const handlePhotoChange = (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      toast.error('Usa una imagen JPG, PNG o WebP.');
-      return;
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      toast.error('La imagen pesa más de 2 MB. Elige una más liviana.');
-      return;
-    }
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) { toast.error('Usa una imagen JPG, PNG o WebP.'); return; }
+    if (file.size > MAX_PHOTO_BYTES) { toast.error('La imagen pesa más de 2 MB. Elige una más liviana.'); return; }
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setForm((prev) => ({ ...prev, photoFile: file }));
-      setPhotoPreview(ev.target.result);
-      markDirty();
-    };
+    reader.onload = (ev) => { setForm((prev) => ({ ...prev, photoFile: file })); setPhotoPreview(ev.target.result); markDirty(); };
     reader.readAsDataURL(file);
   };
 
-  const removePhoto = () => {
-    setForm((prev) => ({ ...prev, photoFile: null, photo_url: '' }));
-    setPhotoPreview(null);
-    markDirty();
-  };
+  const removePhoto = () => { setForm((prev) => ({ ...prev, photoFile: null, photo_url: '' })); setPhotoPreview(null); markDirty(); };
 
-  const setValue = (key) => (value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-    markDirty();
-  };
+  const setValue = (key) => (value) => { setForm((prev) => ({ ...prev, [key]: value })); if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined })); markDirty(); };
 
-  const discard = () => {
-    const snap = snapshotRef.current;
-    setForm({ ...snap.form, photoFile: null });
-    setPhotoPreview(snap.photo);
-    setErrors({});
-    setDirty(false);
-    toast.info('Cambios descartados');
-  };
+  const discard = () => { const snap = snapshotRef.current; setForm({ ...snap.form, photoFile: null }); setPhotoPreview(snap.photo); setErrors({}); setDirty(false); toast.info('Cambios descartados'); };
 
   const uploadPhotoFile = async () => {
     if (!form.photoFile) return form.photo_url;
-    const dataUrl = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(form.photoFile);
-    });
+    const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(form.photoFile); });
     const res = await api.post('/profiles/photo', { photo_data: dataUrl });
     return res.data.photo_url;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!String(form.display_name).trim()) {
-      setErrors({ display_name: 'Escribe tu nombre: es lo primero que verá quien escanee tu QR.' });
-      toast.error('Falta tu nombre.');
-      setTab('identificacion');
-      window.setTimeout(() => document.getElementById('f_display_name')?.focus(), 50);
-      return;
-    }
+    if (!String(form.display_name).trim()) { setErrors({ display_name: 'Escribe tu nombre: es lo primero que verá quien escanee tu QR.' }); toast.error('Falta tu nombre.'); setTab('identificacion'); window.setTimeout(() => document.getElementById('ac_display_name')?.focus(), 50); return; }
     setSaving(true);
     try {
       let photoUrl = form.photo_url;
       if (form.photoFile) photoUrl = await uploadPhotoFile();
-
       const payload = { photo_url: photoUrl || null };
-      SAVED_KEYS.forEach((k) => {
-        const v = form[k];
-        payload[k] = typeof v === 'boolean' ? v : v || null;
-      });
+      SAVED_KEYS.forEach((k) => { const v = form[k]; payload[k] = typeof v === 'boolean' ? v : v || null; });
       await api.patch('/profiles/me', payload);
-
       const res = await api.get('/profiles/me');
       let nextForm = { ...form, photoFile: null };
       let nextPhoto = photoPreview;
-      if (res.data.profile) {
-        nextPhoto = res.data.profile.photo_url || null;
-        nextForm = { ...form, photo_url: res.data.profile.photo_url || '', photoFile: null };
-        setPhotoPreview(nextPhoto);
-      }
-      setForm(nextForm);
-      snapshotRef.current = { form: nextForm, photo: nextPhoto };
-
-      setErrors({});
-      setDirty(false);
+      if (res.data.profile) { nextPhoto = res.data.profile.photo_url || null; nextForm = { ...form, photo_url: res.data.profile.photo_url || '', photoFile: null }; setPhotoPreview(nextPhoto); }
+      setForm(nextForm); snapshotRef.current = { form: nextForm, photo: nextPhoto }; setErrors({}); setDirty(false);
+      await refreshUser();
       toast.success('Perfil guardado');
-    } catch (error) {
-      try {
-        showApiError(error);
-      } catch (err) {
-        toast.error(err?.message || 'No pudimos guardar tu perfil. Intenta de nuevo.');
-      }
-    } finally {
-      setSaving(false);
+    } catch (error) { try { showApiError(error); } catch (err) { toast.error(err?.message || 'No pudimos guardar tu perfil. Intenta de nuevo.'); } }
+    finally { setSaving(false); }
+  };
+
+  /* ── Estado: Mis perfiles de emergencia ── */
+  const [profiles, setProfiles] = useState([]);
+  const [mpLoading, setMpLoading] = useState(true);
+  const [mpError, setMpError] = useState(null);
+  const [mpFilter, setMpFilter] = useState('all');
+  const [busyId, setBusyId] = useState(null);
+  const [toDeactivate, setToDeactivate] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [createType, setCreateType] = useState('person');
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createForm, setCreateForm] = useState({ display_name: '', relationship: '', consent_accepted: false, pet_owner_name: user?.name || '', pet_sex: 'no_especificado' });
+  const [createErrors, setCreateErrors] = useState({});
+
+  const loadProfiles = useCallback(async () => {
+    setMpError(null);
+    try {
+      const { data } = await api.get('/profiles/me/profiles');
+      setProfiles(data.profiles || []);
+    } catch (err) { setMpError(err?.response?.data?.error || 'No se pudieron cargar los perfiles'); }
+    finally { setMpLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(loadProfiles, 0);
+    return () => clearTimeout(t);
+  }, [loadProfiles]);
+
+  const change = async (p, action) => {
+    setBusyId(p.id);
+    try { await api.patch(`/profiles/me/profiles/${p.id}/${action}`); toastRef.current.success(action === 'deactivate' ? 'Perfil desactivado' : 'Perfil reactivado'); setToDeactivate(null); await loadProfiles(); await refreshUser(); }
+    catch (err) { toastRef.current.error(err?.response?.data?.error || `No se pudo ${action === 'deactivate' ? 'desactivar' : 'reactivar'} el perfil`); }
+    finally { setBusyId(null); }
+  };
+
+  const sorted = useMemo(() => [...profiles].sort((a, b) => (b.is_active !== false) - (a.is_active !== false) || String(a.display_name).localeCompare(String(b.display_name), 'es')), [profiles]);
+  const countsMP = useMemo(() => Object.fromEntries(FILTERS_MP.map((f) => [f.id, profiles.filter(f.test).length])), [profiles]);
+  const visibleMP = sorted.filter((FILTERS_MP.find((f) => f.id === mpFilter) || FILTERS_MP[0]).test);
+  const activeCount = profiles.filter((p) => p.is_active !== false).length;
+
+  const isPet = createType === 'pet';
+  const isManaged = createType === 'managed_person';
+
+  const createSetValue = (key) => (value) => { setCreateForm((prev) => ({ ...prev, [key]: value })); if (createErrors[key]) setCreateErrors((prev) => ({ ...prev, [key]: undefined })); };
+
+  const createValidate = (forStep) => {
+    const next = {};
+    if (forStep === 1) {
+      if (!createForm.display_name.trim()) next.display_name = isPet ? 'Escribe el nombre de la mascota.' : 'Escribe el nombre de la persona.';
     }
+    if (forStep === 2 && isManaged && !createForm.consent_accepted) next.consent_accepted = 'Debes confirmar que tienes autorización.';
+    setCreateErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const createSubmit = async () => {
+    if (!createValidate(1)) return;
+    setCreateSaving(true);
+    try {
+      const payload = {
+        profile_type: createType,
+        display_name: createForm.display_name.trim(),
+        relationship: isPet ? null : createForm.relationship.trim() || null,
+        is_managed_by_third_party: isManaged,
+        consent_accepted: isManaged ? createForm.consent_accepted : false,
+      };
+      await api.post('/profiles/me/profiles', payload);
+      toastRef.current.success(`Perfil de ${createType} creado`);
+      setCreating(false);
+      await loadProfiles();
+      await refreshUser();
+    } catch (err) { toastRef.current.error(err?.response?.data?.error || 'No se pudo crear el perfil'); }
+    finally { setCreateSaving(false); }
   };
 
   if (loading) return <PageLoader />;
 
+  const fullName = user?.name || user?.email?.split('@')[0];
+  const firstName = fullName ? fullName.trim().split(' ')[0] : null;
   const isFilled = (f) => (f.input === 'checkbox' ? form[f.key] === true : String(form[f.key] || '').trim() !== '');
-
-  /* El avance mide lo esencial: lo demás es opcional y no debe impedir llegar al 100 % */
   const essentials = fields.filter((f) => f.recommended);
   const essentialsDone = essentials.filter(isFilled).length;
   const pct = Math.round((essentialsDone / essentials.length) * 100);
-
-  const countFor = (id) => {
-    const list = fields.filter((f) => f.category === id);
-    const rec = list.filter((f) => f.recommended);
-    const target = rec.length > 0 ? rec : list;
-    return { done: target.filter(isFilled).length, total: target.length };
-  };
+  const vis = visReady ? { map: visMap, busy: visBusy, toggle: toggleVis } : null;
   const displayName = String(form.display_name || '').trim();
 
-  const tabIndex = sections.findIndex((s) => s.id === tab);
-  const prev = sections[tabIndex - 1];
-  const nextSection = sections[tabIndex + 1];
-
   return (
-    <div className="animate-fade-in space-y-4 pb-28 lg:space-y-5">
-      <PageTitle title="Tu perfil" description="Empieza por lo esencial. Junto a cada dato eliges si se muestra al escanear." />
+    <div className="animate-fade-in space-y-5 lg:space-y-6">
+      <PageTitle title={firstName ? `Mi perfil, ${firstName}` : 'Mi perfil'} description="Tu cuenta de acceso y los perfiles de emergencia que administras, en un solo lugar." />
 
-      {/* Quién eres: foto, nombre y avance */}
-      <section className={`${panel} flex items-center gap-4 p-4 sm:p-5`} aria-label="Resumen del perfil">
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          aria-label={photoPreview ? 'Cambiar fotografía' : 'Subir fotografía'}
-          className="group relative h-20 w-20 flex-none overflow-hidden rounded-full bg-brand-50 ring-2 ring-border transition-shadow hover:ring-brand-500/50 focus-ring"
-        >
-          {photoPreview ? (
-            <img src={photoPreview} alt="Tu fotografía" className="h-full w-full object-cover" />
-          ) : (
-            <User size={30} className="mx-auto text-text-secondary/60" aria-hidden="true" />
-          )}
-          <span className="absolute inset-0 flex items-center justify-center bg-brand-900/55 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-            <Camera size={20} aria-hidden="true" />
-          </span>
-        </button>
-        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handlePhotoChange} />
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-semibold text-neutral-900">{displayName || 'Tu nombre'}</p>
-          <p className="truncate text-sm text-text-secondary">{user?.email || ''}</p>
-          <div className="mt-3 flex items-center gap-3">
-            <div
-              className="h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-border/70"
-              role="progressbar"
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Datos esenciales completados"
-            >
-              <div className="h-full rounded-full bg-brand-500 transition-[width] duration-500" style={{ width: `${pct}%` }} />
+      {/* ===== SECCIÓN A: MI CUENTA ===== */}
+      <section aria-label="Mi cuenta" className="space-y-5">
+        <div className={`${panel} flex items-center gap-4 p-4 sm:p-5`}>
+          <button type="button" onClick={() => fileRef.current?.click()} aria-label={photoPreview ? 'Cambiar fotografía' : 'Subir fotografía'} className="group relative h-20 w-20 flex-none overflow-hidden rounded-full bg-brand-50 ring-2 ring-border transition-shadow hover:ring-brand-500/50 focus-ring">
+            {photoPreview ? <img src={photoPreview} alt="Tu fotografía" className="h-full w-full object-cover" /> : <User size={30} className="mx-auto text-text-secondary/60" aria-hidden="true" />}
+            <span className="absolute inset-0 flex items-center justify-center bg-brand-900/55 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"><Camera size={20} aria-hidden="true" /></span>
+          </button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handlePhotoChange} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-lg font-semibold text-neutral-900">{displayName || 'Tu nombre'}</p>
+            <p className="truncate text-sm text-text-secondary">{user?.email || ''}</p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-border/70" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Datos esenciales completados">
+                <div className="h-full rounded-full bg-brand-500 transition-[width] duration-500" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="flex-none text-xs text-text-secondary">Esenciales {essentialsDone} de {essentials.length}</span>
             </div>
-            <span className="flex-none text-xs text-text-secondary">Esenciales {essentialsDone} de {essentials.length}</span>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-            {vis && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-                Foto <VisToggle on={visMap.photo_url === true} busy={visBusy === 'photo_url'} onToggle={() => toggleVis('photo_url')} label="Foto" />
-              </span>
-            )}
-            {photoPreview && (
-              <button type="button" onClick={removePhoto} className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:underline">
-                <Trash2 size={13} aria-hidden="true" /> Quitar foto
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
-        {/* Navegación entre secciones */}
-        <div role="tablist" aria-label="Secciones del perfil" className="custom-scrollbar flex gap-1.5 overflow-x-auto rounded-xl border border-border bg-white p-1.5">
-          {sections.map((s) => {
-            const { done, total } = countFor(s.id);
-            const active = tab === s.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setTab(s.id)}
-                className={`flex flex-1 flex-none items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-ring ${
-                  active ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
-                }`}
-              >
-                {s.title}
-                <span className={`text-xs ${active ? 'text-white/80' : 'text-text-secondary'}`}>
-                  {done === total ? <Check size={13} strokeWidth={3} aria-label="Esenciales completos" /> : `${done}/${total}`}
-                </span>
-              </button>
-            );
-          })}
+          {accountEdit && <button type="button" onClick={() => setAccountEdit(false)} className="btn-ghost text-xs text-rose-600 hover:underline">Cancelar edición</button>}
+          {!accountEdit && <button type="button" onClick={() => setAccountEdit(true)} className="btn-outline px-3 py-2 text-xs font-semibold">Editar cuenta</button>}
         </div>
 
-        <section role="tabpanel" className={`${panel} p-5 sm:p-6`}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {fields
-              .filter((f) => f.category === tab)
-              .map((f) => (
+        {accountEdit ? (
+          <form ref={formRef} onSubmit={handleSubmit} noValidate className={`${panel} p-5 sm:p-6 space-y-4`}>
+            <div role="tablist" aria-label="Secciones de la cuenta" className="custom-scrollbar flex gap-1.5 overflow-x-auto rounded-xl border border-border bg-white p-1.5 mb-4">
+              {sections.map((s) => {
+                const list = fields.filter((f) => f.category === s.id);
+                const done = list.filter(isFilled).length;
+                const active = tab === s.id;
+                return (
+                  <button key={s.id} type="button" role="tab" aria-selected={active} onClick={() => setTab(s.id)} className={`flex flex-1 flex-none items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-ring ${active ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'}`}>
+                    {s.title}<span className={`text-xs ${active ? 'text-white/80' : 'text-text-secondary'}`}>{done === list.length ? <Check size={13} strokeWidth={3} aria-hidden="true" /> : `${done}/${list.length}`}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <section role="tabpanel" className="grid gap-4 sm:grid-cols-2">
+              {fields.filter((f) => f.category === tab).map((f) => (
                 <Field key={f.key} f={f} value={form[f.key]} error={errors[f.key]} onValue={setValue(f.key)} vis={vis} />
               ))}
-          </div>
-        </section>
-
-        {/* Avanzar sin perderse */}
-        <div className="flex items-center justify-between gap-3">
-          {prev ? (
-            <button type="button" onClick={() => setTab(prev.id)} className="btn-ghost px-4 py-2 text-sm">
-              <ArrowLeft size={16} aria-hidden="true" /> {prev.title}
-            </button>
-          ) : (
-            <span />
-          )}
-          {nextSection ? (
-            <button type="button" onClick={() => setTab(nextSection.id)} className="btn-outline px-4 py-2 text-sm">
-              {nextSection.title} <ArrowRight size={16} aria-hidden="true" />
-            </button>
-          ) : (
-            <Link to={routes.dashboardContacts} className="btn-outline px-4 py-2 text-sm">
-              Siguiente: contactos <ArrowRight size={16} aria-hidden="true" />
-            </Link>
-          )}
-        </div>
-
-        {dirty && (
-          <div role="region" aria-label="Guardar cambios" className="fixed inset-x-0 bottom-4 z-40 animate-slide-up px-4">
-            <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-2xl border border-border bg-white/95 p-3 pl-4 shadow-card backdrop-blur sm:pl-5">
-              <p className="flex min-w-0 items-center gap-2 text-sm font-medium text-neutral-900">
-                <span className="h-2.5 w-2.5 flex-none rounded-full bg-amber-500" aria-hidden="true" />
-                <span className="truncate">Cambios sin guardar</span>
-              </p>
-              <div className="flex flex-none items-center gap-2">
-                <Button type="button" variant="ghost" onClick={discard} disabled={saving} className="px-3 py-2 text-sm">
-                  <RotateCcw size={15} /> <span className="hidden sm:inline">Descartar</span>
-                </Button>
-                <Button type="submit" variant="primary" disabled={saving} className="px-4 py-2 text-sm">
-                  <Save size={16} /> {saving ? 'Guardando...' : 'Guardar'}
-                </Button>
-              </div>
+            </section>
+            <div className="flex items-center justify-between gap-3 mt-4">
+              <button type="button" onClick={discard} disabled={saving} className="btn-ghost px-4 py-2 text-sm"><RotateCcw size={15} /> Descartar</button>
+              <Button type="submit" variant="primary" disabled={saving} className="px-4 py-2 text-sm"><Save size={16} /> {saving ? 'Guardando...' : 'Guardar cuenta'}</Button>
+            </div>
+          </form>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={`${panel} p-4`}>
+              <p className="text-xs font-medium text-text-secondary">Nombre</p>
+              <p className="text-sm font-semibold text-neutral-900 truncate">{displayName || 'Sin nombre'}</p>
+            </div>
+            <div className={`${panel} p-4`}>
+              <p className="text-xs font-medium text-text-secondary">Correo</p>
+              <p className="text-sm font-semibold text-neutral-900 truncate">{user?.email || '—'}</p>
+            </div>
+            <div className={`${panel} p-4 sm:col-span-2 lg:col-span-2`}>
+              <p className="text-xs font-medium text-text-secondary mb-2">Datos esenciales</p>
+              <p className="text-sm text-text-secondary">{essentialsDone} de {essentials.length} completados ({pct}%)</p>
+            </div>
+            <div className={`${panel} p-4 sm:col-span-2 lg:col-span-2`}>
+              <p className="text-xs font-medium text-text-secondary mb-2">QR de emergencia</p>
+              <p className="text-sm font-semibold text-neutral-900">Consúltalo en Mi QR</p>
+              <Link to={routes.dashboardQr} className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-500 hover:text-brand-600"><ArrowRight2 size={14} aria-hidden="true" /> Ir a Mi QR</Link>
             </div>
           </div>
         )}
-      </form>
+      </section>
+
+      {/* ===== SECCIÓN B: MIS PERFILES ===== */}
+      <section aria-label="Mis perfiles de emergencia" id="mis-perfiles" className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-neutral-900">Mis perfiles de emergencia</h2>
+            <p className="text-sm text-text-secondary">{activeCount} de {profiles.length} activos · Cada perfil tiene su propio QR.</p>
+          </div>
+          <button type="button" onClick={() => setCreating(true)} className="btn-primary px-5 py-2.5 text-sm"><Plus size={16} aria-hidden="true" /> Agregar perfil</button>
+        </div>
+
+        {mpLoading ? <PageLoader /> : mpError ? (
+          <div className={`${panel} p-6 lg:p-8`}>
+            <EmptyState icon={AlertTriangle} title="No se pudieron cargar los perfiles" text={mpError}>
+              <button type="button" onClick={loadProfiles} className="btn-outline px-4 py-2 text-sm"><RefreshCw size={16} aria-hidden="true" /> Reintentar</button>
+            </EmptyState>
+          </div>
+        ) : profiles.length === 0 ? (
+          <div className={`${panel} p-6 lg:p-8`}>
+            <EmptyState icon={Users} title="Aún no tienes perfiles de emergencia" text="Crea uno para ti, un familiar o tu mascota. Cada perfil tendrá su propio QR permanente.">
+              <button type="button" onClick={() => setCreating(true)} className="btn-primary px-5 py-2.5 text-sm"><Plus size={16} aria-hidden="true" /> Agregar perfil</button>
+            </EmptyState>
+          </div>
+        ) : (
+          <>
+            <div role="group" aria-label="Filtrar perfiles" className="custom-scrollbar flex max-w-full gap-1.5 overflow-x-auto rounded-xl border border-border bg-white p-1.5">
+              {FILTERS_MP.map((f) => {
+                const on = mpFilter === f.id;
+                return (
+                  <button key={f.id} type="button" aria-pressed={on} onClick={() => setMpFilter(f.id)} className={`flex flex-none items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus-ring ${on ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'}`}>
+                    {f.label}<span className={`rounded-full px-1.5 text-[11px] font-bold ${on ? 'bg-white/20' : 'bg-brand-50'}`}>{countsMP[f.id]}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {visibleMP.length === 0 ? (
+              <div className={`${panel} p-6`}>
+                <EmptyState icon={Users} title="Sin perfiles en esta categoría" text="Prueba con otro filtro.">
+                  <button type="button" onClick={() => setMpFilter('all')} className="btn-outline px-4 py-2 text-sm">Ver todos</button>
+                </EmptyState>
+              </div>
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {visibleMP.map((p) => (
+                  <ProfileCardMP key={p.id} profile={p} busy={busyId === p.id} onDeactivate={setToDeactivate} onReactivate={(prof) => change(prof, 'reactivate')} onEdit={() => { /* editar abre el mismo perfil: la cuenta ya lo muestra; aquí se desactiva/reactiva */ }} />
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+
+        <Modal isOpen={!!toDeactivate} onClose={() => (busyId ? null : setToDeactivate(null))} title="Desactivar perfil">
+          <p className="mb-6 text-sm leading-relaxed text-text-secondary"><span className="font-semibold text-neutral-900">{toDeactivate?.display_name || 'Este perfil'}</span> dejará de mostrarse al escanear su QR hasta que lo reactives.</p>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setToDeactivate(null)} disabled={!!busyId}>Cancelar</Button>
+            <Button variant="danger" onClick={() => change(toDeactivate, 'deactivate')} disabled={!!busyId}>{busyId && <Loader2 size={16} className="animate-spin" />}{busyId ? 'Desactivando…' : 'Desactivar'}</Button>
+          </div>
+        </Modal>
+
+        {/* Modal: crear perfil */}
+        <Modal isOpen={creating} onClose={() => setCreating(false)} title="Agregar perfil de emergencia" size="lg">
+          <div className="space-y-5">
+            <p className="text-sm text-text-secondary">Elige qué tipo de perfil crear. Cada uno recibe su propio QR permanente.</p>
+            <div role="radiogroup" aria-label="Tipo de perfil" className="grid gap-3 sm:grid-cols-3">
+              {[
+                { value: 'person', label: 'Persona', icon: User, desc: 'Para ti o para otro adulto.' },
+                { value: 'pet', label: 'Mascota', icon: Dog, desc: 'Para tu perro, gato u otro animal.' },
+                { value: 'managed_person', label: 'A mi cargo', icon: Users, desc: 'Un hijo, adulto mayor o alguien a quien asistas.' },
+              ].map((t) => {
+                const active = createType === t.value;
+                const Icon = t.icon;
+                return (
+                  <button key={t.value} type="button" role="radio" aria-checked={active} onClick={() => setCreateType(t.value)} className={`focus-ring flex flex-col items-center gap-2 rounded-xl border p-5 text-center transition-colors ${active ? 'border-brand-500 bg-brand-50' : 'border-border bg-white hover:border-brand-500/40'}`}>
+                    <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${active ? 'bg-brand-500 text-white' : 'bg-brand-500/10 text-brand-500'}`}><Icon size={22} aria-hidden="true" /></span>
+                    <span className="font-semibold text-neutral-900">{t.label}</span>
+                    <span className="text-xs leading-relaxed text-text-secondary">{t.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="cp_display_name">Nombre para mostrar<span className="ml-1 text-brand-500" aria-hidden="true">*</span></Label>
+                <Input id="cp_display_name" value={createForm.display_name} onChange={(e) => createSetValue('display_name')(e.target.value)} placeholder={isPet ? 'Ej.: Firulais' : 'Ej.: María Gómez'} aria-invalid={createErrors.display_name ? 'true' : undefined} className="h-11" autoFocus />
+                {createErrors.display_name && <p role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{createErrors.display_name}</p>}
+              </div>
+              {!isPet && (
+                <div>
+                  <Label htmlFor="cp_relationship">Relación contigo</Label>
+                  <Input id="cp_relationship" value={createForm.relationship} onChange={(e) => createSetValue('relationship')(e.target.value)} placeholder="Ej.: esposa, hijo, mamá" className="h-11" />
+                </div>
+              )}
+              {isManaged && (
+                <div className="sm:col-span-2">
+                  <CheckField id="cp_consent" checked={createForm.consent_accepted} onChange={createSetValue('consent_accepted')} label="Declaro tener autorización para gestionar los datos de esta persona." />
+                  {createErrors.consent_accepted && <p role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{createErrors.consent_accepted}</p>}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setCreating(false)} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={createSubmit} disabled={createSaving} className="btn-primary px-6 py-2.5 text-sm">{createSaving ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}{createSaving ? 'Creando…' : 'Crear perfil'}</button>
+            </div>
+          </div>
+        </Modal>
+      </section>
     </div>
   );
 };

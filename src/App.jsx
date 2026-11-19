@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ToastProvider } from './components/Toast';
@@ -12,6 +12,7 @@ import { AdminUsers } from './pages/admin/Users';
 import { AdminOrders } from './pages/admin/Orders';
 import { AdminAudit } from './pages/admin/Audit';
 import { RouteTransition } from './components/RouteTransition';
+import { routes } from './utils/routes';
 
 // Lazy pages
 const Home = lazy(() => import('./pages/Home'));
@@ -36,14 +37,19 @@ const ContactsPage = lazy(() => import('./pages/dashboard/ContactsPage'));
 const PrivacyPage = lazy(() => import('./pages/dashboard/PrivacyPage'));
 const QrPage = lazy(() => import('./pages/dashboard/QrPage'));
 const OrdersPage = lazy(() => import('./pages/dashboard/OrdersPage'));
-const ProfilesPage = lazy(() => import('./pages/dashboard/ProfilesPage'));
 const CreateProfilePage = lazy(() => import('./pages/dashboard/CreateProfilePage'));
-const PackagesPage = lazy(() => import('./pages/dashboard/PackagesPage'));
 
-// Admin pages
+// Redirects para rutas antiguas del panel (perfiles y paquetes unificados)
+const RedirectPerfiles = () => <Navigate to={routes.dashboardMiPerfil} replace={true} />;
+const RedirectPerfilesNuevo = () => <Navigate to={routes.dashboardMiPerfilNuevo} replace={true} />;
+const RedirectPaquetes = () => <Navigate to={routes.dashboardPedidos} replace={true} />;
+
+// Admin pages (vistas separadas que aún usa el panel de administración)
 const Help = lazy(() => import('./pages/admin/help'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const AdminQrAdmin = lazy(() => import('./pages/admin/QrAdmin'));
+const AdminPackagesPage = lazy(() => import('./pages/dashboard/PackagesPage'));
+const AdminProfilesPage = lazy(() => import('./pages/dashboard/ProfilesPage'));
 
 const App = () => (
   <HelmetProvider>
@@ -79,14 +85,17 @@ const App = () => (
                 <Route path="/panel">
                   <Route index element={<DashboardIndex />} />
                   <Route path="perfil" element={<ProfilePage />} />
-                  <Route path="perfiles" element={<ProfilesPage />} />
-                  <Route path="perfiles/nuevo" element={<CreateProfilePage />} />
+                  <Route path="perfil/nuevo" element={<CreateProfilePage />} />
                   <Route path="contactos" element={<ContactsPage />} />
                   <Route path="privacidad" element={<PrivacyPage />} />
                   <Route path="qr" element={<QrPage />} />
                   <Route path="pedidos" element={<OrdersPage />} />
-                  <Route path="paquetes" element={<PackagesPage />} />
                   <Route path="checkout" element={<Checkout />} />
+                  {/* Redirecciones de rutas antiguas unificadas */}
+                  <Route path="perfiles" element={<RedirectPerfiles />} />
+                  <Route path="perfiles/*" element={<RedirectPerfilesNuevo />} />
+                  <Route path="paquetes" element={<RedirectPaquetes />} />
+                  <Route path="paquetes/*" element={<RedirectPaquetes />} />
                 </Route>
               </Route>
 
@@ -99,8 +108,8 @@ const App = () => (
                   <Route path="auditoria" element={<RequireAdmin><AdminAudit /></RequireAdmin>} />
                   <Route path="ayuda" element={<RequireAdmin><Help /></RequireAdmin>} />
                   <Route path="qrs" element={<RequireAdmin><AdminQrAdmin /></RequireAdmin>} />
-                  <Route path="paquetes" element={<RequireAdmin><PackagesPage /></RequireAdmin>} />
-                  <Route path="perfiles" element={<RequireAdmin><ProfilesPage /></RequireAdmin>} />
+                  <Route path="paquetes" element={<RequireAdmin><AdminPackagesPage /></RequireAdmin>} />
+                  <Route path="perfiles" element={<RequireAdmin><AdminProfilesPage /></RequireAdmin>} />
                   <Route path="*" element={<RequireAdmin><AdminHome /></RequireAdmin>} />
                 </Route>
               </Route>

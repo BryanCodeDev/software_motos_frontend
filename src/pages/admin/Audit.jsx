@@ -4,6 +4,7 @@ import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
+import { useAdminSync } from '../../contexts/AdminSyncProvider';
 
 const PAGE_SIZE = 25;
 const panel = 'rounded-2xl border border-border bg-white';
@@ -29,6 +30,7 @@ const formatDate = (d) =>
 
 export const AdminAudit = () => {
   const toast = useToast();
+  const { refreshKey } = useAdminSync();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,7 +55,7 @@ export const AdminAudit = () => {
   useEffect(() => {
     const t = setTimeout(load, 0);
     return () => clearTimeout(t);
-  }, [load]);
+  }, [load, refreshKey]);
 
   const entities = useMemo(() => [...new Set(logs.map((l) => l.entity_type).filter(Boolean))].sort(), [logs]);
 
