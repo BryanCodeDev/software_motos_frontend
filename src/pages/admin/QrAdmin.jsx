@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, FileText, Image, Link2,
-  Loader2, Plus, Printer, QrCode, RefreshCw, Search, Unlink, User, X,
+  Loader2, Plus, Printer, QrCode, RefreshCw, Search, Trash2, Unlink, User, X,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
@@ -72,7 +72,7 @@ const Field = ({ label, children, wide = false }) => (
 );
 
 /* ───────── Tarjeta de QR ───────── */
-const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onExportSticker }) => (
+const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onExportSticker, onArchive, archiveBusy: isArchiveBusy }) => (
   <li
     className={`flex flex-col rounded-2xl border p-4 transition-colors ${
       selected ? 'border-brand-500/60 bg-brand-50/60' : 'border-border bg-white hover:border-brand-500/40'
@@ -133,6 +133,17 @@ const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDo
           <Link2 size={14} aria-hidden="true" /> Vincular
         </button>
       )}
+      {!qr.user && (
+        <button
+          type="button"
+          onClick={() => onArchive && onArchive(qr.id)}
+          disabled={isArchiveBusy === qr.id}
+          className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50"
+        >
+          {isArchiveBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
+          {isArchiveBusy === qr.id ? 'Archivando…' : 'Archivar'}
+        </button>
+      )}
       <button type="button" onClick={onCopy} aria-label="Copiar enlace público" title="Copiar enlace público" className="btn-outline h-8 w-8 flex-none">
         <Copy size={14} aria-hidden="true" />
       </button>
@@ -167,6 +178,7 @@ export const AdminQrInventory = () => {
   const [selected, setSelected] = useState(new Set());
   const [exportBusy, setExportBusy] = useState(false);
   const [archiveBusy, setArchiveBusy] = useState(false);
+  const [archiveOneBusy, setArchiveOneBusy] = useState(null);
 
   /* Exportar sticker */
   const [stickerExportOpen, setStickerExportOpen] = useState(false);
@@ -496,6 +508,21 @@ export const AdminQrInventory = () => {
     }
   };
 
+  /* Archivar un QR individualmente */
+  const doArchiveOne = async (id) => {
+    setArchiveOneBusy(id);
+    try {
+      await api.post(`/admin/qrs/${id}/archive`, { reason: 'Archivado desde el panel de administración' });
+      toast.success('QR archivado');
+      refreshLocal();
+      globalRefresh();
+    } catch {
+      toast.error('No se pudo archivar el QR');
+    } finally {
+      setArchiveOneBusy(null);
+    }
+  };
+
   const s = stats || {};
   const exportBtn = 'focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors disabled:opacity-50';
 
@@ -631,6 +658,8 @@ export const AdminQrInventory = () => {
                 onCopy={() => copy(publicUrl(qr.value), 'Enlace copiado')}
                 onDownload={() => downloadQr(qr.id)}
                 onExportSticker={() => openStickerExport(qr)}
+                onArchive={() => doArchiveOne(qr.id)}
+                archiveBusy={archiveOneBusy}
               />
             ))}
           </ul>
