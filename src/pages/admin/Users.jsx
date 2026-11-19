@@ -407,37 +407,6 @@ export const AdminUsers = () => {
                 </Link>
               </div>
             )}
-            {tab === 'qr' && (
-              <div className="space-y-3">
-                {qrs === null && (
-                  <p className="flex items-center gap-2 text-sm text-text-secondary"><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Buscando…</p>
-                )}
-                {qrs && qrs.length === 0 && (
-                  <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm text-text-secondary">Este usuario no tiene un QR vinculado.</p>
-                )}
-                {qrs && qrs.map((x) => {
-                  const [label, tone] = QR_STATUS[x.status] || [x.status, 'neutral'];
-                  return (
-                    <div key={x.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
-                        <QrCode size={18} aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-mono text-xs font-semibold text-neutral-900">{x.value}</p>
-                        <p className="mt-0.5 text-xs text-text-secondary">{x.order?.order_number ? `Pedido ${x.order.order_number}` : 'Sin pedido'}</p>
-                      </div>
-                      <Badge tone={tone} size="sm">{label}</Badge>
-                    </div>
-                  );
-                })}
-                <Link
-                  to={`/admin/qrs?q=${encodeURIComponent(sel.email)}`}
-                  className="btn-outline inline-flex px-3 py-2 text-xs"
-                >
-                  <ExternalLink size={14} aria-hidden="true" /> Ver en Códigos QR
-                </Link>
-              </div>
-            )}
           </div>
         )}
       </Modal>

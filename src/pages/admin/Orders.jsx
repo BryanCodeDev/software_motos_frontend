@@ -332,7 +332,7 @@ export const AdminOrders = () => {
   const applyStatus = async (o, status) => {
     setBusyId(o.id);
     try {
-      await api.patch(`/admin/orders/${o.id}`, { commercial_status: status });
+      await api.patch(`/admin/orders/${o.id}/status`, { commercial_status: status });
       toast.success(`${o.order_number}: ${COMMERCIAL[status][0]}`);
       setPending(null);
       load();
