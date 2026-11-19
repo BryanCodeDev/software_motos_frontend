@@ -230,7 +230,7 @@ export const AdminQrInventory = () => {
     const t = setTimeout(async () => {
       setUsersLoading(true);
       try {
-        const { data } = await api.get('/admin/users', { params: { q: userQuery.trim(), role: 'user', page: 1, limit: 8 } });
+        const { data } = await api.get('/admin/users', { params: { q: userQuery.trim(), role: 'user', without_qr: 'true', page: 1, limit: 8 } });
         setUsers(data.users || []);
       } catch {
         setUsers([]);
@@ -266,7 +266,7 @@ export const AdminQrInventory = () => {
   const closeCreate = () => { if (!createBusy) { setCreateOpen(false); setCreated(null); } };
 
   const doCreate = async () => {
-    const qty = Math.min(20, Math.max(1, Number(createQty) || 1));
+    const qty = Math.min(100, Math.max(1, Number(createQty) || 1));
     setCreateBusy(true);
     let made = 0;
     let last = null;
@@ -690,12 +690,12 @@ export const AdminQrInventory = () => {
                 id="create-qty"
                 type="number"
                 min={1}
-                max={20}
+                max={100}
                 value={createQty}
                 onChange={(e) => setCreateQty(e.target.value)}
                 className="input !w-28"
               />
-              <p className="mt-1.5 text-xs text-text-secondary">Máximo 20. Se crean sin asignar y los vinculas después.</p>
+              <p className="mt-1.5 text-xs text-text-secondary">Máximo 100. Se crean sin asignar y los vinculas después.</p>
             </div>
             <div className="flex justify-end gap-3">
               <button type="button" onClick={closeCreate} disabled={createBusy} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
