@@ -72,7 +72,7 @@ const Field = ({ label, children, wide = false }) => (
 );
 
 /* ───────── Tarjeta de QR ───────── */
-const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onExportSticker, onArchive, archiveBusy: isArchiveBusy }) => (
+const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onExportSticker, onArchive, onActivate, onDeactivate, onDelete, archiveBusy: isArchiveBusy, activateBusy: isActivateBusy, deactivateBusy: isDeactivateBusy, deleteBusy: isDeleteBusy }) => (
   <li
     className={`flex flex-col rounded-2xl border p-4 transition-colors ${
       selected ? 'border-brand-500/60 bg-brand-50/60' : 'border-border bg-white hover:border-brand-500/40'
@@ -144,6 +144,39 @@ const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDo
           {isArchiveBusy === qr.id ? 'Archivando…' : 'Archivar'}
         </button>
       )}
+      {!qr.user && qr.status === 'disabled' && (
+        <button
+          type="button"
+          onClick={() => onActivate && onActivate(qr.id)}
+          disabled={isActivateBusy === qr.id}
+          className="btn-outline px-3 py-2 text-xs !text-emerald-700 hover:!bg-emerald-50"
+        >
+          {isActivateBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />}
+          {isActivateBusy === qr.id ? 'Activando…' : 'Activar'}
+        </button>
+      )}
+      {!qr.user && qr.status === 'active' && (
+        <button
+          type="button"
+          onClick={() => onDeactivate && onDeactivate(qr.id)}
+          disabled={isDeactivateBusy === qr.id}
+          className="btn-outline px-3 py-2 text-xs !text-amber-700 hover:!bg-amber-50"
+        >
+          {isDeactivateBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />}
+          {isDeactivateBusy === qr.id ? 'Desactivando…' : 'Desactivar'}
+        </button>
+      )}
+      {!qr.user && (
+        <button
+          type="button"
+          onClick={() => onDelete && onDelete(qr.id)}
+          disabled={isDeleteBusy === qr.id}
+          className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50"
+        >
+          {isDeleteBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
+          {isDeleteBusy === qr.id ? 'Eliminando…' : 'Eliminar'}
+        </button>
+      )}
       <button type="button" onClick={onCopy} aria-label="Copiar enlace público" title="Copiar enlace público" className="btn-outline h-8 w-8 flex-none">
         <Copy size={14} aria-hidden="true" />
       </button>
@@ -179,6 +212,12 @@ export const AdminQrInventory = () => {
   const [exportBusy, setExportBusy] = useState(false);
   const [archiveBusy, setArchiveBusy] = useState(false);
   const [archiveOneBusy, setArchiveOneBusy] = useState(null);
+  const [activateBusy, setActivateBusy] = useState(null);
+  const [deactivateBusy, setDeactivateBusy] = useState(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteOneBusy, setDeleteOneBusy] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteQrId, setDeleteQrId] = useState(null);
 
   /* Exportar sticker */
   const [stickerExportOpen, setStickerExportOpen] = useState(false);
@@ -508,6 +547,58 @@ export const AdminQrInventory = () => {
     }
   };
 
+  /* Activar selección en lote */
+  const doActivateSelected = async () => {
+    if (!selected.size || exportBusy) return;
+    setExportBusy(true);
+    let ok = 0;
+    let fail = 0;
+    const ids = [...selected];
+    try {
+      for (const id of ids) {
+        try {
+          await api.post(`/admin/qrs/${id}/activate`);
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      if (ok) toast.success(`${ok} QR activado${ok !== 1 ? 's' : ''}`);
+      if (fail) toast.error(`${fail} QR no se pudieron activar`);
+      setSelected(new Set());
+      refreshLocal();
+      globalRefresh();
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
+  /* Desactivar selección en lote */
+  const doDeactivateSelected = async () => {
+    if (!selected.size || exportBusy) return;
+    setExportBusy(true);
+    let ok = 0;
+    let fail = 0;
+    const ids = [...selected];
+    try {
+      for (const id of ids) {
+        try {
+          await api.post(`/admin/qrs/${id}/deactivate`);
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      if (ok) toast.success(`${ok} QR desactivado${ok !== 1 ? 's' : ''}`);
+      if (fail) toast.error(`${fail} QR no se pudieron desactivar`);
+      setSelected(new Set());
+      refreshLocal();
+      globalRefresh();
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
   /* Archivar un QR individualmente */
   const doArchiveOne = async (id) => {
     setArchiveOneBusy(id);
@@ -520,6 +611,80 @@ export const AdminQrInventory = () => {
       toast.error('No se pudo archivar el QR');
     } finally {
       setArchiveOneBusy(null);
+    }
+  };
+
+  /* Activar un QR individualmente */
+  const doActivate = async (id) => {
+    setActivateBusy(id);
+    try {
+      await api.post(`/admin/qrs/${id}/activate`);
+      toast.success('QR activado');
+      refreshLocal();
+      globalRefresh();
+    } catch {
+      toast.error('No se pudo activar el QR');
+    } finally {
+      setActivateBusy(null);
+    }
+  };
+
+  /* Desactivar un QR individualmente */
+  const doDeactivate = async (id) => {
+    setDeactivateBusy(id);
+    try {
+      await api.post(`/admin/qrs/${id}/deactivate`);
+      toast.success('QR desactivado');
+      refreshLocal();
+      globalRefresh();
+    } catch {
+      toast.error('No se pudo desactivar el QR');
+    } finally {
+      setDeactivateBusy(null);
+    }
+  };
+
+  /* Eliminar un QR individualmente */
+  const askDelete = (id) => { setDeleteQrId(id); setDeleteOpen(true); };
+  const doDeleteOne = async (id) => {
+    setDeleteOneBusy(id);
+    try {
+      await api.delete(`/admin/qrs/${id}`);
+      toast.success('QR eliminado');
+      setDeleteQrId(null);
+      setDeleteOpen(false);
+      refreshLocal();
+      globalRefresh();
+    } catch {
+      toast.error('No se pudo eliminar el QR');
+    } finally {
+      setDeleteOneBusy(null);
+    }
+  };
+
+  /* Eliminar selección */
+  const doDeleteSelected = async () => {
+    if (!selected.size || deleteBusy) return;
+    setDeleteBusy(true);
+    let ok = 0;
+    let fail = 0;
+    const ids = [...selected];
+    try {
+      for (const id of ids) {
+        try {
+          await api.delete(`/admin/qrs/${id}`);
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      if (ok) toast.success(`${ok} QR eliminado${ok !== 1 ? 's' : ''}`);
+      if (fail) toast.error(`${fail} QR no se pudieron eliminar`);
+      setSelected(new Set());
+      refreshLocal();
+      globalRefresh();
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -659,7 +824,13 @@ export const AdminQrInventory = () => {
                 onDownload={() => downloadQr(qr.id)}
                 onExportSticker={() => openStickerExport(qr)}
                 onArchive={() => doArchiveOne(qr.id)}
+                onActivate={() => doActivate(qr.id)}
+                onDeactivate={() => doDeactivate(qr.id)}
+                onDelete={() => askDelete(qr.id)}
                 archiveBusy={archiveOneBusy}
+                activateBusy={activateBusy}
+                deactivateBusy={deactivateBusy}
+                deleteBusy={deleteOneBusy}
               />
             ))}
           </ul>
@@ -700,6 +871,15 @@ export const AdminQrInventory = () => {
             </button>
             <button type="button" onClick={doArchive} disabled={archiveBusy} className={`${exportBtn} border border-rose-200/60 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
               {archiveBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />} Archivar
+            </button>
+            <button type="button" onClick={doActivateSelected} disabled={exportBusy} className={`${exportBtn} border border-emerald-200/60 bg-emerald-900/40 text-emerald-200 hover:bg-emerald-900/70`}>
+              {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />} Activar
+            </button>
+            <button type="button" onClick={doDeactivateSelected} disabled={exportBusy} className={`${exportBtn} border border-amber-200/60 bg-amber-900/40 text-amber-200 hover:bg-amber-900/70`}>
+              {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />} Desactivar
+            </button>
+            <button type="button" onClick={doDeleteSelected} disabled={deleteBusy} className={`${exportBtn} border border-rose-200/60 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
+              {deleteBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />} Eliminar
             </button>
           </div>
         </div>
@@ -893,6 +1073,25 @@ export const AdminQrInventory = () => {
               <button type="button" onClick={doUnlink} disabled={unlinkBusy} className="btn-danger px-4 py-2 text-sm">
                 {unlinkBusy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
                 Desvincular
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ───────── Eliminar QR ───────── */}
+      <Modal isOpen={deleteOpen} onClose={() => (deleteOneBusy ? null : setDeleteOpen(false))} title="Eliminar QR">
+        {deleteQrId && (
+          <div className="space-y-5">
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Esta acción eliminará permanentemente el código QR <span className="font-mono font-semibold text-neutral-900">{deleteQrId}</span>.
+              No se deshará.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setDeleteOpen(false)} disabled={deleteOneBusy} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={() => doDeleteOne(deleteQrId)} disabled={deleteOneBusy} className="btn-danger px-4 py-2 text-sm">
+                {deleteOneBusy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                Eliminar
               </button>
             </div>
           </div>
