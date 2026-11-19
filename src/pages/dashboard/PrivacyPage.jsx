@@ -235,7 +235,10 @@ export const PrivacyPage = () => {
         toastRef.current.error('No pudimos cargar tu privacidad. Recarga la página.');
       }
 
-      if (profRes.status === 'fulfilled') setProfile(profRes.value.data?.[0] || null);
+      if (profRes.status === 'fulfilled') {
+        const profiles = profRes.value.data?.profiles || profRes.value.data || [];
+        setProfile(Array.isArray(profiles) ? profiles[0] || null : null);
+      }
       if (contactsRes.status === 'fulfilled') setContacts(contactsRes.value.data.contacts || contactsRes.value.data || []);
     } finally {
       setLoading(false);

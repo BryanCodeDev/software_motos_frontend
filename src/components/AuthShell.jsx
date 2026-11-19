@@ -132,9 +132,9 @@ export const AuthShell = ({ aside, children, bgImage, showFooter }) => {
         </aside>
 
         {/* ───────── Formulario (derecha) ───────── */}
-        <section className="flex items-center justify-center px-4 py-10 sm:px-8">
+        <section className="flex w-full items-center justify-center px-4 py-10 sm:px-8 lg:py-14">
           <motion.div
-            className="w-full max-w-md"
+            className="w-full max-w-md lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto"
             initial={reduce ? false : { opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.7, ease: EASE }}

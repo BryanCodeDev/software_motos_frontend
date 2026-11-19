@@ -66,7 +66,7 @@ export const EmptyState = ({ icon: Icon, title, text, children }) => {
 export const CheckField = ({ id, checked, onChange, label, hint, disabled = false }) => (
   <label
     htmlFor={id}
-    className={`group flex select-none items-start gap-3 rounded-lg py-1 ${
+    className={`group flex select-none items-start gap-3 rounded-lg py-1.5 ${
       disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
     }`}
   >
@@ -80,7 +80,7 @@ export const CheckField = ({ id, checked, onChange, label, hint, disabled = fals
     />
     <span
       aria-hidden="true"
-      className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border border-border bg-white text-white transition-all duration-200 group-hover:border-brand-500/60 peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2 peer-checked:[&>svg]:scale-100 peer-checked:[&>svg]:opacity-100"
+      className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 border-border bg-white text-white transition-all duration-200 group-hover:border-brand-500 peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2 peer-checked:[&>svg]:scale-100 peer-checked:[&>svg]:opacity-100"
     >
       <svg
         viewBox="0 0 16 16"
