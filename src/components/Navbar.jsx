@@ -40,7 +40,13 @@ const NavLinkItem = ({ item, active, mobile = false, onHero = false }) => {
 /** Enlaces de la cuenta, compartidos por el menú de escritorio y el móvil. */
 const AccountLinks = ({ isAdmin, isActive, itemRole, onLogout }) => {
   const itemBase = 'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors';
-  const links = isAdmin ? [{ label: 'Panel administrativo', to: ADMIN_ROUTE, icon: Settings }] : accountLinks;
+  const links = isAdmin
+    ? [
+        { label: 'Panel administrativo', to: ADMIN_ROUTE, icon: Settings },
+        { label: 'Mi panel', to: routes.dashboard, icon: LayoutDashboard },
+        { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
+      ]
+    : accountLinks;
 
   return (
     <>

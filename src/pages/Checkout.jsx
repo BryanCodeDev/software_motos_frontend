@@ -728,9 +728,9 @@ export const Checkout = () => {
                     Selecciona {pkg.profile_count} perfil(es) existentes o crea uno nuevo. Cada perfil recibirá su propio QR permanente.
                   </p>
                 </div>
-                <Badge tone="info" size="sm">
-                  Paso de 3
-                </Badge>
+                  <Badge tone="info" size="sm">
+                    Paso 2 de 3
+                  </Badge>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); createPackageOrderAndPay(); }} className={`${panel} p-6 lg:p-8 space-y-5`}>
@@ -813,7 +813,7 @@ export const Checkout = () => {
                 )}
 
                 <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <Link to={packages ? routes.products : routes.products} className="btn-outline px-4 py-2.5 text-sm">
+                  <Link to={packages ? routes.dashboardOrders : routes.products} className="btn-outline px-4 py-2.5 text-sm">
                     Volver a paquetes
                   </Link>
                   <button

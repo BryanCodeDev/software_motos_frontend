@@ -53,6 +53,17 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  // Cuando el interceptor de axios expira el token y no hay refresh, limpia la sesión aquí también.
+  useEffect(() => {
+    const onUnauthorized = () => {
+      clearTokens();
+      setUser(null);
+      setLoading(false);
+    };
+    window.addEventListener('auth:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
+  }, []);
+
   const refreshUser = useCallback(async () => {
     const u = await fetchUser();
     setUser(u);

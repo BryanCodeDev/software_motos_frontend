@@ -126,6 +126,7 @@ export const QrPage = () => {
   const [copied, setCopied] = useState(false);
 
   const [state, setState] = useState('loading');
+  const [attempt, setAttempt] = useState(0);
 
   const deriveState = useCallback((id, ord) => {
     if (!id && !ord) return 'no_order';
@@ -222,7 +223,7 @@ export const QrPage = () => {
       clearTimeout(timer);
       cleanupBlob();
     };
-  }, [deriveState]);
+  }, [deriveState, attempt]);
 
   useEffect(() => {
     if (!qrProduct) {
@@ -644,7 +645,7 @@ export const QrPage = () => {
         <div className={`${panel} p-6 lg:p-8`}>
           <EmptyState icon={AlertCircle} title="No se pudo cargar tu QR" text="Inténtalo de nuevo en unos momentos." />
           <div className="mt-6 flex justify-center">
-            <Button onClick={() => window.location.reload()} variant="outline">
+            <Button onClick={() => setAttempt((a) => a + 1)} variant="outline">
               <RotateCcw size={16} /> Recargar
             </Button>
           </div>

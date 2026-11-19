@@ -311,7 +311,7 @@ export const PublicEmergency = () => {
         if (isMounted && !scanRecorded.current && identifier) {
           scanRecorded.current = true;
           try {
-            await api.post('/api/identifiers/scans', {
+            await api.post('/identifiers/scans', {
               identifier_value: identifier,
               result: res.data.status === 'active' ? 'active' : 'inactive',
             });
