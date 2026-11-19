@@ -257,7 +257,13 @@ export const PrivacyPage = () => {
   const save = useCallback(async () => {
     setSaving(true);
     try {
-      await api.patch('/privacy/me', { settings: toggles });
+      await api.patch('/privacy/me', {
+        settings: Object.entries(toggles).map(([field_name, is_public]) => ({
+          profile_id: profile?.id,
+          field_name,
+          is_public,
+        })),
+      });
       savedRef.current = toggles;
       setDirty(false);
       toastRef.current.success('Privacidad guardada');
@@ -266,7 +272,7 @@ export const PrivacyPage = () => {
     } finally {
       setSaving(false);
     }
-  }, [toggles]);
+  }, [toggles, profile?.id]);
 
   /* Ctrl/Cmd + S guarda */
   useEffect(() => {

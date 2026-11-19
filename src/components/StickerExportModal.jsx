@@ -32,8 +32,8 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
   const [error, setError] = useState(null);
 
   const publicUrl = useMemo(
-    () => `${window.location.origin}/e/${encodeURIComponent(qr.value)}`,
-    [qr.value]
+    () => (qr ? `${window.location.origin}/e/${encodeURIComponent(qr.value)}` : null),
+    [qr]
   );
 
   const revoke = useCallback((url) => {
@@ -49,7 +49,8 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
     });
   }, []);
 
-  const compose = useCallback(async (designId) => {
+    const compose = useCallback(async (designId) => {
+    if (!qr) return null;
     const config = stickerConfigurations[designId];
     if (!config) return null;
 
@@ -102,7 +103,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('No se pudo generar la imagen del sticker');
     return URL.createObjectURL(blob);
-  }, [publicUrl, loadImage]);
+  }, [publicUrl, loadImage, qr]);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,7 +140,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
     try {
       const link = document.createElement('a');
       link.href = previewUrl;
-      link.download = `sticker-${qr.value}.png`;
+      link.download = `sticker-${qr ? qr.value : 'qr'}.png`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -161,7 +162,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
         isOpen={true}
         onClose={onClose}
         title="Exportar sticker con QR"
-        description={`Selecciona el diseño y descarga el sticker personalizado con el QR del código ${qr.value}.`}
+        description={`Selecciona el diseño y descarga el sticker personalizado con el QR del código ${qr ? qr.value : '—'}.`}
         size="xl"
         footer={
           <div className="flex justify-end gap-3">

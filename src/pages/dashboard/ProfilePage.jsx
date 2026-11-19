@@ -53,7 +53,7 @@ const sections = [
 
 const emptyForm = {
   ...Object.fromEntries(fields.map((f) => [f.key, f.input === 'checkbox' ? false : ''])),
-  photo_url: '', photoFile: null,
+  photo_url: '', photoFile: null, profile_id: '',
 };
 const isWide = (f) => f.wide || f.input === 'textarea' || f.input === 'checkbox';
 
@@ -211,13 +211,14 @@ export const ProfilePage = () => {
         if (profRes.status === 'fulfilled') {
           const data = profRes.value.data;
           const profiles = data.profiles || (Array.isArray(data) ? data : []);
-          const p = profiles.length > 0 ? profiles[0] : {};
+          const mainAcct = profiles.find((p) => p.is_main === 1 || p.is_main === true) || profiles[0];
+          const p = mainAcct || {};
           const loaded = Object.fromEntries(fields.map((f) => {
             let v = p[f.key] ?? '';
             if (f.input === 'date' && v) v = String(v).slice(0, 10);
             return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
           }));
-          const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
+          const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null, profile_id: p.id || '' };
           setForm(next);
           snapshotRef.current = { form: next, photo: p.photo_url || null };
           if (p.photo_url) setPhotoPreview(p.photo_url);
@@ -266,7 +267,7 @@ export const ProfilePage = () => {
   const uploadPhotoFile = async () => {
     if (!form.photoFile) return form.photo_url;
     const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(form.photoFile); });
-    const res = await api.post('/profiles/photo', { photo_data: dataUrl });
+    const res = await api.post('/profiles/photo', { photo_data: dataUrl, profile_id: form.profile_id || undefined });
     return res.data.photo_url;
   };
 
@@ -318,9 +319,10 @@ export const ProfilePage = () => {
       const { data } = await api.get('/profiles/me/profiles');
       const profiles = data.profiles || [];
       setProfiles(profiles);
-      // Establecer el primer perfil como activo por defecto si no hay uno seleccionado
+      // Establecer el perfil principal como activo por defecto; si no hay principal, el primero.
       if (!activeProfileId && profiles.length > 0) {
-        setActiveProfileId(profiles[0].id);
+        const main = profiles.find((p) => p.is_main === 1 || p.is_main === true);
+        setActiveProfileId((main || profiles[0]).id);
       }
       // Cargar identificadores del usuario para saber qué perfiles tienen QR activo
       try {
@@ -343,10 +345,11 @@ export const ProfilePage = () => {
     return () => clearTimeout(t);
   }, [loadProfiles]);
 
-  /* Si se elimina el perfil activo, seleccionar el primero disponible automáticamente */
+  /* Si se elimina el perfil activo, seleccionar el principal o el primero disponible */
   const resetActiveProfileIfNeeded = useCallback(() => {
     if (activeProfileId && profiles.length > 0 && !profiles.find((p) => p.id === activeProfileId)) {
-      setActiveProfileId(profiles[0].id);
+      const main = profiles.find((p) => p.is_main === 1 || p.is_main === true);
+      setActiveProfileId((main || profiles[0]).id);
     }
   }, [profiles, activeProfileId]);
 
@@ -391,9 +394,16 @@ export const ProfilePage = () => {
       await refreshUser();
     } catch (err) {
       const status = err?.response?.status;
+      const code = err?.response?.data?.code;
       const msg = err?.response?.data?.error || 'No se pudo eliminar el perfil.';
       if (status === 409) {
-        toastRef.current.error('No se puede eliminar este perfil: ya está inactivo.');
+        if (code === 'profile_is_main') {
+          toastRef.current.error('No puedes desactivar tu perfil principal. Promueve otro perfil a principal primero.');
+        } else if (code === 'profile_inactive') {
+          toastRef.current.error('Este perfil ya está inactivo.');
+        } else {
+          toastRef.current.error(msg);
+        }
       } else {
         toastRef.current.error(msg);
       }
@@ -402,10 +412,10 @@ export const ProfilePage = () => {
     }
   };
 
-  const sorted = useMemo(() => [...profiles].sort((a, b) => (b.is_active !== false) - (a.is_active !== false) || String(a.display_name).localeCompare(String(b.display_name), 'es')), [profiles]);
+  const sorted = useMemo(() => [...profiles].sort((a, b) => (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0) || String(a.display_name).localeCompare(String(b.display_name), 'es')), [profiles]);
   const countsMP = useMemo(() => Object.fromEntries(FILTERS_MP.map((f) => [f.id, profiles.filter(f.test).length])), [profiles]);
   const visibleMP = sorted.filter((FILTERS_MP.find((f) => f.id === mpFilter) || FILTERS_MP[0]).test);
-  const activeCount = profiles.filter((p) => p.is_active !== false).length;
+  const activeCount = profiles.filter((p) => Boolean(p.is_active)).length;
 
   const isPet = createType === 'pet';
   const isManaged = createType === 'managed_person';
