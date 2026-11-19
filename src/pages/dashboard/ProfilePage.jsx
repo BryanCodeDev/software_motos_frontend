@@ -206,7 +206,9 @@ export const ProfilePage = () => {
         ]);
         if (!mounted) return;
         if (profRes.status === 'fulfilled') {
-          const p = profRes.value.data.profile || profRes.value.data || {};
+          const data = profRes.value.data;
+          const profiles = data.profiles || (Array.isArray(data) ? data : []);
+          const p = profiles.length > 0 ? profiles[0] : {};
           const loaded = Object.fromEntries(fields.map((f) => {
             let v = p[f.key] ?? '';
             if (f.input === 'date' && v) v = String(v).slice(0, 10);
