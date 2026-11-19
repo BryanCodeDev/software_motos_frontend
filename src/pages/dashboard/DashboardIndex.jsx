@@ -295,7 +295,7 @@ export const DashboardIndex = () => {
               </span>
               <h2 className="text-base font-semibold text-neutral-900">Tu QR aún no está activo</h2>
               <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
-                Se activa con un pago único de <span className="font-bold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>, sin suscripción.
+                Se activa al comprar tu paquete de stickers. Sin suscripción.
               </p>
               <Link to={routes.dashboardQr} className="btn-primary mt-5 w-full px-5 py-2.5 text-sm">
                 Activar mi QR <ArrowRight size={16} aria-hidden="true" />
