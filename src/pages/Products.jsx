@@ -1,4 +1,4 @@
-import { Link, useEffect, useState } from 'react-router-dom';
+import { Link, useEffect, useState } from 'react';
 import { ArrowRight, Check, Truck } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
