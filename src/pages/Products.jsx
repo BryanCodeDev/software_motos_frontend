@@ -1,4 +1,5 @@
-import { Link, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Truck } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
@@ -16,7 +17,7 @@ const formatAmount = (amount) => {
       maximumFractionDigits: 0,
     }).format(Number(amount));
   } catch {
-    return `$${amount}`;
+    return '$30.000';
   }
 };
 
@@ -43,27 +44,33 @@ const STEPS = [
   'Recibe y pega tus stickers',
 ];
 
+const DEFAULT_ROUTE = '/auth/registro';
+const DEFAULT_DASHBOARD = '/panel';
+
 export const Products = () => {
   const { isAuthenticated } = useAuth();
   const [stickerPrice, setStickerPrice] = useState(null);
 
-  // Precio del sticker desde el catálogo del backend (única fuente de verdad).
+  // Precio del sticker desde el catálogo del backend.
   useEffect(() => {
     let mounted = true;
     const loadStickerPrice = async () => {
       try {
         const { data } = await api.get('/products');
-        const list = data.products || data || [];
-        const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
-        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
+        const list = data && data.products ? data.products : data || [];
+        const sticker = list.find((p) => p && p.slug === 'sticker-qr-personalizado');
+        if (mounted && sticker && sticker.price) setStickerPrice(formatAmount(sticker.price));
       } catch {
-        const stickerPlan = productPlans.find((p) => p.name === 'Perfil individual');
-        if (mounted && stickerPlan) setStickerPrice(stickerPlan.price);
+        const stickerPlan = Array.isArray(productPlans) ? productPlans.find((p) => p && p.name === 'Perfil individual') : null;
+        if (mounted && stickerPlan) setStickerPrice(stickerPlan.price || '$39.900');
       }
     };
     loadStickerPrice();
     return () => { mounted = false; };
   }, []);
+
+  const registerRoute = (routes && routes.register) || DEFAULT_ROUTE;
+  const dashboardRoute = (routes && routes.dashboard) || DEFAULT_DASHBOARD;
 
   return (
     <div className="min-h-screen">
@@ -77,10 +84,9 @@ export const Products = () => {
         align="center"
       />
 
-      {/* ───── Oferta principal: precio, qué incluye y diseños ───── */}
+      {/* ───── Oferta principal ───── */}
       <section className="pb-16">
         <div className="container-page grid items-start gap-8 lg:grid-cols-12">
-          {/* Oferta: precio y qué incluye */}
           <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
             <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
             <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
@@ -89,8 +95,8 @@ export const Products = () => {
             <p className="mt-1 text-sm text-text-secondary">Pago único</p>
 
             <ul className="mt-6 space-y-3">
-              {INCLUDES.map((text) => (
-                <li key={text} className="flex items-start gap-3 text-sm text-neutral-900">
+              {(INCLUDES || []).map((text, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-sm text-neutral-900">
                   <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
                     <Check size={13} strokeWidth={3} aria-hidden="true" />
                   </span>
@@ -100,7 +106,7 @@ export const Products = () => {
             </ul>
 
             <Link
-              to={isAuthenticated ? routes.dashboard : routes.register || '/auth/registro'}
+              to={isAuthenticated ? dashboardRoute : registerRoute}
               className="btn-primary mt-8 w-full px-5 py-3 text-sm"
             >
               {isAuthenticated ? 'Ir a mi panel' : 'Crear cuenta para pedir'}
@@ -119,21 +125,21 @@ export const Products = () => {
               Elige entre 6 diseños
             </h2>
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {DESIGNS.map((design) => (
+              {(DESIGNS || []).map((design, idx) => (
                 <li
-                  key={design.id}
+                  key={`design-${idx}`}
                   className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
                 >
                   <img
-                    src={design.image_url}
-                    alt={design.name}
+                    src={design.image_url || '/img/sticker-1.png'}
+                    alt={design.name || 'Diseño'}
                     width="160"
                     height="160"
                     loading="lazy"
                     className="aspect-square w-full rounded-xl bg-neutral-100 object-cover object-center"
                   />
-                  <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name}</p>
-                  <p className="text-xs text-text-secondary">{design.description}</p>
+                  <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name || 'Diseño'}</p>
+                  <p className="text-xs text-text-secondary">{design.description || ''}</p>
                 </li>
               ))}
             </ul>
@@ -141,59 +147,59 @@ export const Products = () => {
         </div>
       </section>
 
-          {/* ───── Catálogo de todos los planes ───── */}
-          <section className="pb-24">
-            <div className="container-page">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
-                <p className="text-sm text-text-secondary">
-                  Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
-                </p>
-              </div>
-              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {(productPlans || [])
-                  .filter((p) => !p.coming && !p.whatsapp)
-                  .map((plan) => (
-                    <li
-                      key={plan.name}
-                      className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
-                    >
-                      {plan.badge && (
-                        <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
-                          {plan.badge}
-                        </span>
-                      )}
-                      <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name || 'Plan'}</h3>
-                      <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
-                        <span className="text-2xl font-bold text-neutral-900">{plan.price || 'Consulta precio'}</span>
-                        {plan.priceNote && (
-                          <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
-                        )}
-                      </div>
-                      <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc || ''}</p>
-                      <ul className="mb-6 space-y-2 text-sm text-text-secondary">
-                        {(plan.features || []).map((f) => (
-                          <li key={f} className="flex items-start gap-2">
-                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
-                          </li>
-                        ))}
-                      </ul>
-                      <Link to={routes.register || '/auth/registro'} className="btn-primary w-full py-2.5 text-sm">
-                        {plan.action || 'Elegir plan'}
-                      </Link>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          </section>
+      {/* ───── Catálogo de todos los planes ───── */}
+      <section className="pb-24">
+        <div className="container-page">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
+            <p className="text-sm text-text-secondary">
+              Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
+            </p>
+          </div>
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {(productPlans || [])
+              .filter((p) => p && !p.coming && !p.whatsapp)
+              .map((plan, idx) => (
+                <li
+                  key={plan.name || `plan-${idx}`}
+                  className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+                >
+                  {plan.badge && (
+                    <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                      {plan.badge}
+                    </span>
+                  )}
+                  <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name || 'Plan'}</h3>
+                  <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
+                    <span className="text-2xl font-bold text-neutral-900">{plan.price || 'Consulta precio'}</span>
+                    {plan.priceNote && (
+                      <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
+                    )}
+                  </div>
+                  <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc || ''}</p>
+                  <ul className="mb-6 space-y-2 text-sm text-text-secondary">
+                    {(plan.features || []).map((f, fIdx) => (
+                      <li key={fIdx} className="flex items-start gap-2">
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to={registerRoute} className="btn-primary w-full py-2.5 text-sm">
+                    {plan.action || 'Elegir plan'}
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </div>
+      </section>
 
       {/* ───── Cómo funciona ───── */}
       <section className="pb-24">
         <div className="container-page">
           <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">Cómo funciona</h2>
           <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((label, i) => (
-              <li key={label} className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4">
+            {(STEPS || []).map((label, i) => (
+              <li key={i} className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4">
                 <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
                   {i + 1}
                 </span>
