@@ -12,6 +12,7 @@ import Modal from '../../components/Modal';
 import {
   User, Users, Dog, Plus, QrCode, Package, AlertTriangle, RefreshCw, Loader2, Power, ArrowRight,
   Camera, Check, ArrowLeft, ArrowRight as ArrowRight2, Eye, EyeOff, RotateCcw, Save, Trash2,
+  Edit2,
 } from 'lucide-react';
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -113,12 +114,13 @@ const FILTERS_MP = [
   { id: 'pets', label: 'Mascotas', test: (p) => p.profile_type === 'pet' },
 ];
 
-const ProfileCardMP = ({ profile: p, busy, onDeactivate, onReactivate, onEdit }) => {
+const ProfileCardMP = ({ profile: p, busy, onDelete, onEdit }) => {
   const cfg = TYPES[p.profile_type] || TYPES.person;
   const Icon = cfg.icon;
   const active = p.is_active !== false;
-  const qrCount = Number(p.qr_count) || 0;
-  const orders = Number(p.order_count) || 0;
+  const identifiers = p.identifiers || (p.qr_id ? [{ id: p.qr_id, value: p.qr_value, status: p.qr_status, print_status: p.qr_print_status }] : []);
+  const hasQr = identifiers.some((id) => id.status === 'active' || id.status === 'pending_activation') || Number(p.qr_count || 0) > 0;
+  const orders = Number(p.order_count || 0) || 0;
   const subtitle = [cfg.label, p.relationship || p.pet_species].filter(Boolean).join(' · ');
   return (
     <li className={`flex flex-col rounded-2xl border p-5 transition-colors ${active ? 'border-border bg-white hover:border-brand-500/40' : 'border-border bg-neutral-50'}`}>
@@ -134,17 +136,15 @@ const ProfileCardMP = ({ profile: p, busy, onDeactivate, onReactivate, onEdit })
       <div className="mt-3 flex flex-wrap gap-1.5">
         {!active && <Badge tone="neutral" size="sm">Inactivo</Badge>}
         {p.pet_lost && <Badge tone="danger" size="sm">Perdido</Badge>}
-        {active && (qrCount > 0 ? <Badge tone="success" size="sm">{plural(qrCount, 'QR activo', 'QR activos')}</Badge> : <Badge tone="warn" size="sm">Sin QR</Badge>)}
+        {active && (hasQr ? <Badge tone="success" size="sm">QR activo</Badge> : <Badge tone="warn" size="sm">Sin QR</Badge>)}
       </div>
       <p className="mt-3 flex items-center gap-1.5 text-xs text-text-secondary"><Package size={13} aria-hidden="true" /> {plural(orders, 'pedido', 'pedidos')}</p>
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
-        <Link to={`${routes.dashboardMiPerfil}#perfil-${p.id}`} onClick={onEdit} className="btn-outline flex-1 px-3 py-2 text-xs">Ver y editar</Link>
-        {active && qrCount === 0 && <Link to={routes.dashboardPedidos} className="btn-primary flex-1 px-3 py-2 text-xs"><QrCode size={14} aria-hidden="true" /> Conseguir QR</Link>}
+        <button type="button" onClick={() => onEdit(p)} disabled={busy} className="btn-outline flex-1 px-3 py-2 text-xs">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Edit2 size={14} aria-hidden="true" />} Ver y editar</button>
+        {active && !hasQr && <Link to={routes.dashboardPedidos} className="btn-primary flex-1 px-3 py-2 text-xs"><QrCode size={14} aria-hidden="true" /> Conseguir QR</Link>}
         {active ? (
-          <button type="button" onClick={() => onDeactivate(p)} disabled={busy} aria-label={`Desactivar a ${p.display_name || 'este perfil'}`} title="Desactivar" className="btn-outline h-8 w-8 flex-none !text-rose-700 hover:!bg-rose-50">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Power size={14} aria-hidden="true" />}</button>
-        ) : (
-          <button type="button" onClick={() => onReactivate(p)} disabled={busy} className="btn-outline flex-1 px-3 py-2 text-xs">{busy && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}Reactivar</button>
-        )}
+          <button type="button" onClick={() => onDelete(p)} disabled={busy} aria-label={`Eliminar a ${p.display_name || 'este perfil'}`} title="Eliminar" className="btn-outline h-8 w-8 flex-none !text-rose-700 hover:!bg-rose-50">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}</button>
+        ) : null}
       </div>
     </li>
   );
@@ -294,7 +294,11 @@ export const ProfilePage = () => {
   const [mpError, setMpError] = useState(null);
   const [mpFilter, setMpFilter] = useState('all');
   const [busyId, setBusyId] = useState(null);
-  const [toDeactivate, setToDeactivate] = useState(null);
+  const [toDelete, setToDelete] = useState(null);
+  const [editingProfile, setEditingProfile] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editingSaving, setEditingSaving] = useState(false);
+  const [editingErrors, setEditingErrors] = useState({});
   const [creating, setCreating] = useState(false);
   const [createType, setCreateType] = useState('person');
   const [createSaving, setCreateSaving] = useState(false);
@@ -315,11 +319,41 @@ export const ProfilePage = () => {
     return () => clearTimeout(t);
   }, [loadProfiles]);
 
-  const change = async (p, action) => {
+  const saveEditProfile = async () => {
+    if (!editingProfile) return;
+    setEditingSaving(true);
+    setEditingErrors({});
+    try {
+      const payload = {
+        display_name: String(editForm.display_name || '').trim() || null,
+        relationship: editingProfile.profile_type === 'pet' ? null : String(editForm.relationship || '').trim() || null,
+      };
+      await api.patch(`/profiles/me/profiles/${editingProfile.id}`, payload);
+      toastRef.current.success('Perfil actualizado');
+      setEditingProfile(null);
+      await loadProfiles();
+      await refreshUser();
+    } catch (err) {
+      const msg = err?.response?.data?.error || 'No se pudo actualizar el perfil.';
+      setEditingErrors({ display_name: msg });
+    } finally {
+      setEditingSaving(false);
+    }
+  };
+
+  const deleteProfile = async (p) => {
+    setToDelete(null);
     setBusyId(p.id);
-    try { await api.patch(`/profiles/me/profiles/${p.id}/${action}`); toastRef.current.success(action === 'deactivate' ? 'Perfil desactivado' : 'Perfil reactivado'); setToDeactivate(null); await loadProfiles(); await refreshUser(); }
-    catch (err) { toastRef.current.error(err?.response?.data?.error || `No se pudo ${action === 'deactivate' ? 'desactivar' : 'reactivar'} el perfil`); }
-    finally { setBusyId(null); }
+    try {
+      await api.delete(`/profiles/me/profiles/${p.id}`);
+      toastRef.current.success('Perfil eliminado');
+      await loadProfiles();
+      await refreshUser();
+    } catch (err) {
+      toastRef.current.error(err?.response?.data?.error || 'No se pudo eliminar el perfil.');
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const sorted = useMemo(() => [...profiles].sort((a, b) => (b.is_active !== false) - (a.is_active !== false) || String(a.display_name).localeCompare(String(b.display_name), 'es')), [profiles]);
@@ -344,22 +378,8 @@ export const ProfilePage = () => {
 
   const createSubmit = async () => {
     if (!createValidate(1)) return;
-    setCreateSaving(true);
-    try {
-      const payload = {
-        profile_type: createType,
-        display_name: createForm.display_name.trim(),
-        relationship: isPet ? null : createForm.relationship.trim() || null,
-        is_managed_by_third_party: isManaged,
-        consent_accepted: isManaged ? createForm.consent_accepted : false,
-      };
-      await api.post('/profiles/me/profiles', payload);
-      toastRef.current.success(`Perfil de ${createType} creado`);
-      setCreating(false);
-      await loadProfiles();
-      await refreshUser();
-    } catch (err) { toastRef.current.error(err?.response?.data?.error || 'No se pudo crear el perfil'); }
-    finally { setCreateSaving(false); }
+    setCreating(false);
+    navigate(`/panel/checkout?type=profile&profile_type=${createType}&name=${encodeURIComponent(createForm.display_name.trim())}&relationship=${encodeURIComponent(createForm.relationship || '')}`);
   };
 
   if (loading) return <PageLoader />;
@@ -489,18 +509,48 @@ export const ProfilePage = () => {
             ) : (
               <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleMP.map((p) => (
-                  <ProfileCardMP key={p.id} profile={p} busy={busyId === p.id} onDeactivate={setToDeactivate} onReactivate={(prof) => change(prof, 'reactivate')} onEdit={() => { /* editar abre el mismo perfil: la cuenta ya lo muestra; aquí se desactiva/reactiva */ }} />
+                  <ProfileCardMP key={p.id} profile={p} busy={busyId === p.id} onDelete={(prof) => setToDelete(prof)} onEdit={() => {
+                    setEditingProfile(p);
+                    setEditForm({ display_name: p.display_name || '', relationship: p.relationship || '' });
+                  }} />
                 ))}
               </ul>
             )}
           </>
         )}
 
-        <Modal isOpen={!!toDeactivate} onClose={() => (busyId ? null : setToDeactivate(null))} title="Desactivar perfil">
-          <p className="mb-6 text-sm leading-relaxed text-text-secondary"><span className="font-semibold text-neutral-900">{toDeactivate?.display_name || 'Este perfil'}</span> dejará de mostrarse al escanear su QR hasta que lo reactives.</p>
+        <Modal isOpen={!!toDelete} onClose={() => (busyId ? null : setToDelete(null))} title="Eliminar perfil">
+          <p className="mb-6 text-sm leading-relaxed text-text-secondary"><span className="font-semibold text-neutral-900">{toDelete?.display_name || 'Este perfil'}</span> se eliminará permanentemente, incluyendo su código QR asociado. Esta acción no se puede deshacer.</p>
           <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setToDeactivate(null)} disabled={!!busyId}>Cancelar</Button>
-            <Button variant="danger" onClick={() => change(toDeactivate, 'deactivate')} disabled={!!busyId}>{busyId && <Loader2 size={16} className="animate-spin" />}{busyId ? 'Desactivando…' : 'Desactivar'}</Button>
+            <Button variant="ghost" onClick={() => setToDelete(null)} disabled={!!busyId}>Cancelar</Button>
+            <Button variant="danger" onClick={() => deleteProfile(toDelete)} disabled={!!busyId}>{busyId && <Loader2 size={16} className="animate-spin" />}{busyId ? 'Eliminando…' : 'Eliminar'}</Button>
+          </div>
+        </Modal>
+
+        {/* Modal: editar perfil */}
+        <Modal isOpen={!!editingProfile} onClose={() => setEditingProfile(null)} title="Editar perfil" size="lg">
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm text-text-secondary">Actualiza el nombre y la relación de este perfil de emergencia.</p>
+              {editingProfile && <p className="text-xs font-semibold text-neutral-900 mb-3">Perfil: {editingProfile.profile_type === 'pet' ? 'Mascota' : editingProfile.profile_type === 'managed_person' ? 'A mi cargo' : 'Persona'}</p>}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="ep_display_name">Nombre para mostrar<span className="ml-1 text-brand-500" aria-hidden="true">*</span></Label>
+                <Input id="ep_display_name" value={editForm.display_name || ''} onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })} aria-invalid={editingErrors.display_name ? 'true' : undefined} className="h-11" autoFocus />
+                {editingErrors.display_name && <p role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{editingErrors.display_name}</p>}
+              </div>
+              {editingProfile && editingProfile.profile_type !== 'pet' && (
+                <div>
+                  <Label htmlFor="ep_relationship">Relación contigo</Label>
+                  <Input id="ep_relationship" value={editForm.relationship || ''} onChange={(e) => setEditForm({ ...editForm, relationship: e.target.value })} placeholder="Ej.: esposa, hijo, mamá" className="h-11" />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setEditingProfile(null)} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={saveEditProfile} disabled={editingSaving} className="btn-primary px-6 py-2.5 text-sm">{editingSaving ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : 'Guardar cambios'}</button>
+            </div>
           </div>
         </Modal>
 
