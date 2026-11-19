@@ -407,53 +407,6 @@ export const AdminUsers = () => {
               )
             )}
 
-            {tab === 'rol' && (
-              isMe(sel) ? (
-                <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm text-text-secondary">
-                  No puedes cambiar tu propio rol. Pídeselo a otro administrador.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  <div role="radiogroup" aria-label="Rol" className="grid gap-3 sm:grid-cols-2">
-                    {Object.entries(ROLES).map(([id, r]) => {
-                      const on = newRole === id;
-                      const Icon = r.icon;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          role="radio"
-                          aria-checked={on}
-                          onClick={() => setNewRole(id)}
-                          className={`focus-ring rounded-xl border p-4 text-left transition-colors ${
-                            on ? 'border-brand-500 bg-brand-500/10' : 'border-border bg-white hover:border-brand-500/40'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
-                            <Icon size={16} className={on ? 'text-brand-500' : 'text-text-secondary'} aria-hidden="true" /> {r.label}
-                          </span>
-                          <span className="mt-1 block text-xs leading-relaxed text-text-secondary">{r.desc}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {newRole !== sel.role && newRole === 'user' && (
-                    <p className="flex items-start gap-2 text-xs leading-relaxed text-amber-700">
-                      <AlertTriangle size={14} className="mt-0.5 flex-none" aria-hidden="true" />
-                      Perderá el acceso a este panel de inmediato.
-                    </p>
-                  )}
-                  <div className="flex justify-end gap-3">
-                    <button type="button" onClick={close} disabled={saving} className="btn-ghost px-4 py-2 text-sm">Cerrar</button>
-                    <button type="button" onClick={saveRole} disabled={saving || newRole === sel.role} className="btn-primary px-4 py-2 text-sm">
-                      {saving && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-                      {saving ? 'Guardando…' : 'Guardar rol'}
-                    </button>
-                  </div>
-                </div>
-              )
-            )}
-
             {/* QR asociados */}
             {tab === 'qr' && (
               <div className="space-y-3">

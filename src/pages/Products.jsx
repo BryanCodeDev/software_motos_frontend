@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Link, useEffect, useState } from 'react';
 import { ArrowRight, Check, Truck } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
@@ -30,6 +29,13 @@ const DESIGNS = [
   { id: 6, name: 'Diseño 6', image_url: '/img/sticker-6.png', description: 'Aventurero y resistente' },
 ];
 
+const INCLUDES = [
+  '1 perfil digital independiente',
+  '1 código QR permanente y único',
+  '2 stickers físicos con el mismo QR',
+  'Página pública con tu información de emergencia',
+];
+
 const STEPS = [
   'Elige tu diseño',
   'Paga una sola vez',
@@ -51,8 +57,7 @@ export const Products = () => {
         const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
         if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
       } catch {
-        // Si el backend no responde, usa el precio local de products.js.
-        const stickerPlan = productPlans.find((p) => p.name === 'Stickers QR');
+        const stickerPlan = productPlans.find((p) => p.name === 'Perfil individual');
         if (mounted && stickerPlan) setStickerPrice(stickerPlan.price);
       }
     };
@@ -72,9 +77,10 @@ export const Products = () => {
         align="center"
       />
 
+      {/* ───── Oferta principal: precio, qué incluye y diseños ───── */}
       <section className="pb-16">
         <div className="container-page grid items-start gap-8 lg:grid-cols-12">
-          {/* Oferta: precio, qué incluye y la única acción de la página */}
+          {/* Oferta: precio y qué incluye */}
           <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
             <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
             <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
@@ -83,7 +89,7 @@ export const Products = () => {
             <p className="mt-1 text-sm text-text-secondary">Pago único</p>
 
             <ul className="mt-6 space-y-3">
-              {productPlans[0].features.map((text) => (
+              {INCLUDES.map((text) => (
                 <li key={text} className="flex items-start gap-3 text-sm text-neutral-900">
                   <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
                     <Check size={13} strokeWidth={3} aria-hidden="true" />
@@ -107,49 +113,81 @@ export const Products = () => {
             </p>
           </Card>
 
-          {/* Catálogo completo de planes */}
+          {/* Diseños */}
           <div className="lg:col-span-7">
-            <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">
-              Todos los planes
+            <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-neutral-900">
+              Elige entre 6 diseños
             </h2>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {productPlans
-                .filter((p) => !p.coming && !p.whatsapp)
-                .map((plan) => (
-                  <li
-                    key={plan.name}
-                    className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
-                  >
-                    {plan.badge && (
-                      <span className="inline-block mb-3 rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
-                        {plan.badge}
-                      </span>
-                    )}
-                    <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name}</h3>
-                    <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-2xl font-bold text-neutral-900">{plan.price}</span>
-                      {plan.priceNote && (
-                        <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
-                      )}
-                    </div>
-                    <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc}</p>
-                    <ul className="mb-6 space-y-2 text-sm text-text-secondary">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2">
-                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link to={routes.register} className="btn-primary w-full py-2.5 text-sm">
-                      {plan.action}
-                    </Link>
-                  </li>
-                ))}
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {DESIGNS.map((design) => (
+                <li
+                  key={design.id}
+                  className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
+                >
+                  <img
+                    src={design.image_url}
+                    alt={design.name}
+                    width="160"
+                    height="160"
+                    loading="lazy"
+                    className="aspect-square w-full rounded-xl bg-neutral-100 object-cover object-center"
+                  />
+                  <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name}</p>
+                  <p className="text-xs text-text-secondary">{design.description}</p>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
       </section>
 
+      {/* ───── Catálogo de todos los planes ───── */}
+      <section className="pb-24">
+        <div className="container-page">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
+            <p className="text-sm text-text-secondary">
+              Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
+            </p>
+          </div>
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {productPlans
+              .filter((p) => !p.coming && !p.whatsapp)
+              .map((plan) => (
+                <li
+                  key={plan.name}
+                  className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+                >
+                  {plan.badge && (
+                    <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                      {plan.badge}
+                    </span>
+                  )}
+                  <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name}</h3>
+                  <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
+                    <span className="text-2xl font-bold text-neutral-900">{plan.price}</span>
+                    {plan.priceNote && (
+                      <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
+                    )}
+                  </div>
+                  <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc}</p>
+                  <ul className="mb-6 space-y-2 text-sm text-text-secondary">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to={routes.register} className="btn-primary w-full py-2.5 text-sm">
+                    {plan.action}
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ───── Cómo funciona ───── */}
       <section className="pb-24">
         <div className="container-page">
           <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">Cómo funciona</h2>
