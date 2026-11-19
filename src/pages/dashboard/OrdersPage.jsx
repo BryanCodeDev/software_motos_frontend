@@ -86,15 +86,6 @@ const Tracker = ({ current }) => {
   );
 };
 
-/* ───────── Diseños de sticker (datos estáticos del frontend) ───────── */
-const DESIGNS = [
-  { id: 1, name: 'Diseño 1', image_url: '/img/sticker-1.png', description: 'Diseño clásico y discreto' },
-  { id: 2, name: 'Diseño 2', image_url: '/img/sticker-2.png', description: 'Estilo moderno y minimalista' },
-  { id: 3, name: 'Diseño 3', image_url: '/img/sticker-3.png', description: 'Diseño deportivo y dinámico' },
-  { id: 4, name: 'Diseño 4', image_url: '/img/sticker-4.png', description: 'Estilo urbano y actual' },
-  { id: 5, name: 'Diseño 5', image_url: '/img/sticker-5.png', description: 'Diseño elegante y sobrio' },
-  { id: 6, name: 'Diseño 6', image_url: '/img/sticker-6.png', description: 'Estilo aventurero y resistente' },
-];
 const STICKER_QUANTITY = 2;
 
 const DesignCard = ({ design, selected, onSelect }) => {
@@ -187,6 +178,10 @@ export const OrdersPage = () => {
   const [payingId, setPayingId] = useState(null);
   const [stickerPrice, setStickerPrice] = useState(null);
 
+  /* Diseños de sticker (cargados desde el backend) */
+  const [designs, setDesigns] = useState([]);
+  const [designsLoading, setDesignsLoading] = useState(false);
+
   /* Estado: Comprar paquetes */
   const [packages, setPackages] = useState([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
@@ -204,6 +199,13 @@ export const OrdersPage = () => {
       const list = data.products || data || [];
       const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
       if (sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
+
+      if (sticker) {
+        setDesignsLoading(true);
+        const dRes = await api.get(`/designs?product_id=${sticker.id}`);
+        setDesigns(dRes.data.designs || []);
+        setDesignsLoading(false);
+      }
     } catch { /* sin precio de catálogo */ }
   }, []);
 
@@ -287,7 +289,7 @@ export const OrdersPage = () => {
   };
   const closeBuy = () => { setBuyOpen(false); setBuyError(null); setSelectedDesignId(null); setNewOrder(null); setStep('select'); };
   const handleSelect = (designId) => {
-    const design = DESIGNS.find((d) => d.id === designId);
+    const design = designs.find((d) => d.id === designId);
     if (!design) { setBuyError('Este diseño no está disponible.'); return; }
     setSelectedDesignId(designId); setBuyError(null);
   };
@@ -335,7 +337,7 @@ export const OrdersPage = () => {
     return orders.filter(f.test);
   }, [orders, filter]);
 
-  const chosenDesign = DESIGNS.find((d) => d.id === selectedDesignId) || null;
+  const chosenDesign = designs.find((d) => d.id === selectedDesignId) || null;
   const totalLabel = newOrder?.total_amount != null ? formatAmount(newOrder.total_amount, newOrder.currency) : stickerPrice || 'Consulta el catálogo';
 
   /* Sincronización: tras crear pedido de sticker, refrescar lista */
@@ -512,7 +514,7 @@ export const OrdersPage = () => {
             <p className="text-sm text-text-secondary">Pack de {STICKER_QUANTITY} stickers con el mismo diseño:{' '}<span className="font-semibold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>. Al pagar, tu QR de emergencia se activa automáticamente.</p>
             {buyError && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">{buyError}</div>}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Diseño del sticker">
-              {DESIGNS.map((design) => <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />)}
+              {designs.map((design) => <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />)}
             </div>
             <div className="flex justify-end">
               <button type="button" onClick={createOrder} disabled={!selectedDesignId || buyLoading} className="btn-primary px-6 py-2.5 text-sm">{buyLoading ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Creando…</>) : (<><ArrowRight size={16} aria-hidden="true" /> Continuar</>)}</button>

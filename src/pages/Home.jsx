@@ -134,7 +134,7 @@ export const Home = () => {
         const { data } = await api.get('/products');
         const list = data.products || data || [];
         const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
-        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
+        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price));
       } catch {
         // Sin precio de catálogo: la tarjeta muestra "Consulta el catálogo".
       }

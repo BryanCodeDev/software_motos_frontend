@@ -7,7 +7,6 @@ import api from '../api/client';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
 import { PageHeader } from '../components/Section';
-import { productPlans } from '../data/products';
 
 const formatAmount = (amount) => {
   try {
@@ -20,15 +19,6 @@ const formatAmount = (amount) => {
     return '$29.900';
   }
 };
-
-const DESIGNS = [
-  { id: 1, name: 'Diseño 1', image_url: '/img/sticker-1.png', description: 'Clásico y discreto' },
-  { id: 2, name: 'Diseño 2', image_url: '/img/sticker-2.png', description: 'Moderno y minimalista' },
-  { id: 3, name: 'Diseño 3', image_url: '/img/sticker-3.png', description: 'Deportivo y dinámico' },
-  { id: 4, name: 'Diseño 4', image_url: '/img/sticker-4.png', description: 'Urbano y actual' },
-  { id: 5, name: 'Diseño 5', image_url: '/img/sticker-5.png', description: 'Elegante y sobrio' },
-  { id: 6, name: 'Diseño 6', image_url: '/img/sticker-6.png', description: 'Aventurero y resistente' },
-];
 
 const INCLUDES = [
   '1 perfil digital independiente',
@@ -50,27 +40,49 @@ const DEFAULT_DASHBOARD = '/panel';
 export const Products = () => {
   const { isAuthenticated } = useAuth();
   const [stickerPrice, setStickerPrice] = useState(null);
+  const [designs, setDesigns] = useState([]);
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Precio del sticker desde el catálogo del backend.
   useEffect(() => {
     let mounted = true;
-    const loadStickerPrice = async () => {
+    const loadCatalog = async () => {
       try {
-        const { data } = await api.get('/products');
-        const list = data && data.products ? data.products : data || [];
+        const [pRes, dRes, pkRes] = await Promise.all([
+          api.get('/products'),
+          api.get('/designs'),
+          api.get('/packages'),
+        ]);
+        if (!mounted) return;
+
+        const list = pRes.data && pRes.data.products ? pRes.data.products : pRes.data || [];
         const sticker = list.find((p) => p && p.slug === 'sticker-qr-personalizado');
         if (mounted && sticker && sticker.price) setStickerPrice(formatAmount(sticker.price));
+
+        const productId = sticker ? sticker.id : null;
+        if (productId) {
+          const productDesigns = (dRes.data.designs || []).filter((d) => d.product_id === productId);
+          setDesigns(productDesigns);
+        } else {
+          setDesigns(dRes.data.designs || []);
+        }
+
+        setPackages(pkRes.data.packages || pkRes.data || []);
       } catch {
-        const stickerPlan = Array.isArray(productPlans) ? productPlans.find((p) => p && p.name === 'Perfil individual') : null;
-        if (mounted && stickerPlan) setStickerPrice(stickerPlan.price || '$39.900');
+        setError('No se pudo cargar el catálogo. Inténtalo de nuevo.');
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
-    loadStickerPrice();
+    loadCatalog();
     return () => { mounted = false; };
   }, []);
 
   const registerRoute = (routes && routes.register) || DEFAULT_ROUTE;
   const dashboardRoute = (routes && routes.dashboard) || DEFAULT_DASHBOARD;
+
+  const stickerProductName = 'Stickers QR personalizados';
 
   return (
     <div className="min-h-screen">
@@ -84,131 +96,173 @@ export const Products = () => {
         align="center"
       />
 
-      {/* ───── Oferta principal ───── */}
-      <section className="pb-16">
-        <div className="container-page grid items-start gap-8 lg:grid-cols-12">
-          <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
-            <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
-            <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
-              {stickerPrice || '$30.000'}
-            </p>
-            <p className="mt-1 text-sm text-text-secondary">Pago único</p>
-
-            <ul className="mt-6 space-y-3">
-              {(INCLUDES || []).map((text, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm text-neutral-900">
-                  <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
-                    <Check size={13} strokeWidth={3} aria-hidden="true" />
-                  </span>
-                  <span className="leading-relaxed">{text}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Link
-              to={isAuthenticated ? dashboardRoute : registerRoute}
-              className="btn-primary mt-8 w-full px-5 py-3 text-sm"
-            >
-              {isAuthenticated ? 'Ir a mi panel' : 'Crear cuenta para pedir'}
-              <ArrowRight size={16} aria-hidden="true" />
-            </Link>
-
-            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
-              <Truck size={14} className="mt-0.5 flex-none" aria-hidden="true" />
-              El envío a domicilio se confirma antes de pagar.
-            </p>
-          </Card>
-
-          {/* Diseños */}
-          <div className="lg:col-span-7">
-            <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-neutral-900">
-              Elige entre 6 diseños
-            </h2>
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {(DESIGNS || []).map((design, idx) => (
-                <li
-                  key={`design-${idx}`}
-                  className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
-                >
-                  <img
-                    src={design.image_url || '/img/sticker-1.png'}
-                    alt={design.name || 'Diseño'}
-                    width="160"
-                    height="160"
-                    loading="lazy"
-                    className="aspect-square w-full rounded-xl bg-neutral-100 object-cover object-center"
-                  />
-                  <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name || 'Diseño'}</p>
-                  <p className="text-xs text-text-secondary">{design.description || ''}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
+      {loading && (
+        <div className="container-page py-20 text-center">
+          <p className="text-text-secondary">Cargando catálogo…</p>
         </div>
-      </section>
+      )}
 
-      {/* ───── Catálogo de todos los planes ───── */}
-      <section className="pb-24">
-        <div className="container-page">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
-            <p className="text-sm text-text-secondary">
-              Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
-            </p>
-          </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {(productPlans || [])
-              .filter((p) => p && !p.coming && !p.whatsapp)
-              .map((plan, idx) => (
-                <li
-                  key={plan.name || `plan-${idx}`}
-                  className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+      {!loading && error && (
+        <div className="container-page py-20 text-center">
+          <p className="text-rose-700">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-outline mt-4 px-4 py-2 text-sm"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <>
+          {/* ───── Oferta principal ───── */}
+          <section className="pb-16">
+            <div className="container-page grid items-start gap-8 lg:grid-cols-12">
+              <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
+                <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
+                <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
+                  {stickerPrice || '$30.000'}
+                </p>
+                <p className="mt-1 text-sm text-text-secondary">Pago único</p>
+
+                <ul className="mt-6 space-y-3">
+                  {(INCLUDES || []).map((text, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-sm text-neutral-900">
+                      <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+                        <Check size={13} strokeWidth={3} aria-hidden="true" />
+                      </span>
+                      <span className="leading-relaxed">{text}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  to={isAuthenticated ? dashboardRoute : registerRoute}
+                  className="btn-primary mt-8 w-full px-5 py-3 text-sm"
                 >
-                  {plan.badge && (
-                    <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
-                      {plan.badge}
-                    </span>
+                  {isAuthenticated ? 'Ir a mi panel' : 'Crear cuenta para pedir'}
+                  <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+
+                <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
+                  <Truck size={14} className="mt-0.5 flex-none" aria-hidden="true" />
+                  El envío a domicilio se confirma antes de pagar.
+                </p>
+              </Card>
+
+              {/* Diseños */}
+              <div className="lg:col-span-7">
+                <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-neutral-900">
+                  Elige entre {designs.length} diseños
+                </h2>
+                <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {(designs || []).map((design, idx) => (
+                    <li
+                      key={`design-${design.id || idx}`}
+                      className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
+                    >
+                      <img
+                        src={design.image_url || '/img/sticker-1.png'}
+                        alt={design.name || 'Diseño'}
+                        width="160"
+                        height="160"
+                        loading="lazy"
+                        className="aspect-square w-full rounded-xl bg-neutral-100 object-cover object-center"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name || 'Diseño'}</p>
+                      {design.description && (
+                        <p className="text-xs text-text-secondary">{design.description}</p>
+                      )}
+                    </li>
+                  ))}
+                  {designs.length === 0 && (
+                    <li className="col-span-full text-center py-10 text-text-secondary">
+                      No hay diseños disponibles en este momento.
+                    </li>
                   )}
-                  <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name || 'Plan'}</h3>
-                  <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
-                    <span className="text-2xl font-bold text-neutral-900">{plan.price || 'Consulta precio'}</span>
-                    {plan.priceNote && (
-                      <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
-                    )}
-                  </div>
-                  <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc || ''}</p>
-                  <ul className="mb-6 space-y-2 text-sm text-text-secondary">
-                    {(plan.features || []).map((f, fIdx) => (
-                      <li key={fIdx} className="flex items-start gap-2">
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to={registerRoute} className="btn-primary w-full py-2.5 text-sm">
-                    {plan.action || 'Elegir plan'}
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        </div>
-      </section>
+                </ul>
+              </div>
+            </div>
+          </section>
 
-      {/* ───── Cómo funciona ───── */}
-      <section className="pb-24">
-        <div className="container-page">
-          <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">Cómo funciona</h2>
-          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {(STEPS || []).map((label, i) => (
-              <li key={i} className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4">
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
-                  {i + 1}
-                </span>
-                <span className="text-sm font-semibold text-neutral-900">{label}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+          {/* ───── Catálogo de todos los planes ───── */}
+          <section className="pb-24">
+            <div className="container-page">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
+                <p className="text-sm text-text-secondary">
+                  Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
+                </p>
+              </div>
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {(packages || [])
+                  .filter((p) => p && p.is_active !== 0 && p.is_visible !== 0)
+                  .map((plan, idx) => (
+                    <li
+                      key={plan.id || `plan-${idx}`}
+                      className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+                    >
+                      {plan.badge && (
+                        <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                          {plan.badge}
+                        </span>
+                      )}
+                      <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name || 'Plan'}</h3>
+                      <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-2xl font-bold text-neutral-900">{plan.price != null ? formatAmount(plan.price) : 'Consulta precio'}</span>
+                        {plan.currency && <span className="text-xs font-medium text-text-secondary">/{plan.currency}</span>}
+                      </div>
+                      <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.description || ''}</p>
+                      <ul className="mb-6 space-y-2 text-sm text-text-secondary">
+                        {(plan.package_profiles || []).flatMap((pp) => [
+                          `${pp.quantity_profiles || 1} perfil${pp.quantity_profiles > 1 ? 'es' : ''} de ${pp.profile_type === 'person' ? 'persona' : pp.profile_type === 'pet' ? 'mascota' : 'gestionado'}`,
+                          `${pp.stickers_per_profile || 2} sticker${pp.stickers_per_profile > 1 ? 's' : ''} por perfil`,
+                        ]).map((f, fIdx) => (
+                          <li key={fIdx} className="flex items-start gap-2">
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
+                          </li>
+                        ))}
+                        <li className="flex items-start gap-2">
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> QR permanente por perfil
+                        </li>
+                      </ul>
+                      <Link
+                        to={isAuthenticated ? routes.dashboardOrders : registerRoute}
+                        className="btn-primary w-full py-2.5 text-sm"
+                      >
+                        {isAuthenticated ? 'Comprar este paquete' : 'Crear cuenta para comprar'}
+                      </Link>
+                    </li>
+                  ))}
+                {(packages || []).length === 0 && (
+                  <li className="col-span-full text-center py-10 text-text-secondary">
+                    No hay paquetes disponibles en este momento.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </section>
+
+          {/* ───── Cómo funciona ───── */}
+          <section className="pb-24">
+            <div className="container-page">
+              <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">Cómo funciona</h2>
+              <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {(STEPS || []).map((label, i) => (
+                  <li key={i} className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
+                      {i + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-neutral-900">{label}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 };

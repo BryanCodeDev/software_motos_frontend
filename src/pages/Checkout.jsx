@@ -145,18 +145,18 @@ export const Checkout = () => {
       setLoading(false);
       return;
     }
-        const [pRes, dRes] = await Promise.all([
-          api.get('/products'),
-          api.get('/designs'),
-        ]);
-        if (!mounted) return;
-        const list = pRes.data.products || pRes.data || [];
-        setProducts(list);
-        const stickerProduct = list.find((p) => p.slug === 'sticker-qr-personalizado');
-        const productDesigns = stickerProduct
-          ? ((dRes.data.designs || []).filter((d) => d.product_id === stickerProduct.id))
-          : [];
-        setDesigns(productDesigns);
+        const [pRes] = await Promise.all([api.get('/products')]);
+    if (!mounted) return;
+    const list = pRes.data.products || pRes.data || [];
+    setProducts(list);
+    const stickerProduct = list.find((p) => p.slug === 'sticker-qr-personalizado');
+    if (stickerProduct) {
+      const dRes = await api.get(`/designs?product_id=${stickerProduct.id}`);
+      if (!mounted) return;
+      setDesigns(dRes.data.designs || []);
+    } else {
+      setDesigns([]);
+    }
       } catch {
         setError('No pudimos cargar el catálogo. Inténtalo de nuevo.');
       } finally {
