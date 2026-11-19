@@ -307,9 +307,16 @@ export const OrdersPage = () => {
     if (!design) { setBuyError('Este diseño no está disponible.'); return; }
     setSelectedDesignId(designId); setBuyError(null);
   };
+  const goToShipping = () => {
+    if (!selectedDesignId) { setBuyError('Debes seleccionar un diseño para continuar.'); return; }
+    setBuyError(null);
+    setShippingErrors({});
+    setStep('shipping');
+  };
+
   const createOrder = async () => {
     if (!selectedDesignId) { setBuyError('Debes seleccionar un diseño para continuar.'); return; }
-    // Validar dirección de envío
+    // Validar dirección de envío (se rellena en el paso anterior)
     const requiredFields = { fullName: 'Nombre completo', phone: 'Teléfono', address: 'Dirección', city: 'Ciudad', department: 'Departamento' };
     const errors = {};
     Object.entries(requiredFields).forEach(([key, label]) => {
@@ -321,7 +328,7 @@ export const OrdersPage = () => {
     try {
       const res = await api.post('/orders/stickers', { design_id: selectedDesignId, shipping_address: shippingAddress });
       setNewOrder(res.data.order);
-      setStep('shipping');
+      setStep('confirm');
     } catch (err) {
       const msg = err?.response?.data?.error || err?.response?.data?.details;
       setBuyError(typeof msg === 'string' ? msg : 'No se pudo crear el pedido.');
@@ -544,7 +551,7 @@ export const OrdersPage = () => {
               {designs.map((design) => <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />)}
             </div>
             <div className="flex justify-end">
-              <button type="button" onClick={createOrder} disabled={!selectedDesignId || buyLoading} className="btn-primary px-6 py-2.5 text-sm">{buyLoading ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Creando…</>) : (<><ArrowRight size={16} aria-hidden="true" /> Continuar</>)}</button>
+              <button type="button" onClick={goToShipping} disabled={!selectedDesignId || buyLoading} className="btn-primary px-6 py-2.5 text-sm">{buyLoading ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Creando…</>) : (<><ArrowRight size={16} aria-hidden="true" /> Continuar</>)}</button>
             </div>
           </div>
         )}
@@ -589,7 +596,7 @@ export const OrdersPage = () => {
             </div>
             <div className="flex justify-between">
               <button type="button" onClick={() => { setBuyError(null); setStep('select'); }} disabled={buyLoading} className="btn-outline px-6 py-2.5 text-sm"><ArrowRight size={16} className="rotate-180" aria-hidden="true" /> Elegir otro diseño</button>
-              <button type="button" onClick={() => setStep('confirm')} disabled={buyLoading} className="btn-primary px-6 py-2.5 text-sm">Revisar y pagar <ArrowRight size={16} aria-hidden="true" /></button>
+              <button type="button" onClick={createOrder} disabled={buyLoading} className="btn-primary px-6 py-2.5 text-sm">Revisar y pagar <ArrowRight size={16} aria-hidden="true" /></button>
             </div>
           </div>
         )}
