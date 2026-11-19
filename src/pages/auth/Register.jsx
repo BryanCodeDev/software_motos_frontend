@@ -124,7 +124,7 @@ export const Register = () => {
   };
 
   return (
-    <AuthShell aside={ASIDE}>
+    <AuthShell aside={ASIDE} bgImage="/herosection-login.webp">
       <Seo title="Crear cuenta" noindex />
 
       <div className="mb-8 text-center">

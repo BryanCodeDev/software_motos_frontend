@@ -65,7 +65,7 @@ export const Login = () => {
   };
 
   return (
-    <AuthShell aside={ASIDE}>
+    <AuthShell aside={ASIDE} bgImage="/herosection-login.webp">
       <Seo title="Iniciar sesión" noindex />
 
       <div className="mb-8 text-center">

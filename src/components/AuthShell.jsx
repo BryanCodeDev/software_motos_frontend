@@ -15,11 +15,11 @@ const rise = {
  * Layout compartido de las pantallas de acceso (login, registro, recuperación).
  * aside: { badge, line1, accent, text, items: [{ icon, title, desc }] }
  */
-export const AuthShell = ({ aside, children }) => {
+export const AuthShell = ({ aside, children, bgImage }) => {
   const reduce = useReducedMotion();
 
   return (
-    <main id="contenido" className="grid min-h-screen bg-brand-50 lg:grid-cols-[1.05fr_1fr]">
+    <main id="contenido" className={`grid min-h-screen lg:grid-cols-[1.05fr_1fr] ${bgImage ? `bg-[url('${bgImage}')] bg-cover bg-center` : 'bg-brand-50'}`}>
       <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-12 text-white lg:flex xl:p-16">
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl animate-float" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
