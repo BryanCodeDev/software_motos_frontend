@@ -171,11 +171,83 @@ const SectionCard = ({ icon: Icon, title, aside, children, className = '' }) => 
   </motion.section>
 );
 
+/** Botón de acción rápida reutilizable (desktop y barra móvil). */
+const QuickActionButton = ({
+  href,
+  icon: Icon,
+  label,
+  sublabel,
+  value,
+  tone = 'brand',
+  colSpan = false,
+}) => {
+  const toneStyles = {
+    brand: 'bg-brand-500 shadow-[0_16px_40px_-16px_rgba(159,18,57,0.7)] hover:bg-brand-600',
+    rose: 'bg-rose-600 shadow-[0_16px_40px_-16px_rgba(225,29,72,0.7)] hover:bg-rose-700',
+  };
+  return (
+    <a
+      href={href}
+      className={`focus-ring group flex items-center justify-between gap-3 rounded-2xl p-4 text-white transition-all hover:-translate-y-0.5 active:scale-[0.99] ${toneStyles[tone]} ${colSpan ? 'sm:col-span-2' : ''}`}
+    >
+      <span className="flex items-center gap-3">
+        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <span className="min-w-0">
+          <strong className="block text-base font-extrabold leading-tight">{label}</strong>
+          {sublabel && <span className="block truncate text-xs text-white/85">{sublabel}</span>}
+        </span>
+      </span>
+      {value && <span className="text-3xl font-extrabold tabular-nums" aria-hidden="true">{value}</span>}
+    </a>
+  );
+};
+
+/** Acciones de contacto (llamar / WhatsApp / correo) reutilizadas en ContactCard. */
+const ContactActions = ({ c, displayName, phone, hasPhone, hasEmail }) => {
+  const message = `Hola ${c.name}, te escribo de parte de ${displayName}. Estás registrado como contacto de emergencia en Tu QR te Cuida (${window.location.origin}). Por favor, atiende lo antes posible. Gracias.`;
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {hasPhone && (
+        <a
+          href={`tel:${phone}`}
+          className="focus-ring flex items-center justify-center gap-2 rounded-xl bg-brand-500 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-600 active:scale-[0.98]"
+        >
+          <Phone className="h-4 w-4" aria-hidden="true" /> Llamar
+        </a>
+      )}
+      {hasPhone && (
+        <a
+          href={`https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 py-3.5 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 active:scale-[0.98]"
+        >
+          <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
+        </a>
+      )}
+      {hasEmail && (
+        <a
+          href={`mailto:${c.email}`}
+          className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-border bg-white py-2.5 text-xs font-medium text-neutral-900 transition-all hover:border-brand-500/50 hover:bg-brand-50 sm:col-span-2"
+        >
+          <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Enviar correo
+        </a>
+      )}
+      {!hasPhone && !hasEmail && (
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 py-3 text-xs font-medium text-text-secondary sm:col-span-2">
+          <AlertCircle className="h-4 w-4" aria-hidden="true" /> Sin datos de contacto
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ContactCard = ({ c, displayName, isPrimary }) => {
   const phone = c.phone ? cleanPhone(c.phone) : '';
   const hasPhone = Boolean(phone);
   const hasEmail = Boolean(c.email);
-  const message = `Hola ${c.name}, te escribo de parte de ${displayName}. Estás registrado como contacto de emergencia en Tu QR te Cuida (${window.location.origin}). Por favor, atiende lo antes posible. Gracias.`;
 
   return (
     <div
@@ -200,39 +272,7 @@ const ContactCard = ({ c, displayName, isPrimary }) => {
         )}
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        {hasPhone && (
-          <a
-            href={`tel:${phone}`}
-            className="focus-ring flex items-center justify-center gap-2 rounded-xl bg-brand-500 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-600 active:scale-[0.98]"
-          >
-            <Phone className="h-4 w-4" aria-hidden="true" /> Llamar
-          </a>
-        )}
-        {hasPhone && (
-          <a
-            href={`https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 py-3.5 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 active:scale-[0.98]"
-          >
-            <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
-          </a>
-        )}
-        {hasEmail && (
-          <a
-            href={`mailto:${c.email}`}
-            className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-border bg-white py-2.5 text-xs font-medium text-neutral-900 transition-all hover:border-brand-500/50 hover:bg-brand-50 sm:col-span-2"
-          >
-            <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Enviar correo
-          </a>
-        )}
-        {!hasPhone && !hasEmail && (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 py-3 text-xs font-medium text-text-secondary sm:col-span-2">
-            <AlertCircle className="h-4 w-4" aria-hidden="true" /> Sin datos de contacto
-          </div>
-        )}
-      </div>
+      <ContactActions c={c} displayName={displayName} phone={phone} hasPhone={hasPhone} hasEmail={hasEmail} />
     </div>
   );
 };
@@ -466,40 +506,28 @@ export const PublicEmergency = () => {
 
         {/* ACCIONES RÁPIDAS */}
         <motion.div variants={item} ref={quickRef} className="grid gap-3 sm:grid-cols-2 lg:gap-4">
-          <a
+          <QuickActionButton
             href={`tel:${EMERGENCY_NUMBER}`}
-            className={`focus-ring group flex items-center justify-between gap-3 rounded-2xl bg-rose-600 p-4 text-white shadow-[0_16px_40px_-16px_rgba(225,29,72,0.7)] transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-[0.99] ${
-              primaryPhone ? '' : 'sm:col-span-2'
-            }`}
-          >
-            <span className="flex items-center gap-3">
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
-                <PhoneCall className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <span>
-                <strong className="block text-base font-extrabold leading-tight">Llamar al {EMERGENCY_NUMBER}</strong>
-                <span className="text-xs text-white/85">Línea de emergencias</span>
-              </span>
-            </span>
-            <span className="text-3xl font-extrabold tabular-nums" aria-hidden="true">{EMERGENCY_NUMBER}</span>
-          </a>
+            icon={PhoneCall}
+            label={`Llamar al ${EMERGENCY_NUMBER}`}
+            sublabel="Línea de emergencias"
+            value={EMERGENCY_NUMBER}
+            tone="rose"
+            colSpan={!primaryPhone}
+          />
 
           {primaryPhone && (
-            <a
+            <QuickActionButton
               href={`tel:${cleanPhone(primaryPhone)}`}
-              aria-label={`Llamar al contacto principal${primaryContact?.name ? `: ${primaryContact.name}` : ''}`}
-              className="focus-ring group flex items-center gap-3 rounded-2xl bg-brand-500 p-4 text-white shadow-[0_16px_40px_-16px_rgba(159,18,57,0.7)] transition-all hover:-translate-y-0.5 hover:bg-brand-600 active:scale-[0.99]"
-            >
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
-                <Phone className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <strong className="block text-base font-extrabold leading-tight">Llamar contacto principal</strong>
-                <span className="block truncate text-xs text-white/85">
-                  {[primaryContact?.name, primaryContact?.relationship].filter(Boolean).join(' · ') || primaryPhone}
-                </span>
-              </span>
-            </a>
+              icon={Phone}
+              label="Llamar contacto principal"
+              sublabel={
+                [primaryContact?.name, primaryContact?.relationship]
+                  .filter(Boolean)
+                  .join(' · ') || primaryPhone
+              }
+              tone="brand"
+            />
           )}
         </motion.div>
 
@@ -629,19 +657,19 @@ export const PublicEmergency = () => {
             style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
           >
             <div className="mx-auto flex max-w-3xl gap-2">
-              <a
+              <QuickActionButton
                 href={`tel:${EMERGENCY_NUMBER}`}
-                className="focus-ring flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 py-3 text-sm font-bold text-white active:scale-[0.98]"
-              >
-                <PhoneCall className="h-4 w-4" aria-hidden="true" /> Llamar al {EMERGENCY_NUMBER}
-              </a>
+                icon={PhoneCall}
+                label={`Llamar al ${EMERGENCY_NUMBER}`}
+                tone="rose"
+              />
               {primaryPhone && (
-                <a
+                <QuickActionButton
                   href={`tel:${cleanPhone(primaryPhone)}`}
-                  className="focus-ring flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-bold text-white active:scale-[0.98]"
-                >
-                  <Phone className="h-4 w-4" aria-hidden="true" /> Contacto
-                </a>
+                  icon={Phone}
+                  label="Contacto"
+                  tone="brand"
+                />
               )}
             </div>
           </motion.div>
