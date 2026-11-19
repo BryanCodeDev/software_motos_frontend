@@ -103,22 +103,48 @@ export const Checkout = () => {
   const [packageId, setPackageId] = useState(null);
   const [pkg, setPkg] = useState(null);
 
+  /* ───── Flujo de paquete / perfil (pago requerido) ───── */
+  const [profileSelection, setProfileSelection] = useState([]); // ids de perfiles existentes
+  const [showNewProfile, setShowNewProfile] = useState(false);
+  const [newProfileForm, setNewProfileForm] = useState({
+    profile_type: 'person',
+    display_name: '',
+    relationship: '',
+  });
+  const [myProfiles, setMyProfiles] = useState([]);
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const pkgId = urlParams.get('package');
-        if (pkgId) {
-          setPackageId(pkgId);
-          const [pRes] = await Promise.all([api.get('/packages'), api.get(`/packages/${pkgId}`)]);
-          if (!mounted) return;
-          setPackages(pRes.data.packages || []);
-          setPkg(pRes.data.package || null);
-          setStep('perfiles');
-          setLoading(false);
-          return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const pkgId = urlParams.get('package');
+    const isProfileFlow = urlParams.get('type') === 'profile';
+    if (pkgId || isProfileFlow) {
+      setPackageId(pkgId || null);
+      const [pRes] = await Promise.all([api.get('/packages')]);
+      if (!mounted) return;
+      const packages = pRes.data.packages || [];
+      setPackages(packages);
+      if (isProfileFlow) {
+        const profileType = urlParams.get('profile_type') || 'person';
+        const name = urlParams.get('name') || '';
+        const relationship = urlParams.get('relationship') || '';
+        setNewProfileForm({ profile_type: profileType, display_name: name, relationship });
+        setShowNewProfile(true);
+        // Para el flujo de perfil aislado (pago requerido), preseleccionar el primer paquete disponible.
+        if (!pkgId && packages.length > 0) {
+          setPkg(packages[0]);
         }
+      } else {
+        const [pRes2] = await Promise.all([api.get(`/packages/${pkgId}`)]);
+        if (!mounted) return;
+        setPkg(pRes2.data.package || null);
+      }
+      setStep('perfiles');
+      setLoading(false);
+      return;
+    }
         const [pRes, dRes] = await Promise.all([
           api.get('/products'),
           api.get('/designs'),
@@ -250,15 +276,6 @@ export const Checkout = () => {
   };
 
   /* ───── Flujo de paquete ───── */
-  const [profileSelection, setProfileSelection] = useState([]); // ids de perfiles existentes
-  const [showNewProfile, setShowNewProfile] = useState(false);
-  const [newProfileForm, setNewProfileForm] = useState({
-    profile_type: 'person',
-    display_name: '',
-    relationship: '',
-  });
-  const [myProfiles, setMyProfiles] = useState([]);
-
   useEffect(() => {
     let mounted = true;
     const loadMyProfiles = async () => {

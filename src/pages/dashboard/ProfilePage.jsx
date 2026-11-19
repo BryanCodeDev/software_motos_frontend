@@ -117,7 +117,7 @@ const FILTERS_MP = [
 const ProfileCardMP = ({ profile: p, busy, onDelete, onEdit, onSetActive, profileQrMap, isActive }) => {
   const cfg = TYPES[p.profile_type] || TYPES.person;
   const Icon = cfg.icon;
-  const profileActive = p.is_active !== false;
+  const profileActive = Boolean(p.is_active);
   const hasQr = Boolean(profileQrMap[p.id]);
   const orders = Number(p.order_count || 0) || 0;
   const subtitle = [cfg.label, p.relationship || p.pet_species].filter(Boolean).join(' · ');
@@ -393,7 +393,7 @@ export const ProfilePage = () => {
       const status = err?.response?.status;
       const msg = err?.response?.data?.error || 'No se pudo eliminar el perfil.';
       if (status === 409) {
-        toastRef.current.error('No se puede eliminar este perfil: tiene un código QR vinculado o es el perfil principal de la cuenta.');
+        toastRef.current.error('No se puede eliminar este perfil: ya está inactivo.');
       } else {
         toastRef.current.error(msg);
       }

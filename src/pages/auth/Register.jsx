@@ -4,7 +4,7 @@ import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
 import { CheckField } from '../../components/DashPage';
 import {
-  UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, ClipboardList, ShieldCheck,
+  UserPlus, User, Users, Dog, Mail, Lock, Eye, EyeOff, Loader2, ClipboardList, ShieldCheck,
   ArrowRight, ArrowLeft, Check,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
@@ -95,7 +95,7 @@ export const Register = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', profile_type: 'person', profile_name: '' });
   const [consents, setConsents] = useState(() => Object.fromEntries(CONSENTS.map((c) => [c.key, false])));
 
   const strength = getStrength(form.password);
@@ -117,7 +117,7 @@ export const Register = () => {
     }
     setLoading(true);
     try {
-      await register({ ...form, role: 'user', consents });
+      await register({ ...form, role: 'user', consents, display_name: form.profile_name || form.name, profile_name: undefined });
       toast.success('¡Cuenta creada! Ahora completa tu perfil');
       navigate(routes.home);
     } catch (error) {
@@ -257,6 +257,48 @@ export const Register = () => {
                     {level.label}
                   </p>
                 )}
+              </div>
+            </div>
+
+            <div className={rise} style={delay(210)}>
+              <div className="space-y-3 rounded-2xl border border-border bg-white p-5">
+                <p className="text-sm font-semibold text-neutral-900">Tu primer perfil de emergencia</p>
+                <p className="text-xs text-text-secondary">Elige qué tipo de perfil crear con esta cuenta. Se asocia al mismo correo y se activa al comprar tus stickers.</p>
+                <div role="radiogroup" aria-label="Tipo de perfil inicial" className="grid gap-2 sm:grid-cols-3">
+                  {[
+                    { value: 'person', label: 'Persona', icon: <User size={16} />, desc: 'Para ti o un adulto.' },
+                    { value: 'pet', label: 'Mascota', icon: <Dog size={16} />, desc: 'Para tu perro o gato.' },
+                    { value: 'managed_person', label: 'A mi cargo', icon: <Users size={16} />, desc: 'Un hijo o adulto mayor.' },
+                  ].map((t) => {
+                    const active = form.profile_type === t.value;
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setForm({ ...form, profile_type: t.value })}
+                        className={`focus-ring flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors ${active ? 'border-brand-500 bg-brand-50' : 'border-border bg-white hover:border-brand-500/40'}`}
+                      >
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${active ? 'bg-brand-500 text-white' : 'bg-brand-500/10 text-brand-500'}`}>
+                          {t.icon}
+                        </span>
+                        <span className="font-semibold text-neutral-900 text-xs">{t.label}</span>
+                        <span className="text-[10px] leading-relaxed text-text-secondary">{t.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    id="profile-name"
+                    type="text"
+                    value={form.profile_name}
+                    onChange={(e) => setForm({ ...form, profile_name: e.target.value })}
+                    placeholder="Nombre para mostrar (ej. Firulais)"
+                    className="input flex-1 !text-base"
+                  />
+                </div>
               </div>
             </div>
 

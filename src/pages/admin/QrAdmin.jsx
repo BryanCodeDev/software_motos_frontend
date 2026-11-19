@@ -216,7 +216,7 @@ export const AdminQrInventory = () => {
       if (q) query.q = q;
       if (print) query.print_status = print;
       const { data } = await api.get('/admin/qrs', { params: query });
-      setQrs(data.qrs || []);
+      setQrs((data.qrs || []).filter(Boolean));
       setPagination(data.pagination || { page: 1, pages: 0, total: 0 });
     } catch (e) {
       setError(e?.response?.data?.error || 'No se pudieron cargar los códigos QR');

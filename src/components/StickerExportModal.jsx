@@ -16,12 +16,12 @@ const PUBLIC_PATH = (n) => `/img/sticker-${n}.png`;
  * plantilla definitiva.
  */
 const stickerConfigurations = {
-  1: { image: PUBLIC_PATH(1), qrPosition: { x: 0.60, y: 0.40, width: 0.27, height: 0.28 } },
-  2: { image: PUBLIC_PATH(2), qrPosition: { x: 0.50, y: 0.50, width: 0.30, height: 0.30 } },
-  3: { image: PUBLIC_PATH(3), qrPosition: { x: 0.50, y: 0.50, width: 0.30, height: 0.30 } },
-  4: { image: PUBLIC_PATH(4), qrPosition: { x: 0.50, y: 0.50, width: 0.30, height: 0.30 } },
-  5: { image: PUBLIC_PATH(5), qrPosition: { x: 0.50, y: 0.50, width: 0.30, height: 0.30 } },
-  6: { image: PUBLIC_PATH(6), qrPosition: { x: 0.50, y: 0.50, width: 0.35, height: 0.35 } },
+  1: { image: PUBLIC_PATH(1), qrPosition: { x: 0.5048, y: 0.3054, width: 0.3628, height: 0.3270 } },
+  2: { image: PUBLIC_PATH(2), qrPosition: { x: 0.5024, y: 0.3174, width: 0.3397, height: 0.3110 } },
+  3: { image: PUBLIC_PATH(3), qrPosition: { x: 0.2480, y: 0.2839, width: 0.5040, height: 0.3740 } },
+  4: { image: PUBLIC_PATH(4), qrPosition: { x: 0.5096, y: 0.3278, width: 0.3397, height: 0.3190 } },
+  5: { image: PUBLIC_PATH(5), qrPosition: { x: 0.2911, y: 0.2871, width: 0.4179, height: 0.3772 } },
+  6: { image: PUBLIC_PATH(6), qrPosition: { x: 0.3600, y: 0.5520, width: 0.2550, height: 0.2570 } },
 };
 
 export const StickerExportModal = ({ isOpen, onClose, qr }) => {
