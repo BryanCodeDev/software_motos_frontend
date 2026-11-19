@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
 import {
-  LogIn, Mail, Lock, Eye, EyeOff, Loader2, HeartPulse, ShieldCheck, QrCode, Siren, UserPlus,
+  LogIn, Mail, Lock, Eye, EyeOff, Loader2, HeartPulse, QrCode, Siren, ArrowRight, UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
@@ -13,25 +13,24 @@ import { showApiError } from '../../utils/errors';
 import Seo from '../../components/Seo';
 import AuthShell from '../../components/AuthShell';
 
-const loginSchema = z.object({
-  email: z.string().email('Ingresa un correo electrónico válido'),
-  password: z.string().min(1, 'Escribe tu contraseña'),
-});
+const emailSchema = z.string().email('Ingresa un correo válido');
 
 const ASIDE = {
-  badge: 'Acceso seguro',
-  line1: 'Qué bueno verte,',
-  accent: 'tu perfil te está esperando.',
-  text: 'Revisa o actualiza lo que quieres tener a mano si algún día no puedes hablar.',
+  badge: 'Tu QR te cuida',
+  line1: 'Bienvenido de vuelta,',
+  accent: 'tu perfil te espera.',
+  text: 'Mantén al día lo que importa en una emergencia.',
   items: [
-    { icon: QrCode, title: 'Tu QR de emergencia', desc: 'Descárgalo o desactívalo cuando quieras' },
-    { icon: HeartPulse, title: 'Tus datos médicos', desc: 'Mantenlos al día' },
-    { icon: Siren, title: 'Tus contactos', desc: 'A quién avisar en una emergencia' },
-    { icon: ShieldCheck, title: 'Tu privacidad', desc: 'Tú decides qué se muestra' },
+    { icon: QrCode, title: 'Tu QR', desc: 'Descárgalo o desactívalo cuando quieras' },
+    { icon: HeartPulse, title: 'Tus datos médicos', desc: 'Siempre actualizados' },
+    { icon: Siren, title: 'Tus contactos', desc: 'A quién avisar' },
   ],
 };
 
-const fieldIcon = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary';
+const rise = 'opacity-0 animate-slide-up';
+const delay = (ms) => ({ animationDelay: `${ms}ms` });
+const fieldIcon =
+  'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary transition-colors group-focus-within:text-brand-500';
 const inputCls = 'h-11 pl-10 text-base sm:text-sm';
 
 export const Login = () => {
@@ -68,18 +67,21 @@ export const Login = () => {
     <AuthShell aside={ASIDE} bgImage="/herosection-login.webp" showFooter={false}>
       <Seo title="Iniciar sesión" noindex />
 
-      <div className="mb-8 text-center">
-        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
-          <LogIn size={22} />
-        </span>
-        <h1 className="text-2xl font-bold text-neutral-900">Inicia sesión</h1>
-        <p className="mt-2 text-sm text-text-secondary">Entra para gestionar tu perfil y tu QR</p>
+      <div className={`mb-8 text-center ${rise}`}>
+        <div className="relative mx-auto mb-5 h-14 w-14">
+          <span className="absolute inset-0 rounded-2xl bg-brand-500/40 animate-pulse-ring" />
+          <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow animate-float">
+            <LogIn size={24} />
+          </span>
+        </div>
+        <h1 className="text-3xl font-extrabold text-neutral-900">Inicia sesión</h1>
+        <p className="mt-2 text-sm text-text-secondary">Gestiona tu perfil y tu QR</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <div>
+        <div className={rise} style={delay(100)}>
           <Label htmlFor="email">Correo electrónico</Label>
-          <div className="relative">
+          <div className="group relative">
             <Mail size={18} className={fieldIcon} />
             <Input
               id="email"
@@ -89,21 +91,23 @@ export const Login = () => {
               className={inputCls}
               error={!!errors.email}
               {...register('email', {
-                validate: (v) => loginSchema.shape.email.safeParse(v).success || 'Ingresa un correo electrónico válido',
+                validate: (v) => emailSchema.safeParse(v).success || 'Ingresa un correo válido',
               })}
             />
           </div>
-          {errors.email && <p className="mt-1.5 text-xs text-rose-600">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="mt-1.5 animate-fade-in text-xs text-rose-600">{errors.email.message}</p>
+          )}
         </div>
 
-        <div>
+        <div className={rise} style={delay(180)}>
           <div className="mb-1.5 flex items-center justify-between gap-3">
             <Label htmlFor="password" className="!mb-0">Contraseña</Label>
             <Link to={routes.forgotPassword} className="text-sm font-medium text-brand-500 hover:underline">
               ¿La olvidaste?
             </Link>
           </div>
-          <div className="relative">
+          <div className="group relative">
             <Lock size={18} className={fieldIcon} />
             <Input
               id="password"
@@ -116,44 +120,41 @@ export const Login = () => {
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary transition-colors hover:text-neutral-900"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary transition-colors hover:text-brand-500"
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <p className="mt-1.5 text-xs text-rose-600">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="mt-1.5 animate-fade-in text-xs text-rose-600">{errors.password.message}</p>
+          )}
         </div>
 
-        <Button type="submit" variant="primary" disabled={loading} className="h-11 w-full">
-          {loading ? (
-            <>
-              <Loader2 size={18} className="animate-spin" /> Ingresando...
-            </>
-          ) : (
-            'Ingresar'
-          )}
-        </Button>
+        <div className={rise} style={delay(260)}>
+          <Button type="submit" variant="primary" disabled={loading} className="group h-12 w-full text-base">
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" /> Ingresando...
+              </>
+            ) : (
+              <>
+                Ingresar
+                <ArrowRight size={18} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </>
+            )}
+          </Button>
+        </div>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-text-secondary">
-        <span className="h-px flex-1 bg-border" />
+      <div className={`mt-6 text-center text-sm text-text-secondary ${rise}`} style={delay(340)}>
         ¿Aún no tienes cuenta?
-        <span className="h-px flex-1 bg-border" />
+        <Link to={routes.register} className="btn-outline mt-3 w-full">
+          <UserPlus size={18} className="text-brand-500" />
+          Crear cuenta gratis
+        </Link>
       </div>
-
-      <Link to={routes.register} className="btn-outline w-full">
-        <UserPlus size={18} className="text-brand-500" />
-        Crear cuenta gratis
-      </Link>
-
-      <p className="mt-5 text-center text-xs text-text-secondary">
-        Al acceder aceptas los{' '}
-        <Link to={routes.terms} className="text-brand-500 hover:underline">Términos y Condiciones</Link>{' '}
-        y la{' '}
-        <Link to={routes.privacyPolicy} className="text-brand-500 hover:underline">Política de Privacidad</Link>.
-      </p>
     </AuthShell>
   );
 };

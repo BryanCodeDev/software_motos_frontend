@@ -9,7 +9,7 @@ import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import {
   Download, Link as LinkIcon, Check, Clock, AlertTriangle, AlertCircle, CheckCircle2,
   RotateCcw, CreditCard, Lock, ExternalLink, Loader2, MessageCircle, ScanLine,
-  BadgeDollarSign, ShieldCheck, ArrowRight,
+  BadgeDollarSign, ShieldCheck, Smartphone, Package, User,
 } from 'lucide-react';
 
 /* ───────── Constantes ───────── */
@@ -120,6 +120,7 @@ export const QrPage = () => {
   const [identifier, setIdentifier] = useState(null);
   const [order, setOrder] = useState(null);
   const [qrProduct, setQrProduct] = useState(null);
+  const [stickerPrice, setStickerPrice] = useState(null);
   const [qrImage, setQrImage] = useState('');
   const [qrUrl, setQrUrl] = useState('');
   const [copied, setCopied] = useState(false);
@@ -229,9 +230,14 @@ export const QrPage = () => {
         .get('/products')
         .then((res) => {
           const products = res.data.products || res.data || [];
-          setQrProduct(products.find((p) => p.slug === 'qr-digital-basico') || null);
+          const qrProductFound = products.find((p) => p.slug === 'qr-digital-basico') || null;
+          setQrProduct(qrProductFound);
+          if (qrProductFound) setStickerPrice(formatAmount(qrProductFound.price));
         })
-        .catch(() => setQrProduct(null));
+        .catch(() => {
+          setQrProduct(null);
+          setStickerPrice(null);
+        });
     }
   }, [qrProduct]);
 
@@ -244,7 +250,7 @@ export const QrPage = () => {
     try {
       const orderRes = await api.post('/orders', {
         product_id: qrProduct.id,
-        customization: { tipo: 'activacion_qr_digital', precio_cop: qrProduct.price },
+        customization: { tipo: 'activacion_qr_digital', precio_cop: qrProduct?.price },
       });
       const newOrder = orderRes.data.order;
       setOrder(newOrder);
@@ -334,14 +340,77 @@ export const QrPage = () => {
     }
   };
 
-  if (loading) return <PageLoader />;
-  const price = qrProduct ? formatAmount(qrProduct.price) : 'Consulta el catálogo';
+  /* Fondo de pantalla de bloqueo con el QR: se ve sin desbloquear el teléfono */
+  const downloadLockScreen = async () => {
+    if (!qrImage) return;
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = qrImage;
+      });
+      const W = 1080;
+      const H = 1920;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const g = canvas.getContext('2d');
+      const bg = g.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#3f0617');
+      bg.addColorStop(1, '#9F1239');
+      g.fillStyle = bg;
+      g.fillRect(0, 0, W, H);
 
+      g.fillStyle = '#ffffff';
+      g.textAlign = 'center';
+      g.font = '700 68px Inter, system-ui, sans-serif';
+      g.fillText('Si me pasa algo,', W / 2, 760);
+      g.fillText('escanea este QR', W / 2, 850);
+      g.fillStyle = 'rgba(255,255,255,0.8)';
+      g.font = '400 40px Inter, system-ui, sans-serif';
+      g.fillText('Verás mis datos de emergencia', W / 2, 920);
+
+      const size = 700;
+      const x = (W - size) / 2;
+      const y = 990;
+      const r = 48;
+      g.fillStyle = '#ffffff';
+      g.beginPath();
+      g.moveTo(x + r, y);
+      g.arcTo(x + size, y, x + size, y + size, r);
+      g.arcTo(x + size, y + size, x, y + size, r);
+      g.arcTo(x, y + size, x, y, r);
+      g.arcTo(x, y, x + size, y, r);
+      g.closePath();
+      g.fill();
+      g.drawImage(img, x + 30, y + 30, size - 60, size - 60);
+
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('canvas');
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'fondo-pantalla-emergencia.png';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Fondo de pantalla descargado');
+    } catch {
+      toast.error('No se pudo crear el fondo de pantalla');
+    }
+  };
+
+  if (loading) return <PageLoader />;
+
+  const price = stickerPrice || (qrProduct ? formatAmount(qrProduct.price) : 'Consulta el catálogo');
   const stepCurrent = STEP_INDEX[state];
 
   const waPay = 'Hola, quiero pagar mi pedido de activación de QR por WhatsApp.';
   const waActivate = 'Hola, quiero activar mi QR de emergencia por WhatsApp.';
   const waHelp = 'Hola, mi QR de emergencia aparece desactivado y necesito ayuda.';
+  const shareHref = `https://wa.me/?text=${encodeURIComponent(`Mi perfil de emergencia: ${qrUrl}`)}`;
 
   const payButton = (label, busyLabel) => (
     <Button onClick={order ? retryPayment : createOrderAndPay} disabled={acting} variant="primary">
@@ -457,46 +526,84 @@ export const QrPage = () => {
 
       {/* ───── QR activo ───── */}
       {state === 'active' && identifier && (
-        <section className={`${panel} mx-auto max-w-md overflow-hidden`} aria-label="Tu código QR">
-          <div className="relative px-5 py-8 sm:px-8">
-            <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0" />
-            <div className="relative mx-auto w-fit rounded-2xl bg-white p-5 shadow-glow ring-1 ring-border sm:p-6">
-              <span aria-hidden="true" className="absolute -left-2 -top-2 h-7 w-7 rounded-tl-xl border-l-[3px] border-t-[3px] border-brand-500" />
-              <span aria-hidden="true" className="absolute -right-2 -top-2 h-7 w-7 rounded-tr-xl border-r-[3px] border-t-[3px] border-brand-500" />
-              <span aria-hidden="true" className="absolute -bottom-2 -left-2 h-7 w-7 rounded-bl-xl border-b-[3px] border-l-[3px] border-brand-500" />
-              <span aria-hidden="true" className="absolute -bottom-2 -right-2 h-7 w-7 rounded-br-xl border-b-[3px] border-r-[3px] border-brand-500" />
-              {qrImage ? (
-                <img src={qrImage} alt="Código QR de emergencia" className="h-56 w-56 sm:h-64 sm:w-64" />
-              ) : (
-                <div className="flex h-56 w-56 items-center justify-center text-center text-sm text-text-secondary sm:h-64 sm:w-64">
-                  Imagen no disponible
-                </div>
-              )}
+        <div className="grid items-start gap-5 lg:grid-cols-5">
+          <section className={`${panel} overflow-hidden lg:col-span-2`} aria-label="Tu código QR">
+            <div className="relative px-5 py-8 sm:px-8">
+              <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0" />
+              <div className="relative mx-auto w-fit rounded-2xl bg-white p-5 shadow-glow ring-1 ring-border sm:p-6">
+                <span aria-hidden="true" className="absolute -left-2 -top-2 h-7 w-7 rounded-tl-xl border-l-[3px] border-t-[3px] border-brand-500" />
+                <span aria-hidden="true" className="absolute -right-2 -top-2 h-7 w-7 rounded-tr-xl border-r-[3px] border-t-[3px] border-brand-500" />
+                <span aria-hidden="true" className="absolute -bottom-2 -left-2 h-7 w-7 rounded-bl-xl border-b-[3px] border-l-[3px] border-brand-500" />
+                <span aria-hidden="true" className="absolute -bottom-2 -right-2 h-7 w-7 rounded-br-xl border-b-[3px] border-r-[3px] border-brand-500" />
+                {qrImage ? (
+                  <img src={qrImage} alt="Código QR de emergencia" className="h-56 w-56" />
+                ) : (
+                  <div className="flex h-56 w-56 items-center justify-center text-center text-sm text-text-secondary">
+                    Imagen no disponible
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3 border-t border-border p-5 sm:p-6">
-            <Button onClick={downloadQr} disabled={!qrImage} variant="primary" className="w-full">
-              <Download size={16} /> Descargar QR
-            </Button>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="secondary" onClick={copyLink}>
-                {copied ? <Check size={16} /> : <LinkIcon size={16} />}
-                {copied ? 'Copiado' : 'Copiar enlace'}
+            <div className="space-y-3 border-t border-border p-5 sm:p-6">
+              <Button onClick={downloadQr} disabled={!qrImage} variant="primary" className="w-full">
+                <Download size={16} /> Descargar QR
               </Button>
-              <a href={qrUrl} target="_blank" rel="noopener noreferrer" className="btn-outline px-5 py-2.5 text-sm">
-                <ExternalLink size={16} aria-hidden="true" /> Probar
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="secondary" onClick={copyLink}>
+                  {copied ? <Check size={16} /> : <LinkIcon size={16} />}
+                  {copied ? 'Copiado' : 'Copiar enlace'}
+                </Button>
+                <a href={qrUrl} target="_blank" rel="noopener noreferrer" className="btn-outline px-5 py-2.5 text-sm">
+                  <ExternalLink size={16} aria-hidden="true" /> Probar
+                </a>
+              </div>
+              <a href={shareHref} target="_blank" rel="noopener noreferrer" className="btn-outline w-full px-5 py-2.5 text-sm">
+                <MessageCircle size={16} aria-hidden="true" /> Compartir por WhatsApp
               </a>
             </div>
-            <Link
-              to={routes.dashboardPrivacy}
-              className="group flex items-center justify-center gap-2 pt-2 text-sm font-semibold text-brand-500 transition-colors hover:text-brand-600"
-            >
-              Elegir qué se muestra
-              <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
+          </section>
+
+          <div className="space-y-4 lg:col-span-3">
+            <section className={`${panel} p-5 sm:p-6`} aria-labelledby="place-title">
+              <h2 id="place-title" className="text-base font-semibold text-neutral-900">Ponlo donde se vea rápido</h2>
+              <p className="mt-1 text-sm text-text-secondary">En una emergencia nadie va a buscarlo: tiene que estar a la vista.</p>
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {['Casco', 'Moto o bicicleta', 'Mochila', 'Billetera', 'Llavero', 'Carné o credencial'].map((place) => (
+                  <li key={place} className="rounded-full border border-border bg-brand-50/60 px-3 py-1 text-xs font-medium text-neutral-900">{place}</li>
+                ))}
+              </ul>
+              <Link to={routes.dashboardOrders} className="btn-primary mt-5 px-5 py-2.5 text-sm">
+                <Package size={16} aria-hidden="true" /> Pedir stickers
+              </Link>
+            </section>
+
+            <section className={`${panel} flex items-start gap-4 p-5 sm:p-6`} aria-labelledby="lock-title">
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
+                <Smartphone size={18} aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="lock-title" className="text-base font-semibold text-neutral-900">Fondo de pantalla de bloqueo</h2>
+                <p className="mt-1 text-sm text-text-secondary">Así pueden escanearlo sin desbloquear tu teléfono.</p>
+                <button type="button" onClick={downloadLockScreen} disabled={!qrImage} className="btn-outline mt-4 px-4 py-2 text-sm">
+                  <Download size={16} aria-hidden="true" /> Descargar fondo
+                </button>
+              </div>
+            </section>
+
+            <section className={`${panel} p-5 sm:p-6`} aria-labelledby="shown-title">
+              <h2 id="shown-title" className="text-base font-semibold text-neutral-900">Qué ve quien lo escanea</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link to={routes.dashboardPrivacy} className="btn-outline px-4 py-2 text-sm">
+                  <ShieldCheck size={16} aria-hidden="true" /> Elegir qué se muestra
+                </Link>
+                <Link to={routes.dashboardProfile} className="btn-outline px-4 py-2 text-sm">
+                  <User size={16} aria-hidden="true" /> Editar mi perfil
+                </Link>
+              </div>
+            </section>
           </div>
-        </section>
+        </div>
       )}
 
       {/* ───── Pago rechazado ───── */}

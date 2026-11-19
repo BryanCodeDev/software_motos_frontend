@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
-import { Mail, MailCheck, ArrowLeft, KeyRound, Loader2, ShieldCheck, Clock, Send } from 'lucide-react';
+import { Mail, MailCheck, ArrowLeft, ArrowRight, KeyRound, Loader2, ShieldCheck, Clock, Send } from 'lucide-react';
 import api from '../../api/client';
 import { useToast } from '../../components/useToast';
 import { showApiError } from '../../utils/errors';
@@ -10,19 +10,19 @@ import Seo from '../../components/Seo';
 import AuthShell from '../../components/AuthShell';
 
 const ASIDE = {
-  badge: 'Recuperación de acceso',
+  badge: 'Recuperar acceso',
   line1: 'Recupera tu cuenta',
   accent: 'en un par de minutos.',
-  text: 'Te enviaremos un enlace seguro para que crees una contraseña nueva.',
+  text: 'Te enviaremos un enlace seguro para crear una contraseña nueva.',
   items: [
-    { icon: Send, title: 'Enlace por correo', desc: 'Llega directo a tu bandeja de entrada' },
+    { icon: Send, title: 'Enlace por correo', desc: 'Directo a tu bandeja de entrada' },
     { icon: Clock, title: 'Válido por 1 hora', desc: 'Caduca por tu seguridad' },
-    { icon: ShieldCheck, title: 'Proceso protegido', desc: 'Nunca revelamos si un correo está registrado' },
+    { icon: ShieldCheck, title: 'Proceso protegido', desc: 'No revelamos si un correo está registrado' },
   ],
 };
 
-const backLink =
-  'inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-neutral-900';
+const rise = 'opacity-0 animate-slide-up';
+const delay = (ms) => ({ animationDelay: `${ms}ms` });
 
 export const ForgotPassword = () => {
   const toast = useToast();
@@ -51,20 +51,24 @@ export const ForgotPassword = () => {
   if (sent) {
     return (
       <AuthShell aside={ASIDE}>
-        <Seo title="Restablecer contraseña" noindex />
+        <Seo title="Revisa tu correo" noindex />
         <div className="text-center">
-          <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600 ring-8 ring-green-50">
-            <MailCheck size={26} />
-          </span>
-          <h1 className="text-2xl font-bold text-neutral-900">Revisa tu correo</h1>
-          <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+          <div className={`relative mx-auto mb-6 h-16 w-16 ${rise}`}>
+            <span className="absolute inset-0 rounded-full bg-green-500/30 animate-pulse-ring" />
+            <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 ring-8 ring-green-50 animate-float">
+              <MailCheck size={28} />
+            </span>
+          </div>
+          <h1 className={`text-3xl font-extrabold text-neutral-900 ${rise}`} style={delay(100)}>
+            Revisa tu correo
+          </h1>
+          <p className={`mt-3 text-sm leading-relaxed text-text-secondary ${rise}`} style={delay(180)}>
             Si <span className="break-all font-semibold text-neutral-900">{email}</span> está registrado,
-            te enviamos un enlace para crear una contraseña nueva. Es válido por 1 hora.
+            recibirás un enlace válido por 1 hora. ¿No llega? Revisa spam.
           </p>
-          <p className="mt-2 text-xs text-text-secondary">¿No llega? Revisa tu carpeta de spam.</p>
 
-          <div className="mt-8 grid gap-3">
-            <Link to={routes.login} className="btn-primary w-full">
+          <div className={`mt-8 grid gap-3 ${rise}`} style={delay(260)}>
+            <Link to={routes.login} className="btn-primary h-12 w-full">
               Volver a iniciar sesión
             </Link>
             <button type="button" onClick={() => setSent(false)} className="btn-ghost w-full">
@@ -80,25 +84,33 @@ export const ForgotPassword = () => {
     <AuthShell aside={ASIDE}>
       <Seo title="Olvidé mi contraseña" noindex />
 
-      <Link to={routes.login} className={backLink}>
-        <ArrowLeft size={16} /> Volver a iniciar sesión
+      <Link
+        to={routes.login}
+        className={`group inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-brand-500 ${rise}`}
+      >
+        <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-1" />
+        Volver
       </Link>
 
-      <div className="mb-8 mt-6 text-center">
-        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
-          <KeyRound size={22} />
-        </span>
-        <h1 className="text-2xl font-bold text-neutral-900">¿Olvidaste tu contraseña?</h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Escribe tu correo y te enviaremos un enlace para crear una nueva.
-        </p>
+      <div className={`mb-8 mt-6 text-center ${rise}`} style={delay(80)}>
+        <div className="relative mx-auto mb-5 h-14 w-14">
+          <span className="absolute inset-0 rounded-2xl bg-brand-500/40 animate-pulse-ring" />
+          <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow animate-float">
+            <KeyRound size={24} />
+          </span>
+        </div>
+        <h1 className="text-3xl font-extrabold text-neutral-900">¿Olvidaste tu contraseña?</h1>
+        <p className="mt-2 text-sm text-text-secondary">Te enviamos un enlace para crear una nueva.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
+        <div className={rise} style={delay(160)}>
           <Label htmlFor="email">Correo electrónico</Label>
-          <div className="relative">
-            <Mail size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+          <div className="group relative">
+            <Mail
+              size={18}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary transition-colors group-focus-within:text-brand-500"
+            />
             <Input
               id="email"
               type="email"
@@ -112,15 +124,20 @@ export const ForgotPassword = () => {
           </div>
         </div>
 
-        <Button type="submit" variant="primary" disabled={loading} className="h-11 w-full">
-          {loading ? (
-            <>
-              <Loader2 size={18} className="animate-spin" /> Enviando...
-            </>
-          ) : (
-            'Enviarme el enlace'
-          )}
-        </Button>
+        <div className={rise} style={delay(240)}>
+          <Button type="submit" variant="primary" disabled={loading} className="group h-12 w-full text-base">
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" /> Enviando...
+              </>
+            ) : (
+              <>
+                Enviarme el enlace
+                <ArrowRight size={18} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </AuthShell>
   );

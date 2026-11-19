@@ -9,12 +9,14 @@ import Modal from '../../components/Modal';
 import { PageTitle, PageLoader, EmptyState, CheckField } from '../../components/DashPage';
 import {
   Trash2, Save, Pencil, Users, Phone as PhoneIcon, Mail as MailIcon, User, Heart,
-  Loader2, AlertTriangle, UserPlus, ArrowRight,
+  Loader2, AlertTriangle, UserPlus, ArrowRight, MessageCircle,
 } from 'lucide-react';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 const iconCls = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary';
 const inputCls = 'h-11 pl-10 text-base sm:text-sm';
+
+const RELATIONS = ['Madre', 'Padre', 'Pareja', 'Hijo/a', 'Hermano/a', 'Amigo/a', 'Médico/a'];
 
 const emptyForm = {
   name: '',
@@ -27,6 +29,13 @@ const emptyForm = {
 };
 
 const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, '')}`;
+
+/* Números colombianos de 10 dígitos (3xx...) reciben el prefijo 57 */
+const waHref = (phone) => {
+  let digits = String(phone).replace(/\D/g, '');
+  if (digits.length === 10 && digits.startsWith('3')) digits = `57${digits}`;
+  return `https://wa.me/${digits}`;
+};
 
 const Switch = ({ checked, onChange, label, disabled }) => (
   <button
@@ -53,6 +62,7 @@ export const ContactsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [toDelete, setToDelete] = useState(null);
@@ -78,6 +88,7 @@ export const ContactsPage = () => {
   const openNew = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setErrors({});
     setFormOpen(true);
   };
 
@@ -92,6 +103,7 @@ export const ContactsPage = () => {
       display_phone: !!c.display_phone,
       display_email: !!c.display_email,
     });
+    setErrors({});
     setFormOpen(true);
   };
 
@@ -101,17 +113,24 @@ export const ContactsPage = () => {
     setEditingId(null);
   };
 
+  const setField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  const validate = () => {
+    const next = {};
+    if (!form.name.trim()) next.name = 'Escribe el nombre del contacto.';
+    if (!form.phone.trim()) next.phone = 'El teléfono es obligatorio: es lo que usará quien te auxilie.';
+    else if (form.phone.replace(/\D/g, '').length < 7) next.phone = 'Revisa el número: parece incompleto.';
+    if (form.is_public && form.display_email && !form.email.trim()) next.email = 'Agrega un correo para poder mostrarlo.';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (form.is_public && form.display_phone && !form.phone.trim()) {
-      toast.error('Agrega un teléfono para poder mostrarlo');
-      return;
-    }
-    if (form.is_public && form.display_email && !form.email.trim()) {
-      toast.error('Agrega un correo para poder mostrarlo');
-      return;
-    }
+    if (!validate()) return;
 
     setSaving(true);
     const payload = {
@@ -191,11 +210,7 @@ export const ContactsPage = () => {
 
       {contacts.length === 0 ? (
         <div className={`${panel} p-6 lg:p-8`}>
-          <EmptyState
-            icon={Users}
-            title="Aún no tienes contactos"
-            text="Agrega al menos una persona de confianza."
-          >
+          <EmptyState icon={Users} title="Aún no tienes contactos" text="Agrega al menos una persona de confianza.">
             <Button type="button" variant="primary" onClick={openNew}>
               <UserPlus size={16} /> Agregar contacto
             </Button>
@@ -214,17 +229,17 @@ export const ContactsPage = () => {
           </div>
 
           {publicCount === 0 && (
-            <p className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <p className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800" role="status">
               <AlertTriangle size={16} className="mt-0.5 flex-none" aria-hidden="true" />
               Ningún contacto es visible. Activa al menos uno para que sepan a quién llamar.
             </p>
           )}
 
-          <ul className="space-y-3">
+          <ul className="grid gap-3 lg:grid-cols-2">
             {contacts.map((c) => {
               const shown = [c.display_phone && c.phone && 'teléfono', c.display_email && c.email && 'correo'].filter(Boolean);
               return (
-                <li key={c.id} className={`${panel} p-4 sm:p-5`}>
+                <li key={c.id} className={`${panel} flex flex-col p-4 sm:p-5`}>
                   <div className="flex items-start gap-3">
                     <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-500/10 text-sm font-bold text-brand-500">
                       {c.name?.charAt(0)?.toUpperCase() || '?'}
@@ -232,44 +247,32 @@ export const ContactsPage = () => {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-neutral-900">{c.name}</p>
                       {c.relationship && <p className="truncate text-xs text-text-secondary">{c.relationship}</p>}
-                      {(c.phone || c.email) && (
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary">
-                          {c.phone && (
-                            <a href={telHref(c.phone)} className="flex items-center gap-1.5 hover:text-brand-500">
-                              <PhoneIcon size={13} aria-hidden="true" /> {c.phone}
-                            </a>
-                          )}
-                          {c.email && (
-                            <a href={`mailto:${c.email}`} className="flex min-w-0 items-center gap-1.5 hover:text-brand-500">
-                              <MailIcon size={13} className="flex-none" aria-hidden="true" />
-                              <span className="truncate">{c.email}</span>
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-none gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(c)}
-                        className="rounded-lg p-2 text-text-secondary transition-colors hover:bg-brand-50 hover:text-brand-500"
-                        aria-label={`Editar ${c.name}`}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setToDelete(c)}
-                        className="rounded-lg p-2 text-rose-600 transition-colors hover:bg-rose-50"
-                        aria-label={`Eliminar ${c.name}`}
-                      >
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </div>
 
+                  {(c.phone || c.email) && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {c.phone && (
+                        <>
+                          <a href={telHref(c.phone)} className="btn-outline px-3 py-1.5 text-xs">
+                            <PhoneIcon size={13} aria-hidden="true" /> {c.phone}
+                          </a>
+                          <a href={waHref(c.phone)} target="_blank" rel="noopener noreferrer" className="btn-outline px-3 py-1.5 text-xs" aria-label={`WhatsApp a ${c.name}`}>
+                            <MessageCircle size={13} aria-hidden="true" /> WhatsApp
+                          </a>
+                        </>
+                      )}
+                      {c.email && (
+                        <a href={`mailto:${c.email}`} className="btn-outline min-w-0 px-3 py-1.5 text-xs">
+                          <MailIcon size={13} className="flex-none" aria-hidden="true" />
+                          <span className="truncate">{c.email}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
-                    <p className="text-xs text-text-secondary">
+                    <p className="min-w-0 text-xs text-text-secondary">
                       {!c.is_public
                         ? 'Oculto al escanear'
                         : shown.length > 0
@@ -282,6 +285,15 @@ export const ContactsPage = () => {
                       disabled={togglingId === c.id}
                       label={`${c.name}: ${c.is_public ? 'visible al escanear' : 'oculto'}`}
                     />
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <button type="button" onClick={() => openEdit(c)} className="btn-outline flex-1 px-3 py-2 text-xs" aria-label={`Editar ${c.name}`}>
+                      <Pencil size={14} aria-hidden="true" /> Editar
+                    </button>
+                    <button type="button" onClick={() => setToDelete(c)} className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50" aria-label={`Eliminar ${c.name}`}>
+                      <Trash2 size={14} aria-hidden="true" /> Eliminar
+                    </button>
                   </div>
                 </li>
               );
@@ -298,36 +310,86 @@ export const ContactsPage = () => {
 
       {/* Agregar o editar */}
       <Modal isOpen={formOpen} onClose={closeForm} title={editingId ? 'Editar contacto' : 'Agregar contacto'}>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <Label htmlFor="c_name">Nombre</Label>
             <div className="relative">
               <User size={18} className={iconCls} aria-hidden="true" />
-              <Input id="c_name" required autoComplete="off" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="María López" className={inputCls} />
+              <Input
+                id="c_name"
+                required
+                autoComplete="off"
+                value={form.name}
+                onChange={(e) => setField('name', e.target.value)}
+                placeholder="María López"
+                aria-invalid={errors.name ? 'true' : undefined}
+                className={inputCls}
+              />
             </div>
+            {errors.name && <p role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{errors.name}</p>}
           </div>
+
           <div>
             <Label htmlFor="c_rel">Relación</Label>
             <div className="relative">
               <Heart size={18} className={iconCls} aria-hidden="true" />
-              <Input id="c_rel" value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value })} placeholder="Esposa" className={inputCls} />
+              <Input id="c_rel" value={form.relationship} onChange={(e) => setField('relationship', e.target.value)} placeholder="Esposa" className={inputCls} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Relaciones sugeridas">
+              {RELATIONS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setField('relationship', r)}
+                  aria-pressed={form.relationship === r}
+                  className={`focus-ring rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                    form.relationship === r
+                      ? 'border-brand-500 bg-brand-500 text-white'
+                      : 'border-border bg-white text-text-secondary hover:border-brand-500/40 hover:text-neutral-900'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
             </div>
           </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="c_phone">Teléfono</Label>
               <div className="relative">
                 <PhoneIcon size={18} className={iconCls} aria-hidden="true" />
-                <Input id="c_phone" type="tel" inputMode="tel" autoComplete="off" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+57 300 000 0000" className={inputCls} />
+                <Input
+                  id="c_phone"
+                  type="tel"
+                  inputMode="tel"
+                  required
+                  autoComplete="off"
+                  value={form.phone}
+                  onChange={(e) => setField('phone', e.target.value)}
+                  placeholder="+57 300 000 0000"
+                  aria-invalid={errors.phone ? 'true' : undefined}
+                  className={inputCls}
+                />
               </div>
+              {errors.phone && <p role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{errors.phone}</p>}
             </div>
             <div>
-              <Label htmlFor="c_email">Correo electrónico (opcional)</Label>
+              <Label htmlFor="c_email">Correo (opcional)</Label>
               <div className="relative">
                 <MailIcon size={18} className={iconCls} aria-hidden="true" />
-                <Input id="c_email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@ejemplo.com" className={inputCls} />
+                <Input
+                  id="c_email"
+                  type="email"
+                  autoComplete="off"
+                  value={form.email}
+                  onChange={(e) => setField('email', e.target.value)}
+                  placeholder="maria@ejemplo.com"
+                  aria-invalid={errors.email ? 'true' : undefined}
+                  className={inputCls}
+                />
               </div>
-              <p className="mt-1 text-xs text-text-secondary">Solo nombre y teléfono son obligatorios. El correo se guarda vacío si no lo proporcionas.</p>
+              {errors.email && <p role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{errors.email}</p>}
             </div>
           </div>
 
@@ -335,13 +397,13 @@ export const ContactsPage = () => {
             <CheckField
               id="c_public"
               checked={form.is_public}
-              onChange={(v) => setForm({ ...form, is_public: v })}
+              onChange={(v) => setField('is_public', v)}
               label="Mostrar al escanear mi QR"
             />
             {form.is_public && (
               <div className="mt-3 space-y-3 border-t border-border pl-7 pt-3">
-                <CheckField id="c_dphone" checked={form.display_phone} onChange={(v) => setForm({ ...form, display_phone: v })} label="Mostrar teléfono" />
-                <CheckField id="c_demail" checked={form.display_email} onChange={(v) => setForm({ ...form, display_email: v })} label="Mostrar correo" />
+                <CheckField id="c_dphone" checked={form.display_phone} onChange={(v) => setField('display_phone', v)} label="Mostrar teléfono" />
+                <CheckField id="c_demail" checked={form.display_email} onChange={(v) => setField('display_email', v)} label="Mostrar correo" />
               </div>
             )}
           </div>

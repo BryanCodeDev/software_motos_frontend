@@ -7,45 +7,47 @@ import { showApiError } from '../../utils/errors';
 import { useToast } from '../../components/useToast';
 import { Button, Input, Label, Textarea } from '../../components/ui';
 import { PageTitle, PageLoader } from '../../components/DashPage';
-import { Camera, Check, ArrowLeft, ArrowRight, RotateCcw, Save, Trash2, User } from 'lucide-react';
+import { Camera, Check, ArrowLeft, ArrowRight, Eye, EyeOff, RotateCcw, Save, Trash2, User } from 'lucide-react';
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 /**
  * Campos que el backend guarda al pulsar "Guardar" (PUBLIC_FIELDS en profile.service.js).
- * La visibilidad de cada dato se gestiona solo en la página de Privacidad.
+ * Para agregar un dato nuevo: súmalo aquí, en PUBLIC_FIELDS del backend y en fieldDefs de PrivacyPage.
+ *  - recommended: cuenta para el avance de "datos esenciales".
+ *  - none: muestra el atajo "No tengo" (así se distingue "sin dato" de "ninguno").
  */
 const fields = [
-  { key: 'display_name', label: 'Nombre completo', category: 'identificacion', input: 'text', placeholder: 'Tu nombre y apellido', required: true, wide: true },
-  { key: 'blood_type', label: 'Tipo de sangre', category: 'identificacion', input: 'text', placeholder: 'O+' },
+  { key: 'display_name', label: 'Nombre completo', category: 'identificacion', input: 'text', placeholder: 'Tu nombre y apellido', required: true, wide: true, recommended: true },
+  { key: 'blood_type', label: 'Tipo de sangre', category: 'identificacion', input: 'select', options: BLOOD_TYPES, recommended: true },
   { key: 'date_of_birth', label: 'Fecha de nacimiento', category: 'identificacion', input: 'date' },
-  { key: 'document_number', label: 'Número de documento', category: 'identificacion', input: 'text', placeholder: 'Cédula o pasaporte', wide: true },
+  { key: 'document_number', label: 'Número de documento', category: 'identificacion', input: 'text', placeholder: 'Cédula, tarjeta de identidad o pasaporte', wide: true },
   { key: 'is_organ_donor', label: 'Donante de órganos', category: 'identificacion', input: 'checkbox', checkLabel: 'Soy donante de órganos' },
-  { key: 'allergies', label: 'Alergias', category: 'medico', input: 'textarea', placeholder: 'Ej.: penicilina, mariscos' },
-  { key: 'medical_conditions', label: 'Condiciones médicas', category: 'medico', input: 'textarea', placeholder: 'Ej.: asma, diabetes' },
-  { key: 'medications', label: 'Medicamentos', category: 'medico', input: 'textarea', placeholder: 'Ej.: salbutamol cada 6 horas' },
-  { key: 'medical_devices', label: 'Dispositivos o implantes', category: 'medico', input: 'textarea', placeholder: 'Ej.: marcapasos' },
+  { key: 'allergies', label: 'Alergias', category: 'medico', input: 'textarea', placeholder: 'Ej.: penicilina, mariscos', none: true, recommended: true },
+  { key: 'medical_conditions', label: 'Condiciones médicas', category: 'medico', input: 'textarea', placeholder: 'Ej.: asma, diabetes, epilepsia', none: true, recommended: true },
+  { key: 'medications', label: 'Medicamentos', category: 'medico', input: 'textarea', placeholder: 'Ej.: salbutamol cada 6 horas', none: true, recommended: true },
+  { key: 'medical_devices', label: 'Dispositivos o implantes', category: 'medico', input: 'textarea', placeholder: 'Ej.: marcapasos', none: true },
   { key: 'height_cm', label: 'Estatura (cm)', category: 'medico', input: 'number', placeholder: '170' },
   { key: 'weight_kg', label: 'Peso (kg)', category: 'medico', input: 'number', placeholder: '70' },
   { key: 'primary_doctor_name', label: 'Médico tratante', category: 'medico', input: 'text', placeholder: 'Nombre de tu médico' },
   { key: 'primary_doctor_phone', label: 'Teléfono del médico', category: 'medico', input: 'tel', placeholder: '+57 300 000 0000' },
   { key: 'is_pregnant', label: 'Embarazo', category: 'medico', input: 'checkbox', checkLabel: 'Hay un embarazo en curso' },
-  { key: 'insurance_company', label: 'EPS o aseguradora', category: 'seguro', input: 'text', placeholder: 'Nombre de tu EPS o seguro' },
-  { key: 'insurance_policy_number', label: 'Afiliación o póliza', category: 'seguro', input: 'text', placeholder: 'Número de carnet o póliza' },
-  { key: 'emergency_note', label: 'Nota de emergencia', category: 'adicional', input: 'textarea', placeholder: 'Lo primero que debe leer el personal de salud' },
-  { key: 'additional_info', label: 'Algo más que deban saber', category: 'adicional', input: 'textarea', placeholder: 'Cualquier dato útil en una emergencia' },
+  { key: 'insurance_company', label: 'EPS o aseguradora', category: 'otros', input: 'text', placeholder: 'Nombre de tu EPS o seguro' },
+  { key: 'insurance_policy_number', label: 'Afiliación o póliza', category: 'otros', input: 'text', placeholder: 'Número de carnet o póliza' },
+  { key: 'emergency_note', label: 'Nota de emergencia', category: 'otros', input: 'textarea', placeholder: 'Lo primero que debe leer el personal de salud', recommended: true },
+  { key: 'additional_info', label: 'Algo más que deban saber', category: 'otros', input: 'textarea', placeholder: 'Cualquier dato útil en una emergencia' },
 ];
 
 const SAVED_KEYS = fields.map((f) => f.key);
 
 const sections = [
   { id: 'identificacion', title: 'Identificación' },
-  { id: 'medico', title: 'Médico' },
-  { id: 'seguro', title: 'Seguro' },
-  { id: 'adicional', title: 'Notas' },
+  { id: 'medico', title: 'Salud' },
+  { id: 'otros', title: 'Seguro y notas' },
 ];
 
 const emptyForm = {
@@ -56,50 +58,99 @@ const emptyForm = {
 
 const isWide = (f) => f.wide || f.input === 'textarea' || f.input === 'checkbox';
 
-const Field = ({ f, value, error, onValue }) => {
+/* ───────── Visibilidad junto al dato ───────── */
+const VisToggle = ({ on, busy, onToggle, label }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    disabled={busy}
+    aria-pressed={on}
+    aria-label={`${label}: ${on ? 'visible al escanear. Pulsa para ocultar' : 'oculto. Pulsa para mostrar'}`}
+    className={`focus-ring inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-60 ${
+      on ? 'bg-brand-500/10 text-brand-600' : 'bg-neutral-100 text-text-secondary hover:bg-brand-50'
+    }`}
+  >
+    {on ? <Eye size={12} aria-hidden="true" /> : <EyeOff size={12} aria-hidden="true" />}
+    {on ? 'Visible' : 'Oculto'}
+  </button>
+);
+
+const Field = ({ f, value, error, onValue, vis }) => {
   const id = `f_${f.key}`;
   const errId = `err_${f.key}`;
+  const empty = String(value ?? '').trim() === '';
+  const toggle = vis && (
+    <VisToggle on={vis.map[f.key] === true} busy={vis.busy === f.key} onToggle={() => vis.toggle(f.key)} label={f.label} />
+  );
+
+  if (f.input === 'checkbox') {
+    return (
+      <div className="sm:col-span-2">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3.5 transition-colors hover:border-brand-500/30">
+          <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+            <input
+              id={id}
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={(e) => onValue(e.target.checked)}
+              className="h-5 w-5 flex-none rounded border-border accent-brand-500"
+            />
+            <span className="text-sm text-neutral-900">{f.checkLabel}</span>
+          </label>
+          {toggle}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={isWide(f) ? 'sm:col-span-2' : ''}>
-      {f.input === 'checkbox' ? (
-        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-white p-3.5 transition-colors hover:border-brand-500/30">
-          <input
-            id={id}
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => onValue(e.target.checked)}
-            className="h-5 w-5 flex-none rounded border-border accent-brand-500"
-          />
-          <span className="text-sm text-neutral-900">{f.checkLabel}</span>
-        </label>
-      ) : (
-        <>
-          <Label htmlFor={id}>
-            {f.label}
-            {f.required && <span className="ml-1 text-brand-500" aria-hidden="true">*</span>}
-          </Label>
-          {f.input === 'textarea' ? (
-            <Textarea
-              id={id}
-              value={value}
-              onChange={(e) => onValue(e.target.value)}
-              placeholder={f.placeholder}
-              rows={3}
-              className="text-base sm:text-sm"
-            />
-          ) : (
-            <Input
-              id={id}
-              type={f.input}
-              value={value}
-              onChange={(e) => onValue(e.target.value)}
-              placeholder={f.placeholder}
-              aria-invalid={error ? 'true' : undefined}
-              aria-describedby={error ? errId : undefined}
-              className="h-11 text-base sm:text-sm"
-            />
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <Label htmlFor={id} className="!mb-0">
+          {f.label}
+          {f.required && <span className="ml-1 text-brand-500" aria-hidden="true">*</span>}
+        </Label>
+        <div className="flex items-center gap-2">
+          {f.none && empty && (
+            <button
+              type="button"
+              onClick={() => onValue('Ninguna')}
+              className="focus-ring rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-text-secondary transition-colors hover:border-brand-500/40 hover:text-neutral-900"
+            >
+              No tengo
+            </button>
           )}
-        </>
+          {toggle}
+        </div>
+      </div>
+
+      {f.input === 'textarea' ? (
+        <Textarea
+          id={id}
+          value={value}
+          onChange={(e) => onValue(e.target.value)}
+          placeholder={f.placeholder}
+          rows={3}
+          className="text-base sm:text-sm"
+        />
+      ) : f.input === 'select' ? (
+        <select id={id} value={value} onChange={(e) => onValue(e.target.value)} className="input h-11">
+          <option value="">Elige una opción</option>
+          {/* Si ya había un valor escrito a mano, no se pierde */}
+          {value && !f.options.includes(value) && <option value={value}>{value}</option>}
+          {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <Input
+          id={id}
+          type={f.input}
+          value={value}
+          onChange={(e) => onValue(e.target.value)}
+          placeholder={f.placeholder}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? errId : undefined}
+          className="h-11 text-base sm:text-sm"
+        />
       )}
       {error && (
         <p id={errId} role="alert" className="mt-1.5 text-xs font-medium text-rose-700">
@@ -124,7 +175,11 @@ export const ProfilePage = () => {
   const [dirty, setDirty] = useState(false);
   const [errors, setErrors] = useState({});
   const [tab, setTab] = useState(sections[0].id);
-  const [profileId, setProfileId] = useState(null);
+
+  /* Visibilidad: se guarda al instante, aparte del formulario */
+  const [visMap, setVisMap] = useState({});
+  const [visReady, setVisReady] = useState(false);
+  const [visBusy, setVisBusy] = useState(null);
 
   const markDirty = useCallback(() => setDirty(true), []);
 
@@ -164,36 +219,68 @@ export const ProfilePage = () => {
     let mounted = true;
     (async () => {
       try {
-        const { data } = await api.get('/profiles/me');
+        const res = await api.get('/profiles/me');
         if (!mounted) return;
-        const profiles = data.profiles || [];
-        const active = profiles.find((p) => p.is_active) || profiles[0];
-        if (!mounted) return;
-        if (active) {
-          setProfileId(active.id);
-          const p = active;
-          const loaded = Object.fromEntries(
-            fields.map((f) => {
-              let v = p[f.key] ?? '';
-              if (f.input === 'date' && v) v = String(v).slice(0, 10);
-              return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
-            }),
-          );
-          const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
-          setForm(next);
-          snapshotRef.current = { form: next, photo: p.photo_url || null };
-          if (p.photo_url) setPhotoPreview(p.photo_url);
-          setDirty(false);
-        }
+        const p = res.data.profile || res.data;
+        const loaded = Object.fromEntries(
+          fields.map((f) => {
+            let v = p[f.key] ?? '';
+            if (f.input === 'date' && v) v = String(v).slice(0, 10);
+            return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
+          }),
+        );
+        const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
+        setForm(next);
+        snapshotRef.current = { form: next, photo: p.photo_url || null };
+        if (p.photo_url) setPhotoPreview(p.photo_url);
+        setDirty(false);
       } catch (error) {
         if (!mounted) return;
-        toast.error('No pudimos cargar tus perfiles. Recarga la página.');
+        if (!(error.response && error.response.status === 404)) {
+          toast.error('No pudimos cargar tu perfil. Recarga la página.');
+        }
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
   }, [toast]);
+
+  /* Visibilidad actual de cada dato (un 404 significa "aún nada visible") */
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get('/privacy/me');
+        if (!mounted) return;
+        const list = res.data.settings || res.data || [];
+        const map = {};
+        if (Array.isArray(list)) list.forEach((s) => { if (s.field_name) map[s.field_name] = s.is_public; });
+        setVisMap(map);
+        setVisReady(true);
+      } catch (error) {
+        if (mounted && error.response && error.response.status === 404) setVisReady(true);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const toggleVis = async (key) => {
+    const prevMap = visMap;
+    const nextMap = { ...visMap, [key]: !visMap[key] };
+    setVisMap(nextMap);
+    setVisBusy(key);
+    try {
+      await api.patch('/privacy/me', { settings: nextMap });
+    } catch {
+      setVisMap(prevMap);
+      toast.error('No se pudo cambiar la visibilidad.');
+    } finally {
+      setVisBusy(null);
+    }
+  };
+
+  const vis = visReady ? { map: visMap, busy: visBusy, toggle: toggleVis } : null;
 
   const handlePhotoChange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -245,7 +332,7 @@ export const ProfilePage = () => {
       reader.onerror = reject;
       reader.readAsDataURL(form.photoFile);
     });
-    const res = await api.post('/profiles/photo', { profile_id: profileId, photo_data: dataUrl });
+    const res = await api.post('/profiles/photo', { photo_data: dataUrl });
     return res.data.photo_url;
   };
 
@@ -260,10 +347,6 @@ export const ProfilePage = () => {
     }
     setSaving(true);
     try {
-      if (!profileId) {
-        toast.error('No se encontró un perfil para guardar. Crea un perfil primero.');
-        return;
-      }
       let photoUrl = form.photo_url;
       if (form.photoFile) photoUrl = await uploadPhotoFile();
 
@@ -272,14 +355,14 @@ export const ProfilePage = () => {
         const v = form[k];
         payload[k] = typeof v === 'boolean' ? v : v || null;
       });
-      const patchRes = await api.patch(`/profiles/me/profiles/${profileId}`, payload);
+      await api.patch('/profiles/me', payload);
 
+      const res = await api.get('/profiles/me');
       let nextForm = { ...form, photoFile: null };
       let nextPhoto = photoPreview;
-      const savedProfile = patchRes.data.profile;
-      if (savedProfile) {
-        nextPhoto = savedProfile.photo_url || null;
-        nextForm = { ...form, photo_url: savedProfile.photo_url || '', photoFile: null };
+      if (res.data.profile) {
+        nextPhoto = res.data.profile.photo_url || null;
+        nextForm = { ...form, photo_url: res.data.profile.photo_url || '', photoFile: null };
         setPhotoPreview(nextPhoto);
       }
       setForm(nextForm);
@@ -302,12 +385,18 @@ export const ProfilePage = () => {
   if (loading) return <PageLoader />;
 
   const isFilled = (f) => (f.input === 'checkbox' ? form[f.key] === true : String(form[f.key] || '').trim() !== '');
+
+  /* El avance mide lo esencial: lo demás es opcional y no debe impedir llegar al 100 % */
+  const essentials = fields.filter((f) => f.recommended);
+  const essentialsDone = essentials.filter(isFilled).length;
+  const pct = Math.round((essentialsDone / essentials.length) * 100);
+
   const countFor = (id) => {
     const list = fields.filter((f) => f.category === id);
-    return { done: list.filter(isFilled).length, total: list.length };
+    const rec = list.filter((f) => f.recommended);
+    const target = rec.length > 0 ? rec : list;
+    return { done: target.filter(isFilled).length, total: target.length };
   };
-  const filled = fields.filter(isFilled).length;
-  const pct = Math.round((filled / fields.length) * 100);
   const displayName = String(form.display_name || '').trim();
 
   const tabIndex = sections.findIndex((s) => s.id === tab);
@@ -316,7 +405,7 @@ export const ProfilePage = () => {
 
   return (
     <div className="animate-fade-in space-y-4 pb-28 lg:space-y-5">
-      <PageTitle title="Tu perfil" description="Llena solo lo que quieras. Qué se muestra lo decides en Privacidad." />
+      <PageTitle title="Tu perfil" description="Empieza por lo esencial. Junto a cada dato eliges si se muestra al escanear." />
 
       {/* Quién eres: foto, nombre y avance */}
       <section className={`${panel} flex items-center gap-4 p-4 sm:p-5`} aria-label="Resumen del perfil">
@@ -347,21 +436,24 @@ export const ProfilePage = () => {
               aria-valuenow={pct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Perfil completado"
+              aria-label="Datos esenciales completados"
             >
               <div className="h-full rounded-full bg-brand-500 transition-[width] duration-500" style={{ width: `${pct}%` }} />
             </div>
-            <span className="flex-none text-xs text-text-secondary">{pct}%</span>
+            <span className="flex-none text-xs text-text-secondary">Esenciales {essentialsDone} de {essentials.length}</span>
           </div>
-          {photoPreview && (
-            <button
-              type="button"
-              onClick={removePhoto}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:underline"
-            >
-              <Trash2 size={13} aria-hidden="true" /> Quitar foto
-            </button>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {vis && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+                Foto <VisToggle on={visMap.photo_url === true} busy={visBusy === 'photo_url'} onToggle={() => toggleVis('photo_url')} label="Foto" />
+              </span>
+            )}
+            {photoPreview && (
+              <button type="button" onClick={removePhoto} className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:underline">
+                <Trash2 size={13} aria-hidden="true" /> Quitar foto
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
@@ -384,7 +476,7 @@ export const ProfilePage = () => {
               >
                 {s.title}
                 <span className={`text-xs ${active ? 'text-white/80' : 'text-text-secondary'}`}>
-                  {done === total ? <Check size={13} strokeWidth={3} aria-label="Completo" /> : `${done}/${total}`}
+                  {done === total ? <Check size={13} strokeWidth={3} aria-label="Esenciales completos" /> : `${done}/${total}`}
                 </span>
               </button>
             );
@@ -396,7 +488,7 @@ export const ProfilePage = () => {
             {fields
               .filter((f) => f.category === tab)
               .map((f) => (
-                <Field key={f.key} f={f} value={form[f.key]} error={errors[f.key]} onValue={setValue(f.key)} />
+                <Field key={f.key} f={f} value={form[f.key]} error={errors[f.key]} onValue={setValue(f.key)} vis={vis} />
               ))}
           </div>
         </section>

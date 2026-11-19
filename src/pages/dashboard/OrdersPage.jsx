@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, QrCode, Check, ArrowRight, AlertTriangle, RotateCcw, Ban, Undo2, Plus, Sticker, CreditCard, Loader2, Lock, X, CheckCircle2 } from 'lucide-react';
+import { Package, QrCode, Check, ArrowRight, AlertTriangle, RotateCcw, Ban, Undo2, Plus, CreditCard, Loader2 } from 'lucide-react';
 import api from '../../api/client';
 import { routes } from '../../utils/routes';
 import { useToast } from '../../components/useToast';
 import { PageTitle, PageLoader, EmptyState } from '../../components/DashPage';
 import { Badge } from '../../components/ui-kit';
+import Modal from '../../components/Modal';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
+/* Precio del pack de stickers. Debe coincidir con el backend; al crear el pedido se muestra el total real. */
 const STICKER_QUANTITY = 2;
 
 const DESIGNS = [
@@ -33,6 +35,7 @@ const formatAmount = (amount, currency) => {
   }
 };
 
+/* ───────── Etiquetas y tonos ───────── */
 const commercialLabels = {
   draft: 'Borrador',
   pending_confirmation: 'Por confirmar',
@@ -111,14 +114,14 @@ const Tracker = ({ current }) => {
           style={{ width: `${(current / last) * 100}%` }}
         />
       </div>
-      <ol className="relative grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-0.5">
+      <ol className="relative grid grid-cols-5">
         {STAGES.map((label, i) => {
           const done = i < current || (current === last && i === last);
           const active = i === current && current !== last;
           return (
             <li key={label} className="flex flex-col items-center gap-1.5 text-center">
               <span
-                className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[9px] sm:text-[10px] font-bold ring-1 ${
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${
                   done
                     ? 'bg-brand-500 text-white ring-brand-500'
                     : active
@@ -126,9 +129,9 @@ const Tracker = ({ current }) => {
                       : 'bg-white text-text-muted ring-border'
                 }`}
               >
-                {done ? <Check size={10} strokeWidth={3} aria-hidden="true" /> : i + 1}
+                {done ? <Check size={12} strokeWidth={3} aria-hidden="true" /> : i + 1}
               </span>
-              <span className={`text-[9px] sm:text-[10px] leading-tight ${done || active ? 'font-semibold text-neutral-900' : 'text-text-secondary'}`}>
+              <span className={`text-[10px] leading-tight sm:text-xs ${done || active ? 'font-semibold text-neutral-900' : 'text-text-secondary'}`}>
                 {label}
               </span>
             </li>
@@ -183,7 +186,7 @@ const DesignCard = ({ design, selected, onSelect }) => {
 };
 
 /* ───────── Seguimiento visual ───────── */
-const OrderCard = ({ order: o }) => {
+const OrderCard = ({ order: o, onPay, paying }) => {
   const isQr = o.product_slug === 'qr-digital-basico';
   const Icon = isQr ? QrCode : Package;
   const closed = CLOSED.includes(o.commercial_status);
@@ -191,14 +194,20 @@ const OrderCard = ({ order: o }) => {
   const stage = STAGE_INDEX[o.commercial_status] ?? 0;
   const needsPayment = isQr && !closed && o.payment_status !== 'approved';
   const payNotice = paymentNotice[o.payment_status];
+  const stickerNeedsPayment =
+    !isQr && !closed && o.payment_status !== 'approved' && ['pending_payment', 'pending_confirmation', 'draft'].includes(o.commercial_status);
 
   return (
     <li className={`${panel} p-5 sm:p-6`}>
-      <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-4">
-        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 sm:mt-0">
-          <Icon size={20} aria-hidden="true" />
+      <div className="flex items-start gap-4">
+        <span className="flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-xl bg-brand-500/10 text-brand-500">
+          {o.design_image_url ? (
+            <img src={o.design_image_url} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          ) : (
+            <Icon size={20} aria-hidden="true" />
+          )}
         </span>
-        <div className="min-w-0 flex-1 sm:flex-1">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{o.product_name}</p>
           {o.design_name && (
             <p className="mt-0.5 text-xs text-text-secondary">
@@ -210,7 +219,7 @@ const OrderCard = ({ order: o }) => {
             {' '}del {formatDate(o.created_at)}
           </p>
         </div>
-        <p className="mt-4 sm:mt-0 sm:flex-none text-base font-bold text-neutral-900 sm:text-lg text-right sm:text-left">
+        <p className="flex-none whitespace-nowrap text-base font-bold text-neutral-900 sm:text-lg">
           {formatAmount(o.total_amount, o.currency)}
         </p>
       </div>
@@ -241,6 +250,14 @@ const OrderCard = ({ order: o }) => {
           </Link>
         </div>
       )}
+      {stickerNeedsPayment && (
+        <div className="mt-5 flex justify-end">
+          <button type="button" onClick={() => onPay(o)} disabled={paying} className="btn-primary px-4 py-2 text-sm">
+            {paying ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <CreditCard size={15} aria-hidden="true" />}
+            {paying ? 'Redirigiendo…' : 'Pagar ahora'}
+          </button>
+        </div>
+      )}
     </li>
   );
 };
@@ -261,11 +278,12 @@ export const OrdersPage = () => {
   const [selectedDesignId, setSelectedDesignId] = useState(null);
   const [buyLoading, setBuyLoading] = useState(false);
   const [buyError, setBuyError] = useState(null);
-  const [step, setStep] = useState('select'); // select | confirm | paying | success
+  const [step, setStep] = useState('select'); // select | confirm | paying
   const [newOrder, setNewOrder] = useState(null);
+  const [payingId, setPayingId] = useState(null);
   const [stickerPrice, setStickerPrice] = useState(null);
 
-  // Precio del sticker desde el catálogo del backend (única fuente de verdad).
+  /* Precio del sticker desde el catálogo del backend (única fuente de verdad). */
   useEffect(() => {
     let mounted = true;
     const loadStickerPrice = async () => {
@@ -300,13 +318,6 @@ export const OrdersPage = () => {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    const run = async () => {
-      await load();
-    };
-    run();
-  }, [load]);
 
   const openBuy = () => {
     setBuyError(null);
@@ -370,6 +381,18 @@ export const OrdersPage = () => {
     }
   };
 
+  /* Pagar un pedido de stickers que quedó sin pagar */
+  const payOrder = async (o) => {
+    setPayingId(o.id);
+    try {
+      const prefRes = await api.post('/payments/preference', { order_id: o.id });
+      window.location.href = prefRes.data.init_point;
+    } catch (err) {
+      setPayingId(null);
+      toastRef.current.error(err?.response?.data?.error || 'No se pudo iniciar el pago.');
+    }
+  };
+
   const counts = useMemo(
     () => Object.fromEntries(FILTERS.map((f) => [f.id, orders.filter(f.test).length])),
     [orders],
@@ -382,9 +405,13 @@ export const OrdersPage = () => {
 
   if (loading) return <PageLoader />;
 
+  const chosenDesign = DESIGNS.find((d) => d.id === selectedDesignId) || null;
+  /* El total que manda es el del pedido creado en el backend */
+  const totalLabel = newOrder?.total_amount != null ? formatAmount(newOrder.total_amount, newOrder.currency) : stickerPrice || 'Consulta el catálogo';
+
   return (
     <div className="animate-fade-in space-y-5 lg:space-y-6">
-      <PageTitle title="Mis pedidos" description="Sigue el estado de tu QR y tus stickers. Compra nuevos stickers desde esta misma sección." />
+      <PageTitle title="Mis pedidos" description="Sigue tu QR y tus stickers." />
 
       {failed ? (
         <div className={`${panel} p-6 lg:p-8`}>
@@ -405,32 +432,32 @@ export const OrdersPage = () => {
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-              <div
-                role="tablist"
-                aria-label="Filtrar pedidos"
-                className="custom-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border bg-white p-1 sm:p-1.5"
-              >
-                {FILTERS.map((f) => {
-                  const active = filter === f.id;
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setFilter(f.id)}
-                      className={`flex flex-none items-center gap-1.5 rounded-lg px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition-colors focus-ring whitespace-nowrap ${
-                        active ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
-                      }`}
-                    >
-                      {f.label}
-                      <span className={`hidden sm:inline-block rounded-full px-1.5 text-[10px] sm:text-[11px] font-bold ${active ? 'bg-white/20' : 'bg-brand-50'}`}>
-                        {counts[f.id]}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+            <div
+              role="tablist"
+              aria-label="Filtrar pedidos"
+              className="custom-scrollbar flex max-w-full gap-1.5 overflow-x-auto rounded-xl border border-border bg-white p-1.5"
+            >
+              {FILTERS.map((f) => {
+                const active = filter === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter(f.id)}
+                    className={`flex flex-none items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus-ring ${
+                      active ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
+                    }`}
+                  >
+                    {f.label}
+                    <span className={`rounded-full px-1.5 text-[11px] font-bold ${active ? 'bg-white/20' : 'bg-brand-50'}`}>
+                      {counts[f.id]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
             <button type="button" onClick={openBuy} className="btn-outline px-4 py-2 text-sm">
               <Plus size={16} aria-hidden="true" /> Pedir sticker
             </button>
@@ -447,178 +474,111 @@ export const OrdersPage = () => {
           ) : (
             <ul className="space-y-4" aria-live="polite">
               {visible.map((o) => (
-                <OrderCard key={o.id} order={o} />
+                <OrderCard key={o.id} order={o} onPay={payOrder} paying={payingId === o.id} />
               ))}
             </ul>
           )}
         </>
       )}
 
-      {/* ───────── Modal: Comprar sticker ───────── */}
-      {buyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Comprar sticker">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeBuy} />
-          <div className="relative w-full max-w-2xl mx-auto mt-10 sm:mt-20 rounded-2xl border border-border bg-white shadow-[0_24px_80px_-20px_rgba(159,18,57,0.35)] p-6 lg:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-neutral-900 sm:text-xl">Comprar nuevo sticker</h2>
-              <button type="button" onClick={closeBuy} className="rounded-full p-1.5 text-text-secondary hover:bg-neutral-100">
-                <X size={18} className="block" aria-hidden="true" />
+      {/* ───────── Comprar stickers ───────── */}
+      <Modal
+        isOpen={buyOpen}
+        onClose={buyLoading ? () => null : closeBuy}
+        title={step === 'select' ? 'Elige el diseño' : step === 'confirm' ? 'Confirmar compra' : 'Redirigiendo al pago'}
+        size="lg"
+      >
+        {step === 'select' && (
+          <div className="space-y-5">
+            <p className="text-sm text-text-secondary">
+              Pack de {STICKER_QUANTITY} stickers con el mismo diseño:{' '}
+              <span className="font-semibold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>.
+            </p>
+            {buyError && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">
+                {buyError}
+              </div>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Diseño del sticker">
+              {DESIGNS.map((design) => (
+                <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <button type="button" onClick={createOrder} disabled={!selectedDesignId || buyLoading} className="btn-primary px-6 py-2.5 text-sm">
+                {buyLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" /> Creando…
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight size={16} aria-hidden="true" /> Continuar
+                  </>
+                )}
               </button>
             </div>
-
-            {/* Paso 1: Selección de diseño */}
-            {step === 'select' && (
-              <>
-                <div className="mb-6">
-                  <h3 className="mb-2 text-base font-semibold text-neutral-900">Elige el diseño</h3>
-                  <p className="text-sm text-text-secondary">
-                    Los dos stickers llevarán el mismo diseño. Precio: {stickerPrice || 'Consulta el catálogo'} por sticker.
-                  </p>
-                </div>
-                {buyError && (
-                  <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">
-                    {buyError}
-                  </div>
-                )}
-                {DESIGNS.length === 0 && (
-                  <div className="rounded-xl border border-border bg-neutral-50 p-6 text-center text-sm text-text-secondary">
-                    No hay diseños disponibles en este momento.
-                  </div>
-                )}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Diseño del sticker">
-                  {DESIGNS.map((design) => (
-                    <DesignCard key={design.id} design={design} selected={selectedDesignId} onSelect={handleSelect} />
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={createOrder}
-                    disabled={!selectedDesignId || buyLoading}
-                    className="btn-primary px-6 py-2.5 text-sm"
-                  >
-                    {buyLoading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" /> Creando…
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-4 w-4" /> Continuar
-                      </>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Paso 2: Confirmar compra */}
-            {step === 'confirm' && (
-              <>
-                <div className="mb-6">
-                  <h3 className="mb-2 text-base font-semibold text-neutral-900">Confirmar compra</h3>
-                  <p className="text-sm text-text-secondary">Revisa el diseño y el precio antes de pagar.</p>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="relative flex-shrink-0">
-                    <img
-                      src={(DESIGNS.find((d) => d.id === selectedDesignId)?.image_url || '')}
-                      alt={(DESIGNS.find((d) => d.id === selectedDesignId)?.name || '')}
-                      className="w-24 h-24 rounded-xl object-cover bg-neutral-100 shadow-inner"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-neutral-900">{DESIGNS.find((d) => d.id === selectedDesignId)?.name}</h3>
-                    {(DESIGNS.find((d) => d.id === selectedDesignId)?.description) && (
-                      <p className="mt-0.5 text-xs text-text-secondary">{DESIGNS.find((d) => d.id === selectedDesignId)?.description}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-6 rounded-xl border border-border p-4">
-                  <table className="w-full text-sm divide-y divide-border">
-                    <tbody>
-                      <tr>
-                        <td className="py-3 text-text-secondary">Producto</td>
-                        <td className="py-3 text-right font-semibold text-neutral-900">Stickers QR personalizados</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 text-text-secondary">Diseño</td>
-                        <td className="py-3 text-right font-semibold text-neutral-900">{DESIGNS.find((d) => d.id === selectedDesignId)?.name}</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 text-text-secondary">Cantidad</td>
-                        <td className="py-3 text-right font-semibold text-neutral-900">{STICKER_QUANTITY} stickers (mismo diseño)</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 text-text-secondary">Precio por sticker</td>
-                        <td className="py-3 text-right font-bold text-neutral-900">{stickerPrice || '—'}</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 text-text-secondary font-semibold">Total a pagar</td>
-                        <td className="py-3 text-right text-lg font-bold text-neutral-900">{stickerPrice || '—'}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-                    El precio se confirma desde el catálogo antes de pagar. No se puede modificar desde el navegador. El pago se procesa a través de Mercado Pago.
-                  </p>
-                </div>
-                <div className="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setStep('select')}
-                    className="btn-outline px-6 py-2.5 text-sm"
-                  >
-                    <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" /> Elegir otro diseño
-                  </button>
-                  <button
-                    type="button"
-                    onClick={proceedToPayment}
-                    disabled={buyLoading}
-                    className="btn-primary px-6 py-2.5 text-sm"
-                  >
-                    {buyLoading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" /> Redirigiendo…
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard size={16} aria-hidden="true" /> Pagar con Mercado Pago
-                      </>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Pago / éxito */}
-            {step === 'paying' && (
-              <div className="flex flex-col items-center justify-center py-10">
-                <h3 className="mb-2 text-base font-semibold text-neutral-900">Redirigiendo al pago</h3>
-                <p className="text-sm text-text-secondary">Serás llevado a Mercado Pago para completar el pago de {stickerPrice || '—'}.</p>
-                <Loader2 size={24} className="animate-spin mt-4" />
-              </div>
-            )}
-
-            {step === 'success' && newOrder && (
-              <div className="text-center py-6">
-                <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-emerald-500" aria-hidden="true" />
-                <h3 className="mb-2 text-lg font-bold text-neutral-900">Pedido creado</h3>
-                <p className="mb-4 text-sm text-text-secondary">
-                  Pedido <span className="font-mono font-semibold text-neutral-900">{newOrder.order_number}</span>. Diseño: <span className="font-medium text-neutral-900">{newOrder.design_name}</span>. Total: {formatAmount(newOrder.total_amount, newOrder.currency)}.
-                </p>
-                <p className="mt-4 text-sm text-text-secondary">
-                  Cuando Mercado Pago apruebe el pago, tu QR se activará automáticamente.
-                </p>
-                <div className="mt-6 flex justify-center">
-                  <button type="button" onClick={closeBuy} className="btn-outline px-6 py-2.5 text-sm">
-                    Cerrar
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {step === 'confirm' && (
+          <div className="space-y-5">
+            {buyError && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">
+                {buyError}
+              </div>
+            )}
+            <div className="flex items-center gap-4">
+              {chosenDesign && (
+                <img src={chosenDesign.image_url} alt={chosenDesign.name} className="h-20 w-20 flex-none rounded-xl bg-neutral-100 object-cover shadow-inner" />
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold text-neutral-900">{chosenDesign?.name}</p>
+                {chosenDesign?.description && <p className="mt-0.5 text-xs text-text-secondary">{chosenDesign.description}</p>}
+              </div>
+            </div>
+
+            <dl className="divide-y divide-border rounded-xl border border-border px-4 text-sm">
+              <div className="flex justify-between gap-4 py-3">
+                <dt className="text-text-secondary">Producto</dt>
+                <dd className="text-right font-semibold text-neutral-900">Stickers QR personalizados</dd>
+              </div>
+              <div className="flex justify-between gap-4 py-3">
+                <dt className="text-text-secondary">Cantidad</dt>
+                <dd className="text-right font-semibold text-neutral-900">{STICKER_QUANTITY} stickers, mismo diseño</dd>
+              </div>
+              <div className="flex justify-between gap-4 py-3">
+                <dt className="font-semibold text-neutral-900">Total a pagar</dt>
+                <dd className="text-right text-lg font-bold text-neutral-900">{totalLabel}</dd>
+              </div>
+            </dl>
+            <p className="text-xs leading-relaxed text-text-secondary">El pago se procesa de forma segura con Mercado Pago.</p>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => { setBuyError(null); setStep('select'); }} disabled={buyLoading} className="btn-outline px-6 py-2.5 text-sm">
+                <ArrowRight size={16} className="rotate-180" aria-hidden="true" /> Elegir otro diseño
+              </button>
+              <button type="button" onClick={proceedToPayment} disabled={buyLoading} className="btn-primary px-6 py-2.5 text-sm">
+                {buyLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" /> Redirigiendo…
+                  </>
+                ) : (
+                  <>
+                    <CreditCard size={16} aria-hidden="true" /> Pagar con Mercado Pago
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'paying' && (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <p className="text-sm text-text-secondary">Te llevamos a Mercado Pago para completar el pago de {totalLabel}.</p>
+            <Loader2 size={24} className="mt-4 animate-spin text-brand-500" aria-hidden="true" />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
