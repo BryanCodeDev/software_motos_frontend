@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, FileText, Link2,
+  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, FileText, Image, Link2,
   Loader2, Plus, Printer, QrCode, RefreshCw, Search, Unlink, User, X,
 } from 'lucide-react';
 import api from '../../api/client';
@@ -9,6 +9,7 @@ import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 import Modal from '../../components/Modal';
+import StickerExportModal from '../../components/StickerExportModal';
 import { useAdminSync } from '../../contexts/useAdminSync';
 
 const PAGE_SIZE = 24;
@@ -71,7 +72,7 @@ const Field = ({ label, children, wide = false }) => (
 );
 
 /* ───────── Tarjeta de QR ───────── */
-const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy }) => (
+const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onExportSticker }) => (
   <li
     className={`flex flex-col rounded-2xl border p-4 transition-colors ${
       selected ? 'border-brand-500/60 bg-brand-50/60' : 'border-border bg-white hover:border-brand-500/40'
@@ -135,6 +136,12 @@ const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy }) =>
       <button type="button" onClick={onCopy} aria-label="Copiar enlace público" title="Copiar enlace público" className="btn-outline h-8 w-8 flex-none">
         <Copy size={14} aria-hidden="true" />
       </button>
+      <button type="button" onClick={onDownload} aria-label="Descargar código QR" title="Descargar código QR" className="btn-outline h-8 w-8 flex-none">
+        <Download size={14} aria-hidden="true" />
+      </button>
+      <button type="button" onClick={onExportSticker} aria-label="Exportar sticker con QR" title="Exportar sticker con QR" className="btn-outline h-8 w-8 flex-none !text-brand-600 hover:!bg-brand-50">
+        <Image size={14} aria-hidden="true" />
+      </button>
     </div>
   </li>
 );
@@ -160,6 +167,10 @@ export const AdminQrInventory = () => {
   const [selected, setSelected] = useState(new Set());
   const [exportBusy, setExportBusy] = useState(false);
   const [archiveBusy, setArchiveBusy] = useState(false);
+
+  /* Exportar sticker */
+  const [stickerExportOpen, setStickerExportOpen] = useState(false);
+  const [stickerExportQr, setStickerExportQr] = useState(null);
 
   /* Crear */
   const [createOpen, setCreateOpen] = useState(false);
@@ -309,6 +320,8 @@ export const AdminQrInventory = () => {
   };
   const closeLink = () => { if (!linkBusy) { setLinkQr(null); setPickedUser(null); } };
 
+  const openStickerExport = (qr) => { setStickerExportQr(qr); setStickerExportOpen(true); };
+
   const doLink = async () => {
     if (!linkQr || !pickedUser) return;
     setLinkBusy(true);
@@ -380,6 +393,26 @@ export const AdminQrInventory = () => {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el estado');
     } finally {
       setPrintBusy(false);
+    }
+  };
+
+  /* Descargar QR individual (imagen real del código) */
+  const downloadQr = async (id) => {
+    const qr = qrs.find((q) => q.id === id);
+    if (!qr) return;
+    try {
+      const res = await api.get(`/admin/qrs/${id}/qr`, { responseType: 'blob' });
+      const objectUrl = URL.createObjectURL(new Blob([res.data], { type: 'image/png' }));
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `qr-emergencia-${qr.value}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      toast.success('QR descargado');
+    } catch {
+      toast.error('No se pudo descargar el QR');
     }
   };
 
@@ -563,6 +596,8 @@ export const AdminQrInventory = () => {
                 onLink={() => openLink(qr)}
                 onUnlink={() => askUnlink(qr)}
                 onCopy={() => copy(publicUrl(qr.value), 'Enlace copiado')}
+                onDownload={() => downloadQr(qr.id)}
+                onExportSticker={() => openStickerExport(qr)}
               />
             ))}
           </ul>
@@ -801,6 +836,13 @@ export const AdminQrInventory = () => {
           </div>
         )}
       </Modal>
+
+      {/* ───────── Exportar sticker ───────── */}
+      <StickerExportModal
+        isOpen={stickerExportOpen}
+        onClose={() => setStickerExportOpen(false)}
+        qr={stickerExportQr}
+      />
     </div>
   );
 };
