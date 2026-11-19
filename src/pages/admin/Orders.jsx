@@ -34,7 +34,7 @@ const COMMERCIAL = {
 
 /* Transiciones comerciales permitidas (debe coincidir con el backend) */
 const COMMERCIAL_TRANSITIONS = {
-  draft: ['pending_confirmation', 'pending_payment', 'cancelled'],
+  draft: ['pending_confirmation', 'pending_payment', 'paid', 'cancelled'],
   pending_confirmation: ['pending_payment', 'paid', 'cancelled'],
   pending_payment: ['paid', 'cancelled'],
   paid: ['preparing', 'cancelled', 'refund_requested'],
