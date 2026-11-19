@@ -245,7 +245,7 @@ export const ProfilePage = () => {
       reader.onerror = reject;
       reader.readAsDataURL(form.photoFile);
     });
-    const res = await api.post('/profiles/photo', { profile_id, photo_data: dataUrl });
+    const res = await api.post('/profiles/photo', { profile_id: profileId, photo_data: dataUrl });
     return res.data.photo_url;
   };
 
