@@ -301,6 +301,13 @@ export const OrdersPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const run = async () => {
+      await load();
+    };
+    run();
+  }, [load]);
+
   const openBuy = () => {
     setBuyError(null);
     setSelectedDesignId(null);

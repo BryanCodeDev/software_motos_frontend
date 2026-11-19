@@ -7,6 +7,7 @@ import api from '../api/client';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
 import { PageHeader } from '../components/Section';
+import { productPlans } from '../data/products';
 
 const formatAmount = (amount) => {
   try {
@@ -27,13 +28,6 @@ const DESIGNS = [
   { id: 4, name: 'Diseño 4', image_url: '/img/sticker-4.png', description: 'Urbano y actual' },
   { id: 5, name: 'Diseño 5', image_url: '/img/sticker-5.png', description: 'Elegante y sobrio' },
   { id: 6, name: 'Diseño 6', image_url: '/img/sticker-6.png', description: 'Aventurero y resistente' },
-];
-
-const INCLUDES = [
-  '2 stickers con el mismo diseño, para casco, moto o mochila',
-  '1 código QR único y permanente, sin datos personales',
-  'Tu perfil de emergencia, con solo lo que autorices',
-  'Sin suscripción; quien escanea no necesita cuenta ni app',
 ];
 
 const STEPS = [
@@ -57,7 +51,9 @@ export const Products = () => {
         const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
         if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
       } catch {
-        // Sin precio de catálogo.
+        // Si el backend no responde, usa el precio local de products.js.
+        const stickerPlan = productPlans.find((p) => p.name === 'Stickers QR');
+        if (mounted && stickerPlan) setStickerPrice(stickerPlan.price);
       }
     };
     loadStickerPrice();
@@ -82,12 +78,12 @@ export const Products = () => {
           <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
             <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
             <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
-              {stickerPrice || 'Consulta el catálogo'}
+              {stickerPrice || '$30.000'}
             </p>
             <p className="mt-1 text-sm text-text-secondary">Pago único</p>
 
             <ul className="mt-6 space-y-3">
-              {INCLUDES.map((text) => (
+              {productPlans[0].features.map((text) => (
                 <li key={text} className="flex items-start gap-3 text-sm text-neutral-900">
                   <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
                     <Check size={13} strokeWidth={3} aria-hidden="true" />
@@ -111,29 +107,44 @@ export const Products = () => {
             </p>
           </Card>
 
-          {/* Diseños */}
+          {/* Catálogo completo de planes */}
           <div className="lg:col-span-7">
-            <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-neutral-900">
-              Elige entre 6 diseños
+            <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">
+              Todos los planes
             </h2>
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {DESIGNS.map((design) => (
-                <li
-                  key={design.id}
-                  className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
-                >
-                  <img
-                    src={design.image_url}
-                    alt={design.name}
-                    width="160"
-                    height="160"
-                    loading="lazy"
-                    className="aspect-square w-full rounded-xl bg-neutral-100 object-cover object-center"
-                  />
-                  <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name}</p>
-                  <p className="text-xs text-text-secondary">{design.description}</p>
-                </li>
-              ))}
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {productPlans
+                .filter((p) => !p.coming && !p.whatsapp)
+                .map((plan) => (
+                  <li
+                    key={plan.name}
+                    className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+                  >
+                    {plan.badge && (
+                      <span className="inline-block mb-3 rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                        {plan.badge}
+                      </span>
+                    )}
+                    <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name}</h3>
+                    <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-2xl font-bold text-neutral-900">{plan.price}</span>
+                      {plan.priceNote && (
+                        <span className="text-xs font-medium text-text-secondary">{plan.priceNote}</span>
+                      )}
+                    </div>
+                    <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.desc}</p>
+                    <ul className="mb-6 space-y-2 text-sm text-text-secondary">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to={routes.register} className="btn-primary w-full py-2.5 text-sm">
+                      {plan.action}
+                    </Link>
+                  </li>
+                ))}
             </ul>
           </div>
         </div>
