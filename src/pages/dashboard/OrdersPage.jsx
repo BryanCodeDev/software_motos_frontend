@@ -111,14 +111,14 @@ const Tracker = ({ current }) => {
           style={{ width: `${(current / last) * 100}%` }}
         />
       </div>
-      <ol className="relative grid grid-cols-5">
+      <ol className="relative grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-0.5">
         {STAGES.map((label, i) => {
           const done = i < current || (current === last && i === last);
           const active = i === current && current !== last;
           return (
             <li key={label} className="flex flex-col items-center gap-1.5 text-center">
               <span
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${
+                className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[9px] sm:text-[10px] font-bold ring-1 ${
                   done
                     ? 'bg-brand-500 text-white ring-brand-500'
                     : active
@@ -126,9 +126,9 @@ const Tracker = ({ current }) => {
                       : 'bg-white text-text-muted ring-border'
                 }`}
               >
-                {done ? <Check size={12} strokeWidth={3} aria-hidden="true" /> : i + 1}
+                {done ? <Check size={10} strokeWidth={3} aria-hidden="true" /> : i + 1}
               </span>
-              <span className={`text-[10px] leading-tight sm:text-xs ${done || active ? 'font-semibold text-neutral-900' : 'text-text-secondary'}`}>
+              <span className={`text-[9px] sm:text-[10px] leading-tight ${done || active ? 'font-semibold text-neutral-900' : 'text-text-secondary'}`}>
                 {label}
               </span>
             </li>
@@ -194,11 +194,11 @@ const OrderCard = ({ order: o }) => {
 
   return (
     <li className={`${panel} p-5 sm:p-6`}>
-      <div className="flex items-start gap-4">
-        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
+      <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-4">
+        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 sm:mt-0">
           <Icon size={20} aria-hidden="true" />
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 sm:flex-1">
           <p className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{o.product_name}</p>
           {o.design_name && (
             <p className="mt-0.5 text-xs text-text-secondary">
@@ -210,7 +210,7 @@ const OrderCard = ({ order: o }) => {
             {' '}del {formatDate(o.created_at)}
           </p>
         </div>
-        <p className="flex-none whitespace-nowrap text-base font-bold text-neutral-900 sm:text-lg">
+        <p className="mt-4 sm:mt-0 sm:flex-none text-base font-bold text-neutral-900 sm:text-lg text-right sm:text-left">
           {formatAmount(o.total_amount, o.currency)}
         </p>
       </div>
@@ -405,32 +405,32 @@ export const OrdersPage = () => {
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div
-              role="tablist"
-              aria-label="Filtrar pedidos"
-              className="custom-scrollbar flex max-w-full gap-1.5 overflow-x-auto rounded-xl border border-border bg-white p-1.5"
-            >
-              {FILTERS.map((f) => {
-                const active = filter === f.id;
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setFilter(f.id)}
-                    className={`flex flex-none items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus-ring ${
-                      active ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
-                    }`}
-                  >
-                    {f.label}
-                    <span className={`rounded-full px-1.5 text-[11px] font-bold ${active ? 'bg-white/20' : 'bg-brand-50'}`}>
-                      {counts[f.id]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+              <div
+                role="tablist"
+                aria-label="Filtrar pedidos"
+                className="custom-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border bg-white p-1 sm:p-1.5"
+              >
+                {FILTERS.map((f) => {
+                  const active = filter === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setFilter(f.id)}
+                      className={`flex flex-none items-center gap-1.5 rounded-lg px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition-colors focus-ring whitespace-nowrap ${
+                        active ? 'bg-brand-500 text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
+                      }`}
+                    >
+                      {f.label}
+                      <span className={`hidden sm:inline-block rounded-full px-1.5 text-[10px] sm:text-[11px] font-bold ${active ? 'bg-white/20' : 'bg-brand-50'}`}>
+                        {counts[f.id]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             <button type="button" onClick={openBuy} className="btn-outline px-4 py-2 text-sm">
               <Plus size={16} aria-hidden="true" /> Pedir sticker
             </button>
