@@ -8,13 +8,6 @@ import { Button } from './ui';
 const STICKER_COUNT = 6;
 const PUBLIC_PATH = (n) => `/img/sticker-${n}.png`;
 
-/**
- * Configuración independiente por diseño.
- * Las coordenadas son proporciones (0-1) sobre las dimensiones naturales
- * de cada plantilla. Los valores de sticker-1 son referencia inicial;
- * los de 2 a 6 son aproximados y se ajustan cuando se confirme la
- * plantilla definitiva.
- */
 const stickerConfigurations = {
   1: { image: PUBLIC_PATH(1), qrPosition: { x: 0.5048, y: 0.3054, width: 0.3628, height: 0.3270 } },
   2: { image: PUBLIC_PATH(2), qrPosition: { x: 0.5024, y: 0.3174, width: 0.3397, height: 0.3110 } },
@@ -24,12 +17,21 @@ const stickerConfigurations = {
   6: { image: PUBLIC_PATH(6), qrPosition: { x: 0.3600, y: 0.5520, width: 0.2550, height: 0.2570 } },
 };
 
+const DESIGN_COLORS = {
+  1: '#f0fdf4',
+  2: '#eff6ff',
+  3: '#fdf2f8',
+  4: '#fffbeb',
+  5: '#fce7f3',
+  6: '#fefce8',
+};
+
 export const StickerExportModal = ({ isOpen, onClose, qr }) => {
   const [selectedId, setSelectedId] = useState(1);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [available, setAvailable] = useState({});
   const [error, setError] = useState(null);
+  const [resolution, setResolution] = useState('—');
 
   const publicUrl = useMemo(
     () => (qr ? `${window.location.origin}/e/${encodeURIComponent(qr.value)}` : null),
@@ -49,19 +51,24 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
     });
   }, []);
 
-    const compose = useCallback(async (designId) => {
+  const compose = useCallback(async (designId) => {
     if (!qr) return null;
     const config = stickerConfigurations[designId];
     if (!config) return null;
 
     let stickerImg;
+    let W = 800;
+    let H = 600;
+    let hasTemplate = false;
+
     try {
       stickerImg = await loadImage(config.image);
+      W = stickerImg.naturalWidth || 800;
+      H = stickerImg.naturalHeight || 600;
+      hasTemplate = true;
     } catch {
-      return { unavailable: true };
+      hasTemplate = false;
     }
-
-    const { naturalWidth: W, naturalHeight: H } = stickerImg;
 
     let qrImg;
     try {
@@ -76,8 +83,12 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
     canvas.height = H;
     const g = canvas.getContext('2d');
 
-    // Plantilla completa a resolución original.
-    g.drawImage(stickerImg, 0, 0, W, H);
+    if (hasTemplate && stickerImg) {
+      g.drawImage(stickerImg, 0, 0, W, H);
+    } else {
+      g.fillStyle = DESIGN_COLORS[designId] || '#ffffff';
+      g.fillRect(0, 0, W, H);
+    }
 
     const { x, y, width, height } = config.qrPosition;
     const boxX = W * x;
@@ -85,11 +96,9 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
     const boxW = W * width;
     const boxH = H * height;
 
-    // Zona de silencio blanca sobre el espacio reservado.
     g.fillStyle = '#ffffff';
     g.fillRect(boxX, boxY, boxW, boxH);
 
-    // QR centrado dentro del espacio, sin deformar (aspect ratio preservado).
     const pad = Math.min(boxW, boxH) * 0.05;
     const innerW = Math.max(1, boxW - pad * 2);
     const innerH = Math.max(1, boxH - pad * 2);
@@ -102,6 +111,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
 
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('No se pudo generar la imagen del sticker');
+    setResolution(`${W} x ${H} px`);
     return URL.createObjectURL(blob);
   }, [publicUrl, loadImage, qr]);
 
@@ -113,27 +123,19 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
       try {
         const result = await compose(selectedId);
         if (cancelled) return;
-        if (result?.unavailable) {
-          setAvailable((prev) => ({ ...prev, [selectedId]: false }));
-          setPreviewUrl(null);
-          setError(`El diseño ${selectedId} aún no está disponible.`);
-          return;
-        }
-        setAvailable((prev) => ({ ...prev, [selectedId]: true }));
         revoke(previewUrl);
         setPreviewUrl(result);
       } catch (err) {
         if (cancelled) return;
         setError(err.message || 'No se pudo generar la vista previa');
         setPreviewUrl(null);
+        setResolution('—');
       } finally {
         if (!cancelled) setBusy(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedId, compose, revoke]);
-
-  const isAvailable = useMemo(() => available[selectedId] !== false, [selectedId, available]);
+  }, [selectedId, compose, revoke, previewUrl]);
 
   const downloadSticker = () => {
     if (!previewUrl || busy) return;
@@ -150,7 +152,6 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
   };
 
   const selectDesign = (id) => {
-    if (available[id] === false) return;
     setSelectedId(id);
   };
 
@@ -177,7 +178,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
             <button
               type="button"
               onClick={downloadSticker}
-              disabled={busy || !previewUrl || !isAvailable}
+              disabled={busy || !previewUrl}
               className="btn-primary px-6 py-2.5 text-sm"
             >
               {busy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Download size={16} aria-hidden="true" />}
@@ -199,41 +200,33 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
               const id = i + 1;
               const config = stickerConfigurations[id];
               const done = selectedId === id;
-              const av = available[id] !== false;
-              const missing = available[id] === false;
               return (
                 <div
                   key={id}
                   onClick={() => selectDesign(id)}
-                  disabled={!av}
                   className={`group relative flex flex-col items-center rounded-xl border p-3 transition-colors ${
                     done
                       ? 'border-brand-500 bg-brand-50/50'
-                      : av
-                        ? 'border-border bg-white hover:border-brand-500/40 hover:cursor-pointer'
-                        : 'border-border/30 bg-neutral-50/50 text-neutral-400'
+                      : 'border-border bg-white hover:border-brand-500/40 hover:cursor-pointer'
                   }`}
                   aria-pressed={done}
                   role="radio"
                   aria-checked={done}
-                  aria-label={`Diseño ${id}${missing ? ', no disponible' : ''}`}
+                  aria-label={`Diseño ${id}`}
                 >
-                  <div className="relative mb-2 h-20 w-20 rounded-lg border border-border overflow-hidden">
-                    {av ? (
-                      <img
-                        src={config.image}
-                        alt={`Sticker ${id}`}
-                        className="h-full w-full object-cover"
-                        onError={() => {
-                          setAvailable((prev) => ({ ...prev, [id]: false }));
-                          setError(`El diseño ${id} no se pudo cargar.`);
-                        }}
-                        decoding="async"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex flex-col items-center justify-center">
-                        <Image size={20} className="mb-1" aria-hidden="true" />
-                        <span className="text-[10px] font-semibold">Pendiente</span>
+                  <div className="relative mb-2 h-20 w-20 rounded-lg border border-border overflow-hidden bg-[#f3f4f6]">
+                    <img
+                      src={config.image}
+                      alt={`Sticker ${id}`}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      decoding="async"
+                    />
+                    {!done && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                        <Image size={24} className="text-neutral-400" aria-hidden="true" />
                       </div>
                     )}
                     {done && (
@@ -243,17 +236,14 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
                     )}
                   </div>
                   <span className="text-xs font-medium text-neutral-900 truncate w-full text-center">Diseño {id}</span>
-                  {!av && (
-                    <span className="mt-0.5 text-[10px] font-semibold text-neutral-500">Pendiente</span>
-                  )}
                 </div>
               );
             })}
           </div>
 
-          {!isAvailable && (
+          {error && (
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 text-xs text-rose-700">
-              {error || `El diseño ${selectedId} aún no está disponible. Elige otro diseño.`}
+              {error}
             </div>
           )}
 
@@ -276,7 +266,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
               )}
             </div>
             <p className="mt-2 text-xs text-text-secondary">
-              Se descarga en PNG a la resolución original de la plantilla ({previewUrl ? 'lista' : '—'}).
+              Se descarga en PNG a la resolución original de la plantilla ({resolution}).
             </p>
           </div>
         </div>

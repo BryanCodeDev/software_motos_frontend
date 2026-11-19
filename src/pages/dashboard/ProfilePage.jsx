@@ -27,19 +27,19 @@ const fields = [
   { key: 'display_name', label: 'Nombre completo', category: 'identificacion', input: 'text', placeholder: 'Tu nombre y apellido', required: true, wide: true, recommended: true },
   { key: 'blood_type', label: 'Tipo de sangre', category: 'identificacion', input: 'select', options: BLOOD_TYPES, recommended: true },
   { key: 'date_of_birth', label: 'Fecha de nacimiento', category: 'identificacion', input: 'date' },
-  { key: 'document_number', label: 'Número de documento', category: 'identificacion', input: 'text', placeholder: 'Cédula, tarjeta de identidad o pasaporte', wide: true },
+  { key: 'document_number', label: 'Número de documento', category: 'identificacion', input: 'text', inputMode: 'numeric', placeholder: '12345678', wide: true },
   { key: 'is_organ_donor', label: 'Donante de órganos', category: 'identificacion', input: 'checkbox', checkLabel: 'Soy donante de órganos' },
   { key: 'allergies', label: 'Alergias', category: 'medico', input: 'textarea', placeholder: 'Ej.: penicilina, mariscos', none: true, recommended: true },
   { key: 'medical_conditions', label: 'Condiciones médicas', category: 'medico', input: 'textarea', placeholder: 'Ej.: asma, diabetes, epilepsia', none: true, recommended: true },
   { key: 'medications', label: 'Medicamentos', category: 'medico', input: 'textarea', placeholder: 'Ej.: salbutamol cada 6 horas', none: true, recommended: true },
   { key: 'medical_devices', label: 'Dispositivos o implantes', category: 'medico', input: 'textarea', placeholder: 'Ej.: marcapasos', none: true },
-  { key: 'height_cm', label: 'Estatura (cm)', category: 'medico', input: 'number', placeholder: '170' },
-  { key: 'weight_kg', label: 'Peso (kg)', category: 'medico', input: 'number', placeholder: '70' },
+  { key: 'height_cm', label: 'Estatura (cm)', category: 'medico', input: 'number', inputMode: 'numeric', placeholder: '170', min: '50', max: '250' },
+  { key: 'weight_kg', label: 'Peso (kg)', category: 'medico', input: 'number', inputMode: 'numeric', placeholder: '70', min: '20', max: '300' },
   { key: 'primary_doctor_name', label: 'Médico tratante', category: 'medico', input: 'text', placeholder: 'Nombre de tu médico' },
-  { key: 'primary_doctor_phone', label: 'Teléfono del médico', category: 'medico', input: 'tel', placeholder: '+57 300 000 0000' },
+  { key: 'primary_doctor_phone', label: 'Teléfono del médico', category: 'medico', input: 'tel', inputMode: 'numeric', placeholder: '300 000 0000' },
   { key: 'is_pregnant', label: 'Embarazo', category: 'medico', input: 'checkbox', checkLabel: 'Hay un embarazo en curso' },
   { key: 'insurance_company', label: 'EPS o aseguradora', category: 'otros', input: 'text', placeholder: 'Nombre de tu EPS o seguro' },
-  { key: 'insurance_policy_number', label: 'Afiliación o póliza', category: 'otros', input: 'text', placeholder: 'Número de carnet o póliza' },
+  { key: 'insurance_policy_number', label: 'Afiliación o póliza', category: 'otros', input: 'text', inputMode: 'numeric', placeholder: '123456789' },
   { key: 'emergency_note', label: 'Nota de emergencia', category: 'otros', input: 'textarea', placeholder: 'Lo primero que debe leer el personal de salud', recommended: true },
   { key: 'additional_info', label: 'Algo más que deban saber', category: 'otros', input: 'textarea', placeholder: 'Cualquier dato útil en una emergencia' },
 ];
@@ -94,7 +94,7 @@ const Field = ({ f, value, error, onValue, vis }) => {
       ) : f.input === 'select' ? (
         <select id={id} value={value} onChange={(e) => onValue(e.target.value)} className="input h-11"><option value="">Elige una opción</option>{value && !f.options.includes(value) && <option value={value}>{value}</option>}{f.options.map((o) => <option key={o} value={o}>{o}</option>)}</select>
       ) : (
-        <Input id={id} type={f.input} value={value} onChange={(e) => onValue(e.target.value)} placeholder={f.placeholder} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? errId : undefined} className="h-11 text-base sm:text-sm" />
+        <Input id={id} type={f.input} inputMode={f.inputMode} value={value} onChange={(e) => onValue(e.target.value)} placeholder={f.placeholder} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? errId : undefined} className="h-11 text-base sm:text-sm" />
       )}
       {error && <p id={errId} role="alert" className="mt-1.5 text-xs font-medium text-rose-700">{error}</p>}
     </div>
