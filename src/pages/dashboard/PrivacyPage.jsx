@@ -218,7 +218,7 @@ export const PrivacyPage = () => {
     try {
       const [privRes, profRes, contactsRes] = await Promise.allSettled([
         api.get('/privacy/me'),
-        api.get('/profiles/me'),
+        api.get('/profiles/me/profiles'),
         api.get('/contacts'),
       ]);
 
@@ -235,7 +235,7 @@ export const PrivacyPage = () => {
         toastRef.current.error('No pudimos cargar tu privacidad. Recarga la página.');
       }
 
-      if (profRes.status === 'fulfilled') setProfile(profRes.value.data.profile || profRes.value.data || null);
+      if (profRes.status === 'fulfilled') setProfile(profRes.value.data?.[0] || null);
       if (contactsRes.status === 'fulfilled') setContacts(contactsRes.value.data.contacts || contactsRes.value.data || []);
     } finally {
       setLoading(false);
@@ -255,6 +255,10 @@ export const PrivacyPage = () => {
   }, [dirty]);
 
   const save = useCallback(async () => {
+    if (!profile) {
+      toastRef.current.error('No hay un perfil creado. Crea un perfil antes de guardar la privacidad.');
+      return;
+    }
     setSaving(true);
     try {
       await api.patch('/privacy/me', {
@@ -272,7 +276,7 @@ export const PrivacyPage = () => {
     } finally {
       setSaving(false);
     }
-  }, [toggles, profile?.id]);
+  }, [toggles, profile]);
 
   /* Ctrl/Cmd + S guarda */
   useEffect(() => {

@@ -16,7 +16,7 @@ const formatAmount = (amount) => {
       maximumFractionDigits: 0,
     }).format(Number(amount));
   } catch {
-    return '$29.900';
+    return '$29.000';
   }
 };
 
@@ -122,7 +122,7 @@ export const Products = () => {
               <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
                 <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
                 <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
-                  {stickerPrice || '$30.000'}
+                  {stickerPrice || '$29.000'}
                 </p>
                 <p className="mt-1 text-sm text-text-secondary">Pago único</p>
 

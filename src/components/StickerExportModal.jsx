@@ -131,7 +131,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedId, compose, revoke, previewUrl]);
+  }, [selectedId, compose, revoke]);
 
   const isAvailable = useMemo(() => available[selectedId] !== false, [selectedId, available]);
 

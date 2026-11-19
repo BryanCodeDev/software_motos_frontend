@@ -324,6 +324,28 @@ export const AdminQrInventory = () => {
 
   const doLink = async () => {
     if (!linkQr || !pickedUser) return;
+
+    /* Validación previa para evitar conflictos 409 del servidor */
+    if (linkQr.user_id && linkQr.user_id !== pickedUser.id) {
+      toast.error(`El QR ya está vinculado a ${linkQr.user?.email || 'otro usuario'}`);
+      return;
+    }
+    if (linkQr.print_status === 'printed' || linkQr.print_status === 'delivered' || linkQr.status === 'replaced') {
+      toast.error('No se puede vincular un QR que ya está impreso, entregado o reemplazado.');
+      return;
+    }
+
+    /* Verificar que el usuario destino no tenga ya un QR vigente */
+    try {
+      const { data } = await api.get('/admin/qrs', { params: { user_id: pickedUser.id, limit: 1 } });
+      if (data.qrs && data.qrs.length > 0) {
+        toast.error(`El usuario ${pickedUser.email} ya tiene un QR vinculado.`);
+        return;
+      }
+    } catch {
+      /* Si falla la consulta previa, se continúa y el servidor responderá si hay conflicto */
+    }
+
     setLinkBusy(true);
     try {
       await api.post('/admin/qrs/link', { qr_id: linkQr.id, user_id: pickedUser.id });
@@ -343,6 +365,17 @@ export const AdminQrInventory = () => {
   const askUnlink = (qr) => { setDetailOpen(false); setUnlinkQr(qr); };
   const doUnlink = async () => {
     if (!unlinkQr) return;
+
+    /* Validación previa para evitar conflictos 409 del servidor */
+    if (!unlinkQr.user_id) {
+      toast.error('Este QR no está vinculado a ningún usuario.');
+      return;
+    }
+    if (unlinkQr.print_status === 'delivered') {
+      toast.error('No se puede desvincular un QR ya entregado.');
+      return;
+    }
+
     setUnlinkBusy(true);
     try {
       await api.post('/admin/qrs/unlink', { qr_id: unlinkQr.id });

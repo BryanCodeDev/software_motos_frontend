@@ -20,7 +20,7 @@ export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURICo
 export const productPlans = [
   {
     name: 'Perfil individual',
-    price: '$39.900',
+    price: '$29.000',
     priceNote: '1 persona · 1 QR permanente · 2 stickers',
     desc: 'Un perfil de persona con su propio código QR permanente y 2 stickers físicos con ese mismo QR. Ideal para ti o un familiar.',
     features: [

@@ -178,6 +178,18 @@ export const OrdersPage = () => {
   const [payingId, setPayingId] = useState(null);
   const [stickerPrice, setStickerPrice] = useState(null);
 
+  /* Dirección de envío para la compra de stickers */
+  const [shippingAddress, setShippingAddress] = useState({
+    fullName: '',
+    phone: '',
+    address: '',
+    city: '',
+    department: '',
+    postalCode: '',
+    notes: '',
+  });
+  const [shippingErrors, setShippingErrors] = useState({});
+
   /* Diseños de sticker (cargados desde el backend) */
   const [designs, setDesigns] = useState([]);
   const [designsLoading, setDesignsLoading] = useState(false);
@@ -286,8 +298,10 @@ export const OrdersPage = () => {
   /* ===== Acciones de pedido ===== */
   const openBuy = () => {
     setBuyError(null); setSelectedDesignId(null); setNewOrder(null); setStep('select'); setBuyOpen(true);
+    setShippingAddress({ fullName: '', phone: '', address: '', city: '', department: '', postalCode: '', notes: '' });
+    setShippingErrors({});
   };
-  const closeBuy = () => { setBuyOpen(false); setBuyError(null); setSelectedDesignId(null); setNewOrder(null); setStep('select'); };
+  const closeBuy = () => { setBuyOpen(false); setBuyError(null); setSelectedDesignId(null); setNewOrder(null); setStep('select'); setShippingAddress({ fullName: '', phone: '', address: '', city: '', department: '', postalCode: '', notes: '' }); setShippingErrors({}); };
   const handleSelect = (designId) => {
     const design = designs.find((d) => d.id === designId);
     if (!design) { setBuyError('Este diseño no está disponible.'); return; }
@@ -295,11 +309,19 @@ export const OrdersPage = () => {
   };
   const createOrder = async () => {
     if (!selectedDesignId) { setBuyError('Debes seleccionar un diseño para continuar.'); return; }
+    // Validar dirección de envío
+    const requiredFields = { fullName: 'Nombre completo', phone: 'Teléfono', address: 'Dirección', city: 'Ciudad', department: 'Departamento' };
+    const errors = {};
+    Object.entries(requiredFields).forEach(([key, label]) => {
+      if (!shippingAddress[key]?.trim()) errors[key] = `${label} es requerido.`;
+    });
+    if (Object.keys(errors).length > 0) { setShippingErrors(errors); return; }
+    setShippingErrors({});
     setBuyLoading(true); setBuyError(null);
     try {
-      const res = await api.post('/orders/stickers', { design_id: selectedDesignId });
+      const res = await api.post('/orders/stickers', { design_id: selectedDesignId, shipping_address: shippingAddress });
       setNewOrder(res.data.order);
-      setStep('confirm');
+      setStep('shipping');
     } catch (err) {
       const msg = err?.response?.data?.error || err?.response?.data?.details;
       setBuyError(typeof msg === 'string' ? msg : 'No se pudo crear el pedido.');
@@ -310,6 +332,11 @@ export const OrdersPage = () => {
     setBuyLoading(true);
     try {
       const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
+      if (prefRes.data.payment_method === 'manual') {
+        // Mercado Pago no configurado: pago pendiente, mostrar instrucciones
+        setStep('pending');
+        return;
+      }
       setStep('paying');
       window.location.href = prefRes.data.init_point;
     } catch (err) {
@@ -508,7 +535,7 @@ export const OrdersPage = () => {
       </div>
 
       {/* ===== Modal: comprar stickers ===== */}
-      <Modal isOpen={buyOpen} onClose={buyLoading ? () => null : closeBuy} title={step === 'select' ? 'Elige el diseño' : step === 'confirm' ? 'Confirmar compra' : 'Redirigiendo al pago'} size="lg">
+      <Modal isOpen={buyOpen} onClose={buyLoading ? () => null : closeBuy} title={step === 'select' ? 'Elige el diseño' : step === 'shipping' ? 'Dirección de envío' : step === 'confirm' ? 'Confirmar compra' : step === 'pending' ? 'Pago pendiente' : 'Redirigiendo al pago'} size="lg">
         {step === 'select' && (
           <div className="space-y-5">
             <p className="text-sm text-text-secondary">Pack de {STICKER_QUANTITY} stickers con el mismo diseño:{' '}<span className="font-semibold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>. Al pagar, tu QR de emergencia se activa automáticamente.</p>
@@ -518,6 +545,51 @@ export const OrdersPage = () => {
             </div>
             <div className="flex justify-end">
               <button type="button" onClick={createOrder} disabled={!selectedDesignId || buyLoading} className="btn-primary px-6 py-2.5 text-sm">{buyLoading ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Creando…</>) : (<><ArrowRight size={16} aria-hidden="true" /> Continuar</>)}</button>
+            </div>
+          </div>
+        )}
+        {step === 'shipping' && (
+          <div className="space-y-5">
+            <p className="text-sm text-text-secondary">Indica dónde quieres recibir tus stickers. Los datos se usan solo para el envío físico.</p>
+            {buyError && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">{buyError}</div>}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="col-span-full sm:col-span-2">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Nombre completo</label>
+                <input type="text" value={shippingAddress.fullName} onChange={(e) => setShippingAddress({ ...shippingAddress, fullName: e.target.value })} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="Juan Pérez" />
+                {shippingErrors.fullName && <p className="mt-0.5 text-xs text-rose-600">{shippingErrors.fullName}</p>}
+              </div>
+              <div className="col-span-full sm:col-span-1">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Teléfono</label>
+                <input type="tel" value={shippingAddress.phone} onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="3001234567" />
+                {shippingErrors.phone && <p className="mt-0.5 text-xs text-rose-600">{shippingErrors.phone}</p>}
+              </div>
+              <div className="col-span-full">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Dirección</label>
+                <input type="text" value={shippingAddress.address} onChange={(e) => setShippingAddress({ ...shippingAddress, address: e.target.value })} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="Calle 10 # 20-30" />
+                {shippingErrors.address && <p className="mt-0.5 text-xs text-rose-600">{shippingErrors.address}</p>}
+              </div>
+              <div className="col-span-full sm:col-span-1">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Ciudad</label>
+                <input type="text" value={shippingAddress.city} onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="Bogotá" />
+                {shippingErrors.city && <p className="mt-0.5 text-xs text-rose-600">{shippingErrors.city}</p>}
+              </div>
+              <div className="col-span-full sm:col-span-1">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Departamento</label>
+                <input type="text" value={shippingAddress.department} onChange={(e) => setShippingAddress({ ...shippingAddress, department: e.target.value })} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="Cundinamarca" />
+                {shippingErrors.department && <p className="mt-0.5 text-xs text-rose-600">{shippingErrors.department}</p>}
+              </div>
+              <div className="col-span-full sm:col-span-1">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Código postal</label>
+                <input type="text" value={shippingAddress.postalCode} onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="110111" />
+              </div>
+              <div className="col-span-full">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Notas de entrega</label>
+                <textarea value={shippingAddress.notes} onChange={(e) => setShippingAddress({ ...shippingAddress, notes: e.target.value })} rows={2} className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="Entrega en recepción" />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <button type="button" onClick={() => { setBuyError(null); setStep('select'); }} disabled={buyLoading} className="btn-outline px-6 py-2.5 text-sm"><ArrowRight size={16} className="rotate-180" aria-hidden="true" /> Elegir otro diseño</button>
+              <button type="button" onClick={() => setStep('confirm')} disabled={buyLoading} className="btn-primary px-6 py-2.5 text-sm">Revisar y pagar <ArrowRight size={16} aria-hidden="true" /></button>
             </div>
           </div>
         )}
@@ -535,11 +607,24 @@ export const OrdersPage = () => {
               <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">Producto</dt><dd className="text-right font-semibold text-neutral-900">Stickers QR personalizados</dd></div>
               <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">Cantidad</dt><dd className="text-right font-semibold text-neutral-900">{STICKER_QUANTITY} stickers, mismo diseño</dd></div>
               <div className="flex justify-between gap-4 py-3"><dt className="font-semibold text-neutral-900">Total a pagar</dt><dd className="text-right text-lg font-bold text-neutral-900">{totalLabel}</dd></div>
+              <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">Envío a</dt><dd className="text-right text-sm text-neutral-900">{shippingAddress.fullName}</dd></div>
+              <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">Dirección</dt><dd className="text-right text-sm text-neutral-900">{shippingAddress.address}, {shippingAddress.city} - {shippingAddress.department}</dd></div>
+              <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">Teléfono</dt><dd className="text-right text-sm text-neutral-900">{shippingAddress.phone}</dd></div>
             </dl>
             <p className="text-xs leading-relaxed text-text-secondary">El pago se procesa de forma segura con Mercado Pago. Al aprobarse el pago, tu QR de emergencia se activa automáticamente.</p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setBuyError(null); setStep('select'); }} disabled={buyLoading} className="btn-outline px-6 py-2.5 text-sm"><ArrowRight size={16} className="rotate-180" aria-hidden="true" /> Elegir otro diseño</button>
+              <button type="button" onClick={() => { setBuyError(null); setStep('shipping'); }} disabled={buyLoading} className="btn-outline px-6 py-2.5 text-sm"><ArrowRight size={16} className="rotate-180" aria-hidden="true" /> Cambiar dirección</button>
               <button type="button" onClick={proceedToPayment} disabled={buyLoading} className="btn-primary px-6 py-2.5 text-sm">{buyLoading ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Redirigiendo…</>) : (<><CreditCard size={16} aria-hidden="true" /> Pagar con Mercado Pago</>)}</button>
+            </div>
+          </div>
+        )}
+        {step === 'pending' && (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50/50 text-brand-500"><Truck size={24} aria-hidden="true" /></div>
+            <h3 className="font-semibold text-neutral-900 mb-2">Pedido registrado - Pago pendiente</h3>
+            <p className="text-sm text-text-secondary mb-6">Tu pedido ha sido creado correctamente. Como el pago en línea no está disponible en este momento, el pago se procesará de forma manual (transferencia o efectivo). Te notificaremos por email cuando se confirme y tu QR se active.</p>
+            <div className="flex justify-end">
+              <button type="button" onClick={closeBuy} className="btn-primary px-6 py-2.5 text-sm">Entendido <Check size={16} aria-hidden="true" /></button>
             </div>
           </div>
         )}
