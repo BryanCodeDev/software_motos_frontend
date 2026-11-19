@@ -274,12 +274,20 @@ export const ProfilePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!String(form.display_name).trim()) { setErrors({ display_name: 'Escribe tu nombre: es lo primero que verá quien escanee tu QR.' }); toast.error('Falta tu nombre.'); setTab('identificacion'); window.setTimeout(() => document.getElementById('ac_display_name')?.focus(), 50); return; }
+    if (!form.profile_id) { setErrors({ profile_id: 'No se pudo identificar el perfil.' }); toast.error('Perfil no identificado.'); return; }
     setSaving(true);
     try {
-      let photoUrl = form.photo_url;
-      if (form.photoFile) photoUrl = await uploadPhotoFile();
-      const payload = { photo_url: photoUrl || null };
+      const payload = {};
       SAVED_KEYS.forEach((k) => { const v = form[k]; payload[k] = typeof v === 'boolean' ? v : v || null; });
+      const snapshotPhoto = snapshotRef.current?.photo || null;
+      const photoRemoved = !form.photoFile && snapshotPhoto && form.photo_url === '';
+      // Solo incluir photo_url si hay un archivo nuevo (subido) o se está eliminando explícitamente.
+      if (form.photoFile) {
+        const photoUrl = await uploadPhotoFile();
+        payload.photo_url = photoUrl || null;
+      } else if (photoRemoved) {
+        payload.photo_url = null;
+      }
       await api.patch('/profiles/me', payload);
       const res = await api.get('/profiles/me');
       let nextForm = { ...form, photoFile: null };
