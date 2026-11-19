@@ -31,6 +31,20 @@ const COMMERCIAL = {
   refund_requested: ['Reembolso solicitado', 'warn'],
   refunded: ['Reembolsado', 'neutral'],
 };
+
+/* Transiciones comerciales permitidas (debe coincidir con el backend) */
+const COMMERCIAL_TRANSITIONS = {
+  draft: ['pending_confirmation', 'pending_payment', 'cancelled'],
+  pending_confirmation: ['pending_payment', 'paid', 'cancelled'],
+  pending_payment: ['paid', 'cancelled'],
+  paid: ['preparing', 'cancelled', 'refund_requested'],
+  preparing: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: [],
+  refund_requested: ['refunded', 'cancelled'],
+  refunded: [],
+};
 const PAYMENT = {
   unpaid: ['Sin pagar', 'neutral'],
   pending: ['Pago en proceso', 'warn'],
@@ -126,6 +140,7 @@ const Stepper = ({ status }) => {
 
 const OrderActions = ({ o, busy, onPick, full = false }) => {
   const next = NEXT[o.commercial_status];
+  const allowed = COMMERCIAL_TRANSITIONS[o.commercial_status] || [];
   return (
     <div className={`flex items-center gap-2 ${full ? 'flex-wrap' : ''}`}>
       {next && (
@@ -141,7 +156,7 @@ const OrderActions = ({ o, busy, onPick, full = false }) => {
         className="input min-w-0 flex-1 !py-2 !text-base sm:!text-xs"
       >
         <option value="">{next ? 'Otro estado' : 'Cambiar estado'}</option>
-        {STATUS_OPTIONS.filter((s) => s !== o.commercial_status && s !== next).map((s) => (
+        {STATUS_OPTIONS.filter((s) => s !== o.commercial_status && s !== next && allowed.includes(s)).map((s) => (
           <option key={s} value={s}>{COMMERCIAL[s][0]}</option>
         ))}
       </select>
