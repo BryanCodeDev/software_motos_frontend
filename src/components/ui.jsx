@@ -177,6 +177,56 @@ Textarea.propTypes = {
   error: PropTypes.bool,
 };
 
+export const Select = forwardRef(({ className = '', error = false, placeholder = '', ...props }, ref) => (
+  <select
+    ref={ref}
+    aria-invalid={error || undefined}
+    {...props}
+    className={`${fieldClasses} ${fieldBorder(error)} ${className}`}
+  >
+    {placeholder && <option value="" disabled hidden>{placeholder}</option>}
+    {props.children}
+  </select>
+));
+
+Select.displayName = 'Select';
+Select.propTypes = {
+  className: PropTypes.string,
+  error: PropTypes.bool,
+  placeholder: PropTypes.string,
+};
+
+export const Checkbox = forwardRef(({ checked = false, onCheckedChange, className = '', children, ...props }, ref) => {
+  const [isChecked, setIsChecked] = useState(checked);
+
+  const handleChange = (e) => {
+    const next = e.target.checked;
+    setIsChecked(next);
+    onCheckedChange?.(next);
+  };
+
+  return (
+    <div className={`inline-flex items-center gap-2 ${className}`}>
+      <input
+        ref={ref}
+        type="checkbox"
+        checked={isChecked}
+        onChange={handleChange}
+        className="w-4 h-4 rounded border-border text-brand-600 focus:ring-brand-500 focus:ring-1 transition-colors"
+        {...props}
+      />
+      {props.children && <span className="text-sm text-neutral-900">{props.children}</span>}
+    </div>
+  );
+});
+
+Checkbox.displayName = 'Checkbox';
+Checkbox.propTypes = {
+  checked: PropTypes.bool,
+  onCheckedChange: PropTypes.func,
+  className: PropTypes.string,
+};
+
 export const Label = ({ children, className = '', required = false, ...props }) => (
   <label className={`mb-1.5 block text-sm font-medium text-neutral-900/80 ${className}`} {...props}>
     {children}
@@ -221,4 +271,21 @@ Card.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   hoverable: PropTypes.bool,
+};
+
+export const Box = ({ title, className = '', children, ...props }) => (
+  <Card className={className} {...props}>
+    {title && (
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-neutral-900">{title}</h3>
+      </div>
+    )}
+    {children}
+  </Card>
+);
+
+Box.propTypes = {
+  title: PropTypes.string,
+  className: PropTypes.string,
+  children: PropTypes.node,
 };

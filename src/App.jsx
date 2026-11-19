@@ -36,6 +36,9 @@ const ContactsPage = lazy(() => import('./pages/dashboard/ContactsPage'));
 const PrivacyPage = lazy(() => import('./pages/dashboard/PrivacyPage'));
 const QrPage = lazy(() => import('./pages/dashboard/QrPage'));
 const OrdersPage = lazy(() => import('./pages/dashboard/OrdersPage'));
+const ProfilesPage = lazy(() => import('./pages/dashboard/ProfilesPage'));
+const CreateProfilePage = lazy(() => import('./pages/dashboard/CreateProfilePage'));
+const PackagesPage = lazy(() => import('./pages/dashboard/PackagesPage'));
 
 // Admin pages
 const Help = lazy(() => import('./pages/admin/help'));
@@ -76,10 +79,13 @@ const App = () => (
                 <Route path="/panel">
                   <Route index element={<DashboardIndex />} />
                   <Route path="perfil" element={<ProfilePage />} />
+                  <Route path="perfiles" element={<ProfilesPage />} />
+                  <Route path="perfiles/nuevo" element={<CreateProfilePage />} />
                   <Route path="contactos" element={<ContactsPage />} />
                   <Route path="privacidad" element={<PrivacyPage />} />
                   <Route path="qr" element={<QrPage />} />
                   <Route path="pedidos" element={<OrdersPage />} />
+                  <Route path="paquetes" element={<PackagesPage />} />
                   <Route path="checkout" element={<Checkout />} />
                 </Route>
               </Route>
@@ -93,6 +99,8 @@ const App = () => (
                   <Route path="auditoria" element={<RequireAdmin><AdminAudit /></RequireAdmin>} />
                   <Route path="ayuda" element={<RequireAdmin><Help /></RequireAdmin>} />
                   <Route path="qrs" element={<RequireAdmin><AdminQrAdmin /></RequireAdmin>} />
+                  <Route path="paquetes" element={<RequireAdmin><PackagesPage /></RequireAdmin>} />
+                  <Route path="perfiles" element={<RequireAdmin><ProfilesPage /></RequireAdmin>} />
                   <Route path="*" element={<RequireAdmin><AdminHome /></RequireAdmin>} />
                 </Route>
               </Route>

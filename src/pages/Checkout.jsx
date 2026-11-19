@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
@@ -20,7 +20,7 @@ import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
 import { useToast } from '../components/useToast';
 import { PageTitle, PageLoader } from '../components/DashPage';
-import { Button } from '../components/ui';
+import { Button, Input, Label } from '../components/ui';
 import { Badge } from '../components/ui-kit';
 
 const DESIGN_STORAGE_KEY = 'tqtc_selected_design';
@@ -66,6 +66,12 @@ const shippingSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+const TYPE_LABEL = {
+  person: 'Persona',
+  pet: 'Mascota',
+  managed_person: 'Persona gestionada',
+};
+
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
 export const Checkout = () => {
@@ -75,9 +81,10 @@ export const Checkout = () => {
   const toastRef = useRef(toast);
   useEffect(() => { toastRef.current = toast; });
 
-  const [step, setStep] = useState('diseño'); // diseño | envio | pago
+  const [step, setStep] = useState('diseño'); // diseño | envio | pago | perfiles | pago-paquete
   const [products, setProducts] = useState([]);
   const [designs, setDesigns] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [selectedDesignId, setSelectedDesignId] = useState(() => loadSelectedDesign());
   const [address, setAddress] = useState({
     fullName: '',
@@ -93,11 +100,25 @@ export const Checkout = () => {
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [packageId, setPackageId] = useState(null);
+  const [pkg, setPkg] = useState(null);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pkgId = urlParams.get('package');
+        if (pkgId) {
+          setPackageId(pkgId);
+          const [pRes] = await Promise.all([api.get('/packages'), api.get(`/packages/${pkgId}`)]);
+          if (!mounted) return;
+          setPackages(pRes.data.packages || []);
+          setPkg(pRes.data.package || null);
+          setStep('perfiles');
+          setLoading(false);
+          return;
+        }
         const [pRes, dRes] = await Promise.all([
           api.get('/products'),
           api.get('/designs'),
@@ -111,7 +132,7 @@ export const Checkout = () => {
           : [];
         setDesigns(productDesigns);
       } catch {
-        setError('No pudimos cargar el catálogo de diseños. Inténtalo de nuevo.');
+        setError('No pudimos cargar el catálogo. Inténtalo de nuevo.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -228,8 +249,73 @@ export const Checkout = () => {
     }
   };
 
+  /* ───── Flujo de paquete ───── */
+  const [profileSelection, setProfileSelection] = useState([]); // ids de perfiles existentes
+  const [showNewProfile, setShowNewProfile] = useState(false);
+  const [newProfileForm, setNewProfileForm] = useState({
+    profile_type: 'person',
+    display_name: '',
+    relationship: '',
+  });
+  const [myProfiles, setMyProfiles] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadMyProfiles = async () => {
+      try {
+        const { data } = await api.get('/profiles/me/profiles');
+        if (mounted) setMyProfiles(data.profiles || []);
+      } catch {
+        /* silencioso */
+      }
+    };
+    if (pkg) loadMyProfiles();
+    return () => { mounted = false; };
+  }, [pkg]);
+
+  const createPackageOrderAndPay = async () => {
+    if (!pkg) {
+      setError('Paquete no encontrado.');
+      return;
+    }
+    const totalProfiles = profileSelection.length + (showNewProfile ? 1 : 0);
+    if (totalProfiles !== pkg.profile_count) {
+      setError(`Este paquete requiere ${pkg.profile_count} perfil(es). Seleccionaste ${totalProfiles}.`);
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const body = {
+        package_id: pkg.id,
+        profile_ids: profileSelection.length > 0 ? profileSelection : undefined,
+        new_profiles: showNewProfile ? [newProfileForm] : undefined,
+        shipping_address: null,
+      };
+      const res = await api.post('/orders/package', body);
+      const newOrder = res.data.order;
+      setOrder(newOrder);
+
+      const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
+      setStep('pago');
+      window.location.href = prefRes.data.init_point;
+    } catch (err) {
+      setBusy(false);
+      try {
+        const serverMsg = err?.response?.data?.error || err?.response?.data?.details;
+        setError(typeof serverMsg === 'string' ? serverMsg : 'No se pudo crear el pedido de paquete.');
+      } catch {
+        setError('No se pudo crear el pedido de paquete.');
+      }
+    } finally {
+      if (!order) setBusy(false);
+    }
+  };
+
   const waPayMessage = `Hola, quiero pagar mi pedido de stickers QR ${order?.order_number || ''}. Deseo pagar por WhatsApp.`;
   const waHelpMessage = 'Hola, necesito ayuda con mi pedido de stickers QR de Tu QR te Cuida.';
+
 
   if (!loading && !isAuthenticated) {
     navigate(routes.login, { replace: true });
@@ -610,6 +696,125 @@ export const Checkout = () => {
                 <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <Link to={routes.products} className="btn-outline px-4 py-2.5 text-sm">
                     <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" /> Volver al diseño
+                  </Link>
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="btn px-6 py-2.5 text-sm"
+                  >
+                    {busy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                    {busy ? 'Creando pedido…' : 'Continuar al pago'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ───── Paso intermedio: selección de perfiles (paquete) ───── */}
+        <AnimatePresence>
+          {step === 'perfiles' && pkg && (
+            <motion.div
+              key="step-perfiles"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-neutral-900">Asigna perfiles al paquete</h2>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    Selecciona {pkg.profile_count} perfil(es) existentes o crea uno nuevo. Cada perfil recibirá su propio QR permanente.
+                  </p>
+                </div>
+                <Badge tone="info" size="sm">
+                  Paso de 3
+                </Badge>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); createPackageOrderAndPay(); }} className={`${panel} p-6 lg:p-8 space-y-5`}>
+                <div className="space-y-4">
+                  <label className="text-sm font-medium text-neutral-900">Perfiles existentes de tu cuenta</label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {myProfiles.length === 0 && (
+                      <p className="col-span-full text-sm text-text-secondary">No tienes perfiles creados aún. Crea uno nuevo abajo.</p>
+                    )}
+                    {myProfiles.map((p) => {
+                      const selected = profileSelection.includes(p.id);
+                      const alreadyHasQr = (p.qr_count || 0) > 0;
+                      return (
+                        <label key={p.id} className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
+                          selected ? 'border-brand-500 bg-brand-50' : 'border-border hover:border-brand-300'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setProfileSelection([...profileSelection, p.id]);
+                              } else {
+                                setProfileSelection(profileSelection.filter((id) => id !== p.id));
+                              }
+                            }}
+                            className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+                          />
+                          <div>
+                            <div className="text-sm font-medium text-neutral-900">{p.display_name || 'Sin nombre'}</div>
+                            <div className="text-xs text-text-secondary">
+                              {TYPE_LABEL[p.profile_type] || p.profile_type}
+                              {alreadyHasQr ? ' · Ya tiene QR' : ''}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {pkg.profile_count > profileSelection.length && (
+                  <div className="pt-4 border-t border-border/50">
+                    <label className="flex items-start gap-2 text-sm font-medium text-neutral-900">
+                      <input
+                        type="checkbox"
+                        checked={showNewProfile}
+                        onChange={(e) => setShowNewProfile(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+                      />
+                      Crear un perfil nuevo para completar el paquete
+                    </label>
+                    {showNewProfile && (
+                      <div className="mt-3 space-y-3">
+                        <Label>Tipo de perfil</Label>
+                        <select
+                          value={newProfileForm.profile_type}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, profile_type: e.target.value })}
+                          className="input !text-base"
+                        >
+                          <option value="person">Persona</option>
+                          <option value="pet">Mascota</option>
+                        </select>
+                        <Label>Nombre para mostrar</Label>
+                        <Input
+                          required
+                          value={newProfileForm.display_name}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, display_name: e.target.value })}
+                          placeholder="Ej.: Ana Gómez"
+                        />
+                        <Label>Relación (opcional)</Label>
+                        <Input
+                          value={newProfileForm.relationship}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, relationship: e.target.value })}
+                          placeholder="Ej.: hija, perro"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <Link to={packages ? routes.products : routes.products} className="btn-outline px-4 py-2.5 text-sm">
+                    Volver a paquetes
                   </Link>
                   <button
                     type="submit"
