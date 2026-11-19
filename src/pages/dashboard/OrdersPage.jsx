@@ -9,7 +9,6 @@ import { Badge } from '../../components/ui-kit';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
-const STICKER_PRICE_COP = 30000;
 const STICKER_QUANTITY = 2;
 
 const DESIGNS = [
@@ -34,9 +33,6 @@ const formatAmount = (amount, currency) => {
   }
 };
 
-const stickerPrice = formatAmount(STICKER_PRICE_COP, 'COP');
-
-/* ───────── Etiquetas y tonos ───────── */
 const commercialLabels = {
   draft: 'Borrador',
   pending_confirmation: 'Por confirmar',
@@ -267,6 +263,24 @@ export const OrdersPage = () => {
   const [buyError, setBuyError] = useState(null);
   const [step, setStep] = useState('select'); // select | confirm | paying | success
   const [newOrder, setNewOrder] = useState(null);
+  const [stickerPrice, setStickerPrice] = useState(null);
+
+  // Precio del sticker desde el catálogo del backend (única fuente de verdad).
+  useEffect(() => {
+    let mounted = true;
+    const loadStickerPrice = async () => {
+      try {
+        const { data } = await api.get('/products');
+        const list = data.products || data || [];
+        const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
+        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
+      } catch {
+        // Sin precio de catálogo.
+      }
+    };
+    loadStickerPrice();
+    return () => { mounted = false; };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -451,7 +465,7 @@ export const OrdersPage = () => {
                 <div className="mb-6">
                   <h3 className="mb-2 text-base font-semibold text-neutral-900">Elige el diseño</h3>
                   <p className="text-sm text-text-secondary">
-                    Los dos stickers llevarán el mismo diseño. Precio: {stickerPrice} por sticker.
+                    Los dos stickers llevarán el mismo diseño. Precio: {stickerPrice || 'Consulta el catálogo'} por sticker.
                   </p>
                 </div>
                 {buyError && (
@@ -529,16 +543,16 @@ export const OrdersPage = () => {
                       </tr>
                       <tr>
                         <td className="py-3 text-text-secondary">Precio por sticker</td>
-                        <td className="py-3 text-right font-bold text-neutral-900">{stickerPrice}</td>
+                        <td className="py-3 text-right font-bold text-neutral-900">{stickerPrice || '—'}</td>
                       </tr>
                       <tr>
                         <td className="py-3 text-text-secondary font-semibold">Total a pagar</td>
-                        <td className="py-3 text-right text-lg font-bold text-neutral-900">{stickerPrice}</td>
+                        <td className="py-3 text-right text-lg font-bold text-neutral-900">{stickerPrice || '—'}</td>
                       </tr>
                     </tbody>
                   </table>
                   <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-                    El precio es fijo: $30.000 COP por sticker. No se puede modificar. El pago se procesa a través de Mercado Pago.
+                    El precio se confirma desde el catálogo antes de pagar. No se puede modificar desde el navegador. El pago se procesa a través de Mercado Pago.
                   </p>
                 </div>
                 <div className="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3">
@@ -573,7 +587,7 @@ export const OrdersPage = () => {
             {step === 'paying' && (
               <div className="flex flex-col items-center justify-center py-10">
                 <h3 className="mb-2 text-base font-semibold text-neutral-900">Redirigiendo al pago</h3>
-                <p className="text-sm text-text-secondary">Serás llevado a Mercado Pago para completar el pago de {stickerPrice}.</p>
+                <p className="text-sm text-text-secondary">Serás llevado a Mercado Pago para completar el pago de {stickerPrice || '—'}.</p>
                 <Loader2 size={24} className="animate-spin mt-4" />
               </div>
             )}
@@ -583,7 +597,7 @@ export const OrdersPage = () => {
                 <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-emerald-500" aria-hidden="true" />
                 <h3 className="mb-2 text-lg font-bold text-neutral-900">Pedido creado</h3>
                 <p className="mb-4 text-sm text-text-secondary">
-                  Pedido <span className="font-mono font-semibold text-neutral-900">{newOrder.order_number}</span>. Diseño: <span className="font-medium text-neutral-900">{newOrder.design_name}</span>. Total: {stickerPrice}.
+                  Pedido <span className="font-mono font-semibold text-neutral-900">{newOrder.order_number}</span>. Diseño: <span className="font-medium text-neutral-900">{newOrder.design_name}</span>. Total: {formatAmount(newOrder.total_amount, newOrder.currency)}.
                 </p>
                 <p className="mt-4 text-sm text-text-secondary">
                   Cuando Mercado Pago apruebe el pago, tu QR se activará automáticamente.

@@ -11,9 +11,10 @@ import { WHATSAPP_URL } from '../data/products';
  * - plan.coming    -> sin botón, marcada como próximamente
  * - plan.highlight -> borde y brillo de la marca
  */
-export const PlanCard = ({ plan: p, isAuthenticated = false, as: Heading = 'h3' }) => {
+export const PlanCard = ({ plan: p, isAuthenticated = false, as: Heading = 'h3', priceOverride }) => {
   const href = p.requiresAccount && isAuthenticated ? routes.dashboardQr : p.href;
   const label = isAuthenticated && p.authAction ? p.authAction : p.action;
+  const displayPrice = priceOverride != null ? priceOverride : p.price;
 
   return (
     <Card
@@ -36,8 +37,14 @@ export const PlanCard = ({ plan: p, isAuthenticated = false, as: Heading = 'h3' 
 
       <Heading className="mb-1 text-lg font-semibold text-neutral-900">{p.name}</Heading>
       <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
-        <span className="text-2xl font-bold text-neutral-900">{p.price}</span>
-        {p.priceNote && <span className="text-xs font-medium text-text-secondary">{p.priceNote}</span>}
+        {displayPrice != null ? (
+          <>
+            <span className="text-2xl font-bold text-neutral-900">{displayPrice}</span>
+            {p.priceNote && <span className="text-xs font-medium text-text-secondary">{p.priceNote}</span>}
+          </>
+        ) : (
+          <span className="text-sm font-medium text-text-secondary">Consulta el catálogo</span>
+        )}
       </div>
       <p className="mb-5 text-sm leading-relaxed text-text-secondary">{p.desc}</p>
 

@@ -135,9 +135,10 @@ export const TermsAndConditions = () => {
     compras: (
       <>
         <LegalP>
-          El precio del producto de activación de QR digital es de $30.000 COP, sujeto a actualización. El valor
-          incluye el acceso al QR digital y, según la oferta comercial vigente, puede incluir un sticker físico
-          personalizado.
+          El precio del producto de activación de QR digital y de los paquetes de stickers se publica en el catálogo
+          de la plataforma y está sujeto a actualización. El valor incluye el acceso al QR digital y, según la oferta
+          comercial vigente, puede incluir uno o más stickers físicos personalizados. El precio aplicable es siempre el
+          mostrado al momento de confirmar la compra; los pedidos ya realizados conservan su precio original.
         </LegalP>
         <Lead>Medios de pago:</Lead>
         <LegalList items={['Mercado Pago.', 'Canales manuales habilitados (por ejemplo, pago por WhatsApp).']} />

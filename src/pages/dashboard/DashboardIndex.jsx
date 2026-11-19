@@ -12,10 +12,6 @@ import api from '../../api/client';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
 
-/* Debe coincidir con el producto de activación del backend (también está en QrPage) */
-const QR_PRICE_COP = 30000;
-const price = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(QR_PRICE_COP);
-
 /* Datos que más ayudan a quien auxilia, además del nombre */
 const RECOMMENDED = [
   ['blood_type', 'tipo de sangre'],
@@ -52,7 +48,25 @@ export const DashboardIndex = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [stickerPrice, setStickerPrice] = useState(null);
   const blobRef = useRef(null);
+
+  // Precio de activación del QR desde el catálogo del backend (única fuente de verdad).
+  useEffect(() => {
+    let mounted = true;
+    const loadStickerPrice = async () => {
+      try {
+        const { data } = await api.get('/products');
+        const list = data.products || data || [];
+        const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
+        if (mounted && sticker) setStickerPrice(new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(sticker.price));
+      } catch {
+        // Sin precio de catálogo.
+      }
+    };
+    loadStickerPrice();
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => () => { if (blobRef.current) URL.revokeObjectURL(blobRef.current); }, []);
 
@@ -308,7 +322,7 @@ export const DashboardIndex = () => {
               </span>
               <h2 className="text-base font-semibold text-neutral-900">Tu QR aún no está activo</h2>
               <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
-                Se activa con un pago único de <span className="font-bold text-neutral-900">{price}</span>, sin suscripción.
+                Se activa con un pago único de <span className="font-bold text-neutral-900">{stickerPrice || 'Consulta el catálogo'}</span>, sin suscripción.
               </p>
               <Link to={routes.dashboardQr} className="btn-primary mt-5 w-full px-5 py-2.5 text-sm">
                 Activar mi QR <ArrowRight size={16} aria-hidden="true" />

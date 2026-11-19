@@ -9,9 +9,6 @@ export const WHATSAPP_DISPLAY = '+57 321 220 9943';
 const WHATSAPP_MESSAGE = 'Hola, quiero un sticker QR personalizado de Tu QR te Cuida.';
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
-/* Precio del pack de stickers (2 stickers por un solo precio) */
-export const STICKER_PACK_PRICE = '$30.000 COP';
-
 /* ------------------------------------------------------------------ */
 /* Tarjetas de producto                                                */
 /* ------------------------------------------------------------------ */
@@ -19,8 +16,8 @@ export const STICKER_PACK_PRICE = '$30.000 COP';
 export const productPlans = [
   {
     name: 'Stickers QR',
-    price: STICKER_PACK_PRICE,
-    priceNote: '2 stickers · pago único',
+    price: null,
+    priceNote: 'Precio desde el catálogo · 2 stickers · pago único',
     desc: 'Llévate dos stickers por el precio de uno. Pégalos en tu casco, tu moto o donde quieras: si ocurre una emergencia, quien los escanee verá la información que tú autorizaste.',
     features: [
       '2 stickers vinculados a tu perfil de emergencia',

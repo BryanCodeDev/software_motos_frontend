@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 
 /* ───────── Constantes ───────── */
-const QR_PRICE_COP = 30000;
 const WHATSAPP_NUMBER = '573212209943';
 
 const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
@@ -245,7 +244,7 @@ export const QrPage = () => {
     try {
       const orderRes = await api.post('/orders', {
         product_id: qrProduct.id,
-        customization: { tipo: 'activacion_qr_digital', precio_cop: QR_PRICE_COP },
+        customization: { tipo: 'activacion_qr_digital', precio_cop: qrProduct.price },
       });
       const newOrder = orderRes.data.order;
       setOrder(newOrder);
@@ -336,8 +335,8 @@ export const QrPage = () => {
   };
 
   if (loading) return <PageLoader />;
+  const price = qrProduct ? formatAmount(qrProduct.price) : 'Consulta el catálogo';
 
-  const price = formatAmount(QR_PRICE_COP);
   const stepCurrent = STEP_INDEX[state];
 
   const waPay = 'Hola, quiero pagar mi pedido de activación de QR por WhatsApp.';

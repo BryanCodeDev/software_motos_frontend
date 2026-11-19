@@ -116,6 +116,32 @@ export const Home = () => {
   const reduce = useReducedMotion();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [hasQr, setHasQr] = useState(null); // null = pendiente, true = tiene, false = no tiene
+  const [stickerPrice, setStickerPrice] = useState(null);
+
+  const formatAmount = (amount) => {
+    try {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(amount));
+    } catch {
+      return `$${amount}`;
+    }
+  };
+
+  // Precio del sticker desde el catálogo del backend (única fuente de verdad).
+  useEffect(() => {
+    let mounted = true;
+    const loadStickerPrice = async () => {
+      try {
+        const { data } = await api.get('/products');
+        const list = data.products || data || [];
+        const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
+        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
+      } catch {
+        // Sin precio de catálogo: la tarjeta muestra "Consulta el catálogo".
+      }
+    };
+    loadStickerPrice();
+    return () => { mounted = false; };
+  }, []);
 
   // Verificar si el usuario autenticado ya tiene un QR vinculado.
   useEffect(() => {
@@ -349,7 +375,7 @@ export const Home = () => {
           <div className="grid gap-6 md:grid-cols-3">
             {productPlans.map((p, i) => (
               <Reveal key={p.name} delay={(i % 4) * 0.1}>
-                <PlanCard plan={p} />
+                <PlanCard plan={p} priceOverride={p.name === 'Stickers QR' ? stickerPrice : undefined} />
               </Reveal>
             ))}
           </div>

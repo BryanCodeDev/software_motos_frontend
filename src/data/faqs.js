@@ -1,4 +1,4 @@
-import { STICKER_PACK_PRICE, WHATSAPP_DISPLAY } from './products';
+import { WHATSAPP_DISPLAY } from './products';
 
 // Preguntas frecuentes compartidas entre Home y la página de FAQ.
 // Importante: homeFaqs usa posiciones del arreglo; si reordenas, revisa esa selección.
@@ -25,7 +25,7 @@ export const faqs = [
   },
   {
     q: '¿El código QR digital tiene costo?',
-    a: `No. El QR digital es gratuito y lo descargas desde tu cuenta. Los stickers físicos sí tienen precio: ${STICKER_PACK_PRICE} por 2 stickers, con pago único y sin suscripción. El valor se confirma antes de pagar.`,
+    a: 'No. El QR digital es gratuito y lo descargas desde tu cuenta. Los stickers físicos tienen un precio único según el paquete que elijas; el valor se confirma en el catálogo antes de pagar.',
   },
   {
     q: '¿Cómo solicito mis stickers?',

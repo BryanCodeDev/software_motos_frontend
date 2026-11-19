@@ -23,7 +23,7 @@ const loggedOutFaqs = [
   },
   {
     q: '¿El QR digital tiene costo?',
-    a: 'No. El QR digital es gratuito una vez que creas tu cuenta. Los stickers físicos tienen un costo único de $30.000 COP por 2 unidades.',
+    a: 'No. El QR digital es gratuito una vez que creas tu cuenta. Los stickers físicos tienen un costo único según el paquete que elijas; el valor se confirma antes de pagar.',
   },
 ];
 
@@ -34,7 +34,7 @@ const loggedInNoQrFaqs = [
   },
   {
     q: '¿El QR tiene costo?',
-    a: 'Tu QR digital es gratuito. Solo pagas si quieres los stickers físicos ($30.000 COP por 2, pago único, sin suscripción).',
+    a: 'Tu QR digital es gratuito. Solo pagas si quieres los stickers físicos, según el paquete que elijas (pago único, sin suscripción).',
   },
 ];
 

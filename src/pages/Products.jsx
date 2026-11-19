@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useEffect, useState } from 'react-router-dom';
 import { ArrowRight, Check, Truck } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
+import api from '../api/client';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
 import { PageHeader } from '../components/Section';
@@ -17,8 +18,6 @@ const formatAmount = (amount) => {
     return `$${amount}`;
   }
 };
-
-const STICKER_PRICE = 30000;
 
 const DESIGNS = [
   { id: 1, name: 'Diseño 1', image_url: '/img/sticker-1.png', description: 'Clásico y discreto' },
@@ -45,6 +44,24 @@ const STEPS = [
 
 export const Products = () => {
   const { isAuthenticated } = useAuth();
+  const [stickerPrice, setStickerPrice] = useState(null);
+
+  // Precio del sticker desde el catálogo del backend (única fuente de verdad).
+  useEffect(() => {
+    let mounted = true;
+    const loadStickerPrice = async () => {
+      try {
+        const { data } = await api.get('/products');
+        const list = data.products || data || [];
+        const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
+        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price, 'COP'));
+      } catch {
+        // Sin precio de catálogo.
+      }
+    };
+    loadStickerPrice();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -64,7 +81,7 @@ export const Products = () => {
           <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
             <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
             <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
-              {formatAmount(STICKER_PRICE)}
+              {stickerPrice || 'Consulta el catálogo'}
             </p>
             <p className="mt-1 text-sm text-text-secondary">Pago único</p>
 
