@@ -124,6 +124,7 @@ export const ProfilePage = () => {
   const [dirty, setDirty] = useState(false);
   const [errors, setErrors] = useState({});
   const [tab, setTab] = useState(sections[0].id);
+  const [profileId, setProfileId] = useState(null);
 
   const markDirty = useCallback(() => setDirty(true), []);
 
@@ -163,26 +164,30 @@ export const ProfilePage = () => {
     let mounted = true;
     (async () => {
       try {
-        const res = await api.get('/profiles/me');
+        const { data } = await api.get('/profiles/me');
         if (!mounted) return;
-        const p = res.data.profile || res.data;
-        const loaded = Object.fromEntries(
-          fields.map((f) => {
-            let v = p[f.key] ?? '';
-            if (f.input === 'date' && v) v = String(v).slice(0, 10);
-            return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
-          }),
-        );
-        const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
-        setForm(next);
-        snapshotRef.current = { form: next, photo: p.photo_url || null };
-        if (p.photo_url) setPhotoPreview(p.photo_url);
-        setDirty(false);
+        const profiles = data.profiles || [];
+        const active = profiles.find((p) => p.is_active) || profiles[0];
+        if (!mounted) return;
+        if (active) {
+          setProfileId(active.id);
+          const p = active;
+          const loaded = Object.fromEntries(
+            fields.map((f) => {
+              let v = p[f.key] ?? '';
+              if (f.input === 'date' && v) v = String(v).slice(0, 10);
+              return [f.key, f.input === 'checkbox' ? Boolean(v) : v];
+            }),
+          );
+          const next = { ...emptyForm, ...loaded, photo_url: p.photo_url || '', photoFile: null };
+          setForm(next);
+          snapshotRef.current = { form: next, photo: p.photo_url || null };
+          if (p.photo_url) setPhotoPreview(p.photo_url);
+          setDirty(false);
+        }
       } catch (error) {
         if (!mounted) return;
-        if (!(error.response && error.response.status === 404)) {
-          toast.error('No pudimos cargar tu perfil. Recarga la página.');
-        }
+        toast.error('No pudimos cargar tus perfiles. Recarga la página.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -255,6 +260,10 @@ export const ProfilePage = () => {
     }
     setSaving(true);
     try {
+      if (!profileId) {
+        toast.error('No se encontró un perfil para guardar. Crea un perfil primero.');
+        return;
+      }
       let photoUrl = form.photo_url;
       if (form.photoFile) photoUrl = await uploadPhotoFile();
 
@@ -263,14 +272,14 @@ export const ProfilePage = () => {
         const v = form[k];
         payload[k] = typeof v === 'boolean' ? v : v || null;
       });
-      await api.patch('/profiles/me', payload);
+      const patchRes = await api.patch(`/profiles/me/profiles/${profileId}`, payload);
 
-      const res = await api.get('/profiles/me');
       let nextForm = { ...form, photoFile: null };
       let nextPhoto = photoPreview;
-      if (res.data.profile) {
-        nextPhoto = res.data.profile.photo_url || null;
-        nextForm = { ...form, photo_url: res.data.profile.photo_url || '', photoFile: null };
+      const savedProfile = patchRes.data.profile;
+      if (savedProfile) {
+        nextPhoto = savedProfile.photo_url || null;
+        nextForm = { ...form, photo_url: savedProfile.photo_url || '', photoFile: null };
         setPhotoPreview(nextPhoto);
       }
       setForm(nextForm);
