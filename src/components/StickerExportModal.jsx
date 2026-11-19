@@ -72,6 +72,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
 
     let qrImg;
     try {
+      if (!publicUrl) throw new Error('Código QR no disponible');
       const dataUrl = await QRCode.toDataURL(publicUrl, { width: 1024, margin: 2 });
       qrImg = await loadImage(dataUrl);
     } catch (err) {
