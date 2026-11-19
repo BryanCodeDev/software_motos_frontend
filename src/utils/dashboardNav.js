@@ -9,14 +9,16 @@ export const PANEL_LABEL = { user: 'Mi panel', admin: 'Administración' };
 export const userNav = [
   { label: 'Resumen', to: routes.dashboard, icon: LayoutDashboard, end: true },
   { label: 'Perfil', to: routes.dashboardProfile, icon: User },
+  { label: 'Perfiles', to: routes.dashboardProfiles, icon: Users },
   { label: 'Contactos', to: routes.dashboardContacts, icon: Users },
   { label: 'Privacidad', to: routes.dashboardPrivacy, icon: ShieldCheck },
   { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
   { label: 'Pedidos', to: routes.dashboardOrders, icon: Package },
+  { label: 'Paquetes', to: routes.dashboardPackages, icon: Package },
 ];
 
 export const adminNav = [
-  { label: 'Resumen', to: '/admin', icon: LayoutDashboard, end: true },
+  { label: 'Resumen', to: routes.admin, icon: LayoutDashboard, end: true },
   { label: 'Usuarios', to: '/admin/usuarios', icon: Users },
   { label: 'Pedidos', to: '/admin/pedidos', icon: Package },
   { label: 'Administración QR', to: routes.adminQrs, icon: Barcode },

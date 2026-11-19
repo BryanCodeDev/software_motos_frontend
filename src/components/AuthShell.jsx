@@ -15,12 +15,16 @@ const rise = {
  * Layout compartido de las pantallas de acceso (login, registro, recuperación).
  * aside: { badge, line1, accent, text, items: [{ icon, title, desc }] }
  */
-export const AuthShell = ({ aside, children, bgImage }) => {
+export const AuthShell = ({ aside, children, bgImage, showFooter = true }) => {
   const reduce = useReducedMotion();
 
+  const bgStyle = bgImage
+    ? { backgroundImage: `url('${bgImage}')`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : {};
+
   return (
-    <main id="contenido" className={`grid min-h-screen lg:grid-cols-[1.05fr_1fr] ${bgImage ? `bg-[url('${bgImage}')] bg-cover bg-center` : 'bg-brand-50'}`}>
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-12 text-white lg:flex xl:p-16">
+    <main id="contenido" className={`grid min-h-screen lg:grid-cols-[1.05fr_1fr] ${bgImage ? '' : 'bg-brand-50'}`} style={bgStyle}>
+      <aside className={`relative flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16 ${bgImage ? 'bg-black/40 backdrop-blur-sm' : 'bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900'}`}>
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl animate-float" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-black/25 blur-3xl" />
         <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
@@ -81,14 +85,16 @@ export const AuthShell = ({ aside, children, bgImage }) => {
           </ul>
         </motion.div>
 
-        <p className="relative text-xs text-white/60">
-          © {new Date().getFullYear()} Tu QR te Cuida. Herramienta de apoyo: no sustituye a los servicios
-          oficiales de emergencia.
-        </p>
+        {showFooter && (
+          <p className="relative text-xs text-white/60">
+            © {new Date().getFullYear()} Tu QR te Cuida. Herramienta de apoyo: no sustituye a los servicios
+            oficiales de emergencia.
+          </p>
+        )}
       </aside>
 
       <section className="flex items-center justify-center px-4 py-10 sm:px-8">
-        <div className="w-full max-w-md animate-slide-up">
+        <div className={`w-full max-w-md animate-slide-up ${bgImage ? 'bg-white/80 backdrop-blur-md' : 'bg-white'}`}>
           <Link
             to={routes.home}
             className="mb-6 flex items-center justify-center gap-2 lg:hidden"
@@ -100,7 +106,7 @@ export const AuthShell = ({ aside, children, bgImage }) => {
             <span className="text-base font-bold tracking-tight text-neutral-900">Tu QR te Cuida</span>
           </Link>
 
-          <div className="relative rounded-2xl border border-border bg-white p-6 shadow-glow sm:p-10">
+          <div className="relative rounded-2xl border border-border p-6 shadow-glow sm:p-10">
             <span
               aria-hidden="true"
               className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent"

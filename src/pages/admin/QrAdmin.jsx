@@ -87,9 +87,11 @@ const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy }) =>
       <input
         type="checkbox"
         checked={selected}
-        onChange={onSelect}
+        onChange={qr.user ? undefined : onSelect}
+        disabled={!!qr.user}
         className="mt-1 rounded border-brand-500 text-brand-500 focus:ring-0"
         aria-label={`Seleccionar ${qr.value}`}
+        title={qr.user ? 'No se puede archivar un QR vinculado a un usuario' : undefined}
       />
     </div>
 
@@ -395,7 +397,12 @@ export const AdminQrInventory = () => {
     setArchiveBusy(true);
     let ok = 0;
     let fail = 0;
-    const ids = [...selected];
+    let skipped = 0;
+    const ids = [...selected].filter((id) => {
+      const qr = qrs.find((q) => q.id === id);
+      return !qr || !qr.user;
+    });
+    const skippedCount = selected.size - ids.length;
     try {
       for (const id of ids) {
         try {
@@ -407,6 +414,7 @@ export const AdminQrInventory = () => {
       }
       if (ok) toast.success(`${ok} QR archivado${ok !== 1 ? 's' : ''}`);
       if (fail) toast.error(`${fail} QR no se pudieron archivar`);
+      if (skippedCount) toast.info(`${skippedCount} QR con usuario vinculado no se archivaron`);
       setSelected(new Set());
       refresh();
     } finally {
