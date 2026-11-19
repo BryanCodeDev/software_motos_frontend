@@ -9,7 +9,7 @@ import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 import Modal from '../../components/Modal';
-import { useAdminSync } from '../../contexts/AdminSyncProvider';
+import { useAdminSync } from '../../contexts/useAdminSync';
 
 const PAGE_SIZE = 24;
 const panel = 'rounded-2xl border border-border bg-white';

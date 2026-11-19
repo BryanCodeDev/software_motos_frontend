@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useContext } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { AdminSyncContext } from './AdminSyncContext';
 
 export const AdminSyncProvider = ({ children }) => {
@@ -14,12 +14,6 @@ export const AdminSyncProvider = ({ children }) => {
   );
 
   return <AdminSyncContext.Provider value={value}>{children}</AdminSyncContext.Provider>;
-};
-
-export const useAdminSync = () => {
-  const ctx = useContext(AdminSyncContext);
-  if (!ctx) return { refreshKey: 0, refresh: () => {} };
-  return ctx;
 };
 
 export default AdminSyncProvider;

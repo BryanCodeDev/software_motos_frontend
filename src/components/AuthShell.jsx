@@ -32,7 +32,6 @@ const Heartbeat = ({ reduce, className = '' }) => (
  * aside: { badge, line1, accent, text, items: [{ icon, title, desc }] }
  * (showFooter se mantiene por compatibilidad, pero ya no se muestra ningún pie.)
  */
-// eslint-disable-next-line no-unused-vars
 export const AuthShell = ({ aside, children, bgImage, showFooter }) => {
   const reduce = useReducedMotion();
   const hasImage = !!bgImage;

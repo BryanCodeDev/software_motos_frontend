@@ -231,7 +231,7 @@ export const OrdersPage = () => {
       clearTimeout(timer);
       setOrdersLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     const t1 = setTimeout(loadOrders, 0);
@@ -252,7 +252,7 @@ export const OrdersPage = () => {
     } finally {
       setPackagesLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (activeTab !== 'paquetes') return;
@@ -273,7 +273,7 @@ export const OrdersPage = () => {
     } finally {
       setProductsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (activeTab !== 'adicionales') return;

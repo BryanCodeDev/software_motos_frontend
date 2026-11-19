@@ -4,7 +4,7 @@ import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
-import { useAdminSync } from '../../contexts/AdminSyncProvider';
+import { useAdminSync } from '../../contexts/useAdminSync';
 
 const PAGE_SIZE = 25;
 const panel = 'rounded-2xl border border-border bg-white';

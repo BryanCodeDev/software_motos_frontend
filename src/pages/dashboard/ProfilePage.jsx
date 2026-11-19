@@ -336,7 +336,7 @@ export const ProfilePage = () => {
       } catch { /* no críticos */ }
     } catch (err) { setMpError(err?.response?.data?.error || 'No se pudieron cargar los perfiles'); }
     finally { setMpLoading(false); }
-  }, []);
+  }, [activeProfileId]);
 
   useEffect(() => {
     const t = setTimeout(loadProfiles, 0);

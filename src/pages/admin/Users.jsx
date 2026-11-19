@@ -6,7 +6,7 @@ import {
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
 import { useAuth } from '../../contexts/useAuth';
-import { useAdminSync } from '../../contexts/AdminSyncProvider';
+import { useAdminSync } from '../../contexts/useAdminSync';
 import { useToast } from '../../components/useToast';
 import { Badge } from '../../components/ui-kit';
 import Modal from '../../components/Modal';

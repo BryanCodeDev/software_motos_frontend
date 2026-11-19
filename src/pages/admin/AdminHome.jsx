@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../contexts/useAuth';
-import { useAdminSync } from '../../contexts/AdminSyncProvider';
+import { useAdminSync } from '../../contexts/useAdminSync';
 
 const EASE = [0.22, 1, 0.36, 1];
 const panel = 'rounded-2xl border border-border bg-white';
