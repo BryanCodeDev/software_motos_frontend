@@ -114,36 +114,40 @@ const FILTERS_MP = [
   { id: 'pets', label: 'Mascotas', test: (p) => p.profile_type === 'pet' },
 ];
 
-const ProfileCardMP = ({ profile: p, busy, onDelete, onEdit, profileQrMap }) => {
+const ProfileCardMP = ({ profile: p, busy, onDelete, onEdit, onSetActive, profileQrMap, isActive }) => {
   const cfg = TYPES[p.profile_type] || TYPES.person;
   const Icon = cfg.icon;
-  const active = p.is_active !== false;
+  const profileActive = p.is_active !== false;
   const hasQr = Boolean(profileQrMap[p.id]);
   const orders = Number(p.order_count || 0) || 0;
   const subtitle = [cfg.label, p.relationship || p.pet_species].filter(Boolean).join(' · ');
   return (
-    <li className={`flex flex-col rounded-2xl border p-5 transition-colors ${active ? 'border-border bg-white hover:border-brand-500/40' : 'border-border bg-neutral-50'}`}>
+    <li className={`flex flex-col rounded-2xl border p-5 transition-colors ${isActive ? 'border-brand-500 bg-brand-50/50 shadow-sm' : profileActive ? 'border-border bg-white hover:border-brand-500/40' : 'border-border bg-neutral-50'}`}>
       <div className="flex items-start gap-3">
-        <span className={`flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full ${active ? 'bg-brand-500/10 text-brand-500' : 'bg-neutral-200 text-text-secondary'}`}>
+        <span className={`flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full ${profileActive ? 'bg-brand-500/10 text-brand-500' : 'bg-neutral-200 text-text-secondary'}`}>
           {p.photo_url ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Icon size={22} aria-hidden="true" />}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold text-neutral-900">{p.display_name || 'Sin nombre'}</p>
           <p className="truncate text-xs text-text-secondary">{subtitle}</p>
         </div>
+        {isActive && <span className="flex-none text-[10px] font-bold bg-brand-500 text-white rounded-full px-2 py-0.5">Activo</span>}
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {!active && <Badge tone="neutral" size="sm">Inactivo</Badge>}
+        {!profileActive && <Badge tone="neutral" size="sm">Inactivo</Badge>}
         {p.pet_lost && <Badge tone="danger" size="sm">Perdido</Badge>}
-        {active && (hasQr ? <Badge tone="success" size="sm">QR activo</Badge> : <Badge tone="warn" size="sm">Sin QR</Badge>)}
+        {profileActive && (hasQr ? <Badge tone="success" size="sm">QR activo</Badge> : <Badge tone="warn" size="sm">Sin QR</Badge>)}
       </div>
       <p className="mt-3 flex items-center gap-1.5 text-xs text-text-secondary"><Package size={13} aria-hidden="true" /> {plural(orders, 'pedido', 'pedidos')}</p>
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
-        <button type="button" onClick={() => onEdit(p)} disabled={busy} className="btn-outline flex-1 px-3 py-2 text-xs">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Edit2 size={14} aria-hidden="true" />} Ver y editar</button>
-        {active && !hasQr && <Link to={routes.dashboardPedidos} className="btn-primary flex-1 px-3 py-2 text-xs"><QrCode size={14} aria-hidden="true" /> Conseguir QR</Link>}
-        {active ? (
-          <button type="button" onClick={() => onDelete(p)} disabled={busy} aria-label={`Eliminar a ${p.display_name || 'este perfil'}`} title="Eliminar" className="btn-outline h-8 w-8 flex-none !text-rose-700 hover:!bg-rose-50">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}</button>
+        <button type="button" onClick={() => { onSetActive(p.id); onEdit(p); }} disabled={busy} className="btn-outline flex-1 px-3 py-2 text-xs">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Edit2 size={14} aria-hidden="true" />} Ver y editar</button>
+        {profileActive && !hasQr && <Link to={routes.dashboardPedidos} className="btn-primary flex-1 px-3 py-2 text-xs"><QrCode size={14} aria-hidden="true" /> Conseguir QR</Link>}
+        {!isActive && profileActive ? (
+          <button type="button" onClick={() => onSetActive(p.id)} className="btn-outline flex-1 px-3 py-2 text-xs">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Users size={14} aria-hidden="true" />} Usar este perfil</button>
         ) : null}
+        {isActive ? null : (profileActive ? (
+          <button type="button" onClick={() => onDelete(p)} disabled={busy} aria-label={`Eliminar a ${p.display_name || 'este perfil'}`} title="Eliminar" className="btn-outline h-8 w-8 flex-none !text-rose-700 hover:!bg-rose-50">{busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}</button>
+        ) : null)}
       </div>
     </li>
   );
@@ -294,6 +298,7 @@ export const ProfilePage = () => {
   const [mpFilter, setMpFilter] = useState('all');
   const [busyId, setBusyId] = useState(null);
   const [toDelete, setToDelete] = useState(null);
+  const [activeProfileId, setActiveProfileId] = useState(null);
   const [editingProfile, setEditingProfile] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [editingSaving, setEditingSaving] = useState(false);
@@ -313,6 +318,10 @@ export const ProfilePage = () => {
       const { data } = await api.get('/profiles/me/profiles');
       const profiles = data.profiles || [];
       setProfiles(profiles);
+      // Establecer el primer perfil como activo por defecto si no hay uno seleccionado
+      if (!activeProfileId && profiles.length > 0) {
+        setActiveProfileId(profiles[0].id);
+      }
       // Cargar identificadores del usuario para saber qué perfiles tienen QR activo
       try {
         const { data: idData } = await api.get('/identifiers/my');
@@ -334,16 +343,24 @@ export const ProfilePage = () => {
     return () => clearTimeout(t);
   }, [loadProfiles]);
 
+  /* Si se elimina el perfil activo, seleccionar el primero disponible automáticamente */
+  const resetActiveProfileIfNeeded = useCallback(() => {
+    if (activeProfileId && profiles.length > 0 && !profiles.find((p) => p.id === activeProfileId)) {
+      setActiveProfileId(profiles[0].id);
+    }
+  }, [profiles, activeProfileId]);
+
   const saveEditProfile = async () => {
-    if (!editingProfile) return;
+    const target = editingProfile || profiles.find((p) => p.id === activeProfileId);
+    if (!target) return;
     setEditingSaving(true);
     setEditingErrors({});
     try {
       const payload = {
         display_name: String(editForm.display_name || '').trim() || null,
-        relationship: editingProfile.profile_type === 'pet' ? null : String(editForm.relationship || '').trim() || null,
+        relationship: target.profile_type === 'pet' ? null : String(editForm.relationship || '').trim() || null,
       };
-      await api.patch(`/profiles/me/profiles/${editingProfile.id}`, payload);
+      await api.patch(`/profiles/me/profiles/${target.id}`, payload);
       toastRef.current.success('Perfil actualizado');
       setEditingProfile(null);
       await loadProfiles();
@@ -357,6 +374,11 @@ export const ProfilePage = () => {
   };
 
   const deleteProfile = async (p) => {
+    // No permitir eliminar el perfil activo (el que se usa para interactuar)
+    if (p.id === activeProfileId) {
+      toastRef.current.error('No puedes eliminar el perfil que estás usando actualmente. Cambia a otro perfil primero.');
+      return;
+    }
     setToDelete(null);
     setBusyId(p.id);
     try {
@@ -365,9 +387,16 @@ export const ProfilePage = () => {
       await api.patch(`/profiles/me/profiles/${p.id}/deactivate`);
       toastRef.current.success('Perfil eliminado');
       await loadProfiles();
+      resetActiveProfileIfNeeded();
       await refreshUser();
     } catch (err) {
-      toastRef.current.error(err?.response?.data?.error || 'No se pudo eliminar el perfil.');
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.error || 'No se pudo eliminar el perfil.';
+      if (status === 409) {
+        toastRef.current.error('No se puede eliminar este perfil: tiene un código QR vinculado o es el perfil principal de la cuenta.');
+      } else {
+        toastRef.current.error(msg);
+      }
     } finally {
       setBusyId(null);
     }
@@ -493,6 +522,34 @@ export const ProfilePage = () => {
           <button type="button" onClick={() => setCreating(true)} className="btn-primary px-5 py-2.5 text-sm"><Plus size={16} aria-hidden="true" /> Agregar perfil</button>
         </div>
 
+        {/* Selector de perfil activo para interactuar */}
+        {profiles.length > 0 && (
+          <div className={`${panel} p-4`}>
+            <p className="text-xs font-medium text-text-secondary mb-2">Perfil activo para interactuar</p>
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar">
+              {sorted.map((p) => {
+                const isActive = p.id === activeProfileId;
+                const hasQr = Boolean(profileQrMap[p.id]);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { setActiveProfileId(p.id); setEditingProfile(p); setEditForm({ display_name: p.display_name || '', relationship: p.relationship || '' }); }}
+                    className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors min-w-[150px] ${isActive ? 'border-brand-500 bg-brand-50/50 shadow-sm' : 'border-border bg-white hover:border-brand-500/40'}`}
+                  >
+                    <span className={`flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-full ${p.photo_url ? 'bg-brand-500/10 text-brand-500' : 'bg-brand-500/10 text-text-secondary'}`}>
+                      {p.photo_url ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Users size={18} aria-hidden="true" />}
+                    </span>
+                    <span className="text-xs font-semibold truncate w-full">{p.display_name || 'Sin nombre'}</span>
+                    {isActive && <span className="text-[10px] font-bold bg-brand-500 text-white rounded-full px-1.5 py-0">USANDO</span>}
+                    {!hasQr && <span className="text-[10px] text-text-secondary">Sin QR</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {mpLoading ? <PageLoader /> : mpError ? (
           <div className={`${panel} p-6 lg:p-8`}>
             <EmptyState icon={AlertTriangle} title="No se pudieron cargar los perfiles" text={mpError}>
@@ -527,9 +584,10 @@ export const ProfilePage = () => {
               <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleMP.map((p) => (
                   <ProfileCardMP key={p.id} profile={p} busy={busyId === p.id} onDelete={(prof) => setToDelete(prof)} onEdit={() => {
+                    setActiveProfileId(p.id);
                     setEditingProfile(p);
                     setEditForm({ display_name: p.display_name || '', relationship: p.relationship || '' });
-                  }} profileQrMap={profileQrMap} />
+                  }} onSetActive={setActiveProfileId} profileQrMap={profileQrMap} isActive={p.id === activeProfileId} />
                 ))}
               </ul>
             )}
