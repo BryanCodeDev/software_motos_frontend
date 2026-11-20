@@ -472,7 +472,7 @@ export const AdminQrInventory = () => {
 
   /* Asignar diseño a la selección actual en lote */
   const doSetDesign = async () => {
-    if (!selected.size || bulkDesignId === null && bulkDesignId !== 0) return;
+    if (!selected.size) return;
     if (bulkBusy) return;
     setBulkBusy('design');
     try {
