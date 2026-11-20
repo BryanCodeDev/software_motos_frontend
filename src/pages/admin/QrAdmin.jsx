@@ -263,6 +263,11 @@ export const AdminQrInventory = () => {
   const [designsLoading, setDesignsLoading] = useState(false);
   const [bulkDesignId, setBulkDesignId] = useState(null);
 
+  /* Parámetros de impresión de stickers de vinilo */
+  const [stickerSize, setStickerSize] = useState('5x5');
+  const [stickerWidth, setStickerWidth] = useState('');
+  const [stickerHeight, setStickerHeight] = useState('');
+
   /* Crear */
   const [createOpen, setCreateOpen] = useState(false);
   const [createQty, setCreateQty] = useState(1);
@@ -690,8 +695,15 @@ export const AdminQrInventory = () => {
     if (!selected.size) return;
     setExportBusy(true);
     try {
-      await downloadBlob(`/admin/qrs/export/${format}?ids=${[...selected.keys()].join(',')}`, `qrs-produccion.${format}`);
-      toast.success(`${selected.size} QR exportados`);
+      const params = new URLSearchParams({
+        ids: [...selected.keys()].join(','),
+        format,
+        size: stickerSize || '5x5',
+        width_mm: stickerWidth || '',
+        height_mm: stickerHeight || '',
+      });
+      await downloadBlob(`/admin/qrs/export/${format}?${params.toString()}`, `stickers-${stickerSize || '5x5'}mm-${format}`);
+      toast.success(`${selected.size} QR exportados a ${format.toUpperCase()}`);
       clearSelection();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo exportar');
@@ -879,14 +891,50 @@ export const AdminQrInventory = () => {
       {selected.size > 0 && (
         <div className="sticky bottom-4 z-20 flex animate-slide-up flex-col gap-2 rounded-2xl border border-white/10 bg-brand-900/95 p-2.5 text-white shadow-card backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:p-3">
           <div className="flex items-center gap-2 text-sm">
-            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-500 px-2 text-xs font-bold">{selected.size}</span>
-            <span className="font-semibold">{selected.size === 1 ? 'seleccionado' : 'seleccionados'}</span>
             <button type="button" onClick={clearSelection} className="text-xs font-semibold text-white/70 underline underline-offset-2 hover:text-white">
               Quitar
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            {/* Configuración de impresión de stickers (tamaño y cantidad) */}
+            <div className="flex items-center gap-2 flex-wrap min-w-[200px]">
+              <select
+                value={stickerSize}
+                onChange={(e) => setStickerSize(e.target.value)}
+                aria-label="Tamaño sticker"
+                className="input !py-2 !px-2 !text-xs sm:!text-sm bg-white border border-brand-200 text-neutral-900 focus:ring-brand-500"
+              >
+                <option value="5x5">5×5 cm</option>
+                <option value="50x100">50×100 cm</option>
+                <option value="100x100">100×100 cm</option>
+                <option value="custom">Personalizado</option>
+              </select>
+              {stickerSize === 'custom' && (
+                <>
+                  <input
+                    type="number"
+                    value={stickerWidth}
+                    onChange={(e) => setStickerWidth(e.target.value)}
+                    placeholder="Ancho mm"
+                    aria-label="Ancho sticker mm"
+                    className="input !py-2 !px-2 !text-xs w-20 bg-white border border-brand-200 text-neutral-900 focus:ring-brand-500"
+                  />
+                  <span className="text-[10px] text-text-secondary">×</span>
+                  <input
+                    type="number"
+                    value={stickerHeight}
+                    onChange={(e) => setStickerHeight(e.target.value)}
+                    placeholder="Alto mm"
+                    aria-label="Alto sticker mm"
+                    className="input !py-2 !px-2 !text-xs w-20 bg-white border border-brand-200 text-neutral-900 focus:ring-brand-500"
+                  />
+                </>
+              )}
+            </div>
+
+            <Sep />
+
             <button type="button" onClick={() => exportAs('csv')} disabled={busyAny} className={barGlass}>
               <FileText size={13} aria-hidden="true" />
               <span className="hidden sm:inline ml-1">CSV</span>
@@ -910,7 +958,7 @@ export const AdminQrInventory = () => {
                   onChange={(e) => setBulkDesignId(e.target.value === '' ? null : Number(e.target.value))}
                   disabled={bulkBusy === 'design'}
                   aria-label="Diseño para lote"
-                  className="input !py-1.5 !px-1.5 !text-xs sm:!text-sm bg-white border border-brand-200 text-brand-700 focus:ring-brand-500"
+                  className="input !py-2 !px-2 !text-xs sm:!text-sm bg-white border border-brand-200 text-brand-700 focus:ring-brand-500"
                 >
                   <option value="">Sin diseño</option>
                   {designs.map((d) => (
