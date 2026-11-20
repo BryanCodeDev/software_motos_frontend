@@ -155,10 +155,9 @@ const IconButton = ({ icon: Icon, label, onClick, tone = 'neutral', busy = false
               type="checkbox"
               checked={selected}
               onChange={onSelect}
-              disabled={linked}
-              className="mt-1 h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
+              className="mt-1 h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0"
               aria-label={`Seleccionar ${qr.value}`}
-              title={linked ? 'Un QR vinculado a un usuario no se puede seleccionar' : undefined}
+              title={linked ? 'Seleccionar para exportar (no se puede modificar ni eliminar)' : 'Seleccionar QR'}
             />
           </div>
         </div>
@@ -401,8 +400,9 @@ export const AdminQrInventory = () => {
   const hasFilters = !!(input || view !== 'all' || print);
   const clearFilters = () => { setInput(''); setQ(''); setView('all'); setPrint(''); setPage(1); };
 
-  /* Selección (los QR vinculados a un usuario no se pueden seleccionar) */
-  const selectable = qrs.filter((x) => !x.user_id);
+  /* Selección (todos los QR se pueden seleccionar para exportar; solo los no vinculados para modificar) */
+  const selectable = qrs; // exportar: se pueden seleccionar vinculados y no vinculados
+  const modifiable = qrs.filter((x) => !x.user_id); // activar/desactivar/eliminar/asignar diseño: solo no vinculados
   const allSelected = selectable.length > 0 && selectable.every((x) => selected.has(x.id));
   const toggleOne = (qr) => setSelected((prev) => {
     const n = new Map(prev);
@@ -418,9 +418,11 @@ export const AdminQrInventory = () => {
   const clearSelection = () => setSelected(new Map());
 
   const picked = [...selected.values()];
-  const activatable = picked.filter((x) => !x.user_id && x.status === 'disabled');
-  const deactivatable = picked.filter((x) => !x.user_id && x.status === 'active');
-  const deletable = picked.filter((x) => !x.user_id);
+  const modifiablePicked = picked.filter((x) => !x.user_id);
+  const activatable = modifiablePicked.filter((x) => x.status === 'disabled');
+  const deactivatable = modifiablePicked.filter((x) => x.status === 'active');
+  const deletable = modifiablePicked;
+  const exportable = picked;
 
   /* Acción sobre un QR individual */
   const runRow = async (qr, kind) => {
@@ -820,16 +822,18 @@ export const AdminQrInventory = () => {
       {qrs.length > 0 && !error && (
         <>
           <div className="flex items-center justify-between gap-3 px-1 text-xs text-text-secondary">
-            <label className={`inline-flex items-center gap-2 ${selectable.length ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+            <label className={`inline-flex items-center gap-2 ${qrs.length ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
               <input
                 type="checkbox"
                 checked={allSelected}
-                disabled={!selectable.length}
+                disabled={!qrs.length}
                 onChange={toggleAll}
                 className="h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0"
               />
               Seleccionar esta página
-              {selectable.length < qrs.length && <span className="text-text-muted">({selectable.length} sin usuario)</span>}
+              {qrs.length > 0 && (
+                <span className="text-text-muted">({modifiable.length} modificables · {qrs.length - modifiable.length} vinculados)</span>
+              )}
             </label>
             <span aria-live="polite">
               <span className="font-semibold text-neutral-900">{pagination.total}</span> {pagination.total === 1 ? 'código' : 'códigos'}
