@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, FileText, Image, Link2,
-  Loader2, Plus, Printer, QrCode, RefreshCw, Search, Trash2, Unlink, User, X,
+  AlertTriangle, Archive, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Download, ExternalLink, FileText,
+  Image as ImageIcon, Layers, Link2, Loader2, Plus, Power, PowerOff, Printer, QrCode, RefreshCw, Search, Trash2,
+  Unlink, User, X,
 } from 'lucide-react';
 import api from '../../api/client';
 import { PageTitle } from '../../components/DashPage';
@@ -14,6 +15,8 @@ import { useAdminSync } from '../../contexts/useAdminSync';
 
 const PAGE_SIZE = 24;
 const panel = 'rounded-2xl border border-border bg-white';
+const rise = 'opacity-0 animate-slide-up';
+const ARCHIVE_REASON = 'Archivado desde el panel de administración';
 
 const QR_STATUS = {
   pending_activation: ['Pendiente de activación', 'warn'],
@@ -22,6 +25,7 @@ const QR_STATUS = {
   deactivated: ['Desvinculado', 'neutral'],
   replaced: ['Reemplazado', 'neutral'],
   retired: ['Retirado', 'neutral'],
+  archived: ['Archivado', 'neutral'],
 };
 const PRINT_STATUS = {
   pending_print: ['Por imprimir', 'neutral'],
@@ -32,14 +36,38 @@ const PRINT_STATUS = {
   cancelled: ['Cancelado', 'neutral'],
 };
 
+/* Franja de color superior de cada tarjeta, según el estado del QR */
+const STATUS_ACCENT = {
+  active: 'from-emerald-500 to-emerald-300',
+  pending_activation: 'from-amber-500 to-amber-300',
+  disabled: 'from-rose-500 to-rose-300',
+  default: 'from-neutral-200 to-neutral-100',
+};
+
 /* Cada tarjeta de resumen es también un filtro */
 const VIEWS = [
-  { id: 'all', label: 'Todos', params: {}, count: (s) => s.total },
-  { id: 'active', label: 'Activos', params: { status: 'active' }, count: (s) => s.by_status?.active },
-  { id: 'pending', label: 'Pendientes de activación', params: { status: 'pending_activation' }, count: (s) => s.by_status?.pending_activation },
-  { id: 'unlinked', label: 'Sin vincular', params: { linked: 'false' }, count: (s) => s.unlinked },
-  { id: 'archived', label: 'Archivados', params: { archived: 'true' }, count: (s) => s.by_status?.archived },
+  { id: 'all', label: 'Todos', icon: Layers, params: {}, count: (s) => s.total },
+  { id: 'active', label: 'Activos', icon: CheckCircle2, params: { status: 'active' }, count: (s) => s.by_status?.active },
+  { id: 'pending', label: 'Por activar', icon: Clock, params: { status: 'pending_activation' }, count: (s) => s.by_status?.pending_activation },
+  { id: 'unlinked', label: 'Sin vincular', icon: Unlink, params: { linked: 'false' }, count: (s) => s.unlinked },
+  { id: 'archived', label: 'Archivados', icon: Archive, params: { archived: 'true' }, count: (s) => s.by_status?.archived },
 ];
+
+/* Acciones sobre un QR: una sola definición para tarjeta individual y lote */
+const CALLS = {
+  archive: (id) => api.post(`/admin/qrs/${id}/archive`, { reason: ARCHIVE_REASON }),
+  activate: (id) => api.post(`/admin/qrs/${id}/activate`),
+  deactivate: (id) => api.post(`/admin/qrs/${id}/deactivate`),
+  delete: (id) => api.delete(`/admin/qrs/${id}`),
+};
+const BULK_WORDS = {
+  archive: ['archivado', 'archivar'],
+  activate: ['activado', 'activar'],
+  deactivate: ['desactivado', 'desactivar'],
+  delete: ['eliminado', 'eliminar'],
+};
+
+const isArchived = (qr) => qr.status === 'archived' || !!qr.archived_at;
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -47,9 +75,8 @@ const fmtDay = (d) =>
   d ? new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const publicUrl = (v) => `${window.location.origin}/e/${v}`;
 
-const downloadBlob = async (url, fileName) => {
-  const res = await api.get(url, { responseType: 'blob' });
-  const objectUrl = URL.createObjectURL(new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' }));
+const saveBlob = (blob, fileName) => {
+  const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = objectUrl;
   link.download = fileName;
@@ -57,6 +84,11 @@ const downloadBlob = async (url, fileName) => {
   link.click();
   link.remove();
   URL.revokeObjectURL(objectUrl);
+};
+
+const downloadBlob = async (url, fileName) => {
+  const res = await api.get(url, { responseType: 'blob' });
+  saveBlob(new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' }), fileName);
 };
 
 const StatusBadge = ({ map, value }) => {
@@ -71,124 +103,126 @@ const Field = ({ label, children, wide = false }) => (
   </div>
 );
 
-/* ───────── Tarjeta de QR ───────── */
-const QrCard = ({ qr, selected, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onExportSticker, onArchive, onActivate, onDeactivate, onDelete, archiveBusy: isArchiveBusy, activateBusy: isActivateBusy, deactivateBusy: isDeactivateBusy, deleteBusy: isDeleteBusy }) => (
-  <li
-    className={`flex flex-col rounded-2xl border p-4 transition-colors ${
-      selected ? 'border-brand-500/60 bg-brand-50/60' : 'border-border bg-white hover:border-brand-500/40'
-    }`}
+const TONES = {
+  neutral: 'text-text-secondary hover:bg-brand-50 hover:text-brand-600',
+  success: 'text-text-secondary hover:bg-emerald-50 hover:text-emerald-700',
+  warn: 'text-text-secondary hover:bg-amber-50 hover:text-amber-700',
+  danger: 'text-text-secondary hover:bg-rose-50 hover:text-rose-700',
+};
+
+const IconButton = ({ icon: Icon, label, onClick, tone = 'neutral', busy = false, disabled = false }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={busy || disabled}
+    aria-label={label}
+    title={label}
+    className={`focus-ring flex h-8 w-8 flex-none items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${TONES[tone]}`}
   >
-    <div className="flex items-start gap-3">
-      <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
-        <QrCode size={22} aria-hidden="true" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-mono text-xs font-semibold text-neutral-900" title={qr.value}>{qr.value}</p>
-        <p className="mt-0.5 text-xs text-text-secondary">Creado {fmtDay(qr.created_at)}</p>
-      </div>
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={qr.user ? undefined : onSelect}
-        disabled={!!qr.user}
-        className="mt-1 rounded border-brand-500 text-brand-500 focus:ring-0"
-        aria-label={`Seleccionar ${qr.value}`}
-        title={qr.user ? 'No se puede archivar un QR vinculado a un usuario' : undefined}
-      />
-    </div>
-
-    <div className="mt-3 flex flex-wrap gap-1.5">
-      <StatusBadge map={QR_STATUS} value={qr.status} />
-      <StatusBadge map={PRINT_STATUS} value={qr.print_status} />
-    </div>
-
-    <dl className="mt-3 space-y-2 border-t border-border pt-3 text-xs">
-      <div className="flex items-center justify-between gap-3">
-        <dt className="text-text-secondary">Usuario</dt>
-        <dd className={`min-w-0 truncate font-medium ${qr.user ? 'text-neutral-900' : 'text-amber-700'}`} title={qr.user?.email}>
-          {qr.user?.email || 'Sin asignar'}
-        </dd>
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <dt className="text-text-secondary">Pedido</dt>
-        <dd className="min-w-0 truncate font-medium text-neutral-900">{qr.order?.order_number || '—'}</dd>
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <dt className="text-text-secondary">Diseño</dt>
-        <dd className="flex min-w-0 items-center gap-1.5 font-medium text-neutral-900">
-          {qr.order?.design_image_url && <img src={qr.order.design_image_url} alt="" className="h-4 w-4 flex-none rounded object-cover" />}
-          <span className="truncate">{qr.order?.design_name || '—'}</span>
-        </dd>
-      </div>
-    </dl>
-
-    <div className="mt-auto flex items-center gap-2 pt-4">
-      <button type="button" onClick={onOpen} className="btn-outline flex-1 px-3 py-2 text-xs">Ver detalles</button>
-      {qr.user ? (
-        <button type="button" onClick={onUnlink} className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50">
-          <Unlink size={14} aria-hidden="true" /> Desvincular
-        </button>
-      ) : (
-        <button type="button" onClick={onLink} className="btn-primary px-3 py-2 text-xs">
-          <Link2 size={14} aria-hidden="true" /> Vincular
-        </button>
-      )}
-      {!qr.user && (
-        <button
-          type="button"
-          onClick={() => onArchive && onArchive(qr.id)}
-          disabled={isArchiveBusy === qr.id}
-          className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50"
-        >
-          {isArchiveBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
-          {isArchiveBusy === qr.id ? 'Archivando…' : 'Archivar'}
-        </button>
-      )}
-      {!qr.user && qr.status === 'disabled' && (
-        <button
-          type="button"
-          onClick={() => onActivate && onActivate(qr.id)}
-          disabled={isActivateBusy === qr.id}
-          className="btn-outline px-3 py-2 text-xs !text-emerald-700 hover:!bg-emerald-50"
-        >
-          {isActivateBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />}
-          {isActivateBusy === qr.id ? 'Activando…' : 'Activar'}
-        </button>
-      )}
-      {!qr.user && qr.status === 'active' && (
-        <button
-          type="button"
-          onClick={() => onDeactivate && onDeactivate(qr.id)}
-          disabled={isDeactivateBusy === qr.id}
-          className="btn-outline px-3 py-2 text-xs !text-amber-700 hover:!bg-amber-50"
-        >
-          {isDeactivateBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />}
-          {isDeactivateBusy === qr.id ? 'Desactivando…' : 'Desactivar'}
-        </button>
-      )}
-      {!qr.user && (
-        <button
-          type="button"
-          onClick={() => onDelete && onDelete(qr.id)}
-          disabled={isDeleteBusy === qr.id}
-          className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50"
-        >
-          {isDeleteBusy === qr.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
-          {isDeleteBusy === qr.id ? 'Eliminando…' : 'Eliminar'}
-        </button>
-      )}
-      <button type="button" onClick={onCopy} aria-label="Copiar enlace público" title="Copiar enlace público" className="btn-outline h-8 w-8 flex-none">
-        <Copy size={14} aria-hidden="true" />
-      </button>
-      <button type="button" onClick={onDownload} aria-label="Descargar código QR" title="Descargar código QR" className="btn-outline h-8 w-8 flex-none">
-        <Download size={14} aria-hidden="true" />
-      </button>
-      <button type="button" onClick={onExportSticker} aria-label="Exportar sticker con QR" title="Exportar sticker con QR" className="btn-outline h-8 w-8 flex-none !text-brand-600 hover:!bg-brand-50">
-        <Image size={14} aria-hidden="true" />
-      </button>
-    </div>
-  </li>
+    {busy ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <Icon size={15} aria-hidden="true" />}
+  </button>
 );
+
+/* ───────── Tarjeta de QR ───────── */
+const QrCard = ({
+  qr, index, selected, busy, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onSticker, onAction, onDelete,
+}) => {
+  const linked = !!qr.user;
+  const archived = isArchived(qr);
+  const accent = STATUS_ACCENT[qr.status] || STATUS_ACCENT.default;
+
+  return (
+    <li
+      style={{ animationDelay: `${Math.min(index, 11) * 35}ms` }}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft ${rise} ${
+        selected ? 'border-brand-500/60 bg-brand-50/60 ring-1 ring-brand-500/30' : 'border-border bg-white hover:border-brand-500/40'
+      }`}
+    >
+      <span aria-hidden="true" className={`h-1 w-full bg-gradient-to-r ${accent}`} />
+
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-soft transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3">
+            <QrCode size={22} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-mono text-xs font-semibold text-neutral-900" title={qr.value}>{qr.value}</p>
+            <p className="mt-0.5 text-xs text-text-secondary">Creado {fmtDay(qr.created_at)}</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onSelect}
+            disabled={linked}
+            className="mt-1 h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label={`Seleccionar ${qr.value}`}
+            title={linked ? 'Un QR vinculado a un usuario no se puede seleccionar' : undefined}
+          />
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <StatusBadge map={QR_STATUS} value={qr.status} />
+          <StatusBadge map={PRINT_STATUS} value={qr.print_status} />
+        </div>
+
+        <dl className="mt-3 space-y-2 rounded-xl bg-brand-50/50 p-3 text-xs">
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-text-secondary">Usuario</dt>
+            <dd className={`min-w-0 truncate font-medium ${linked ? 'text-neutral-900' : 'text-amber-700'}`} title={qr.user?.email}>
+              {qr.user?.email || 'Sin asignar'}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-text-secondary">Pedido</dt>
+            <dd className="min-w-0 truncate font-medium text-neutral-900">{qr.order?.order_number || '—'}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-text-secondary">Diseño</dt>
+            <dd className="flex min-w-0 items-center gap-1.5 font-medium text-neutral-900">
+              {qr.order?.design_image_url && <img src={qr.order.design_image_url} alt="" className="h-4 w-4 flex-none rounded object-cover" />}
+              <span className="truncate">{qr.order?.design_name || '—'}</span>
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+          <button type="button" onClick={onOpen} className="btn-outline px-3 py-2 text-xs">Ver detalles</button>
+          {linked ? (
+            <button type="button" onClick={onUnlink} className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50">
+              <Unlink size={14} aria-hidden="true" /> Desvincular
+            </button>
+          ) : (
+            <button type="button" onClick={onLink} className="btn-primary px-3 py-2 text-xs">
+              <Link2 size={14} aria-hidden="true" /> Vincular
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-0.5 border-t border-border bg-neutral-50/70 px-2 py-1.5">
+        <IconButton icon={Copy} label="Copiar enlace público" onClick={onCopy} />
+        <IconButton icon={Download} label="Descargar código QR" onClick={onDownload} />
+        <IconButton icon={ImageIcon} label="Exportar sticker con QR" onClick={onSticker} />
+        {!linked && (
+          <span className="ml-auto flex items-center gap-0.5">
+            {qr.status === 'disabled' && (
+              <IconButton icon={Power} label="Activar" tone="success" busy={busy === 'activate'} disabled={!!busy} onClick={() => onAction('activate')} />
+            )}
+            {qr.status === 'active' && (
+              <IconButton icon={PowerOff} label="Desactivar" tone="warn" busy={busy === 'deactivate'} disabled={!!busy} onClick={() => onAction('deactivate')} />
+            )}
+            {!archived && (
+              <IconButton icon={Archive} label="Archivar" tone="warn" busy={busy === 'archive'} disabled={!!busy} onClick={() => onAction('archive')} />
+            )}
+            <IconButton icon={Trash2} label="Eliminar" tone="danger" disabled={!!busy} onClick={onDelete} />
+          </span>
+        )}
+      </div>
+    </li>
+  );
+};
+
+const Sep = () => <span aria-hidden="true" className="hidden h-6 w-px bg-white/15 lg:block" />;
 
 export const AdminQrInventory = () => {
   const toast = useToast();
@@ -208,16 +242,13 @@ export const AdminQrInventory = () => {
   const [tick, setTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selected, setSelected] = useState(new Set());
+
+  /* Selección: Map id → QR, así sobrevive entre páginas sin perder los datos del QR */
+  const [selected, setSelected] = useState(() => new Map());
   const [exportBusy, setExportBusy] = useState(false);
-  const [archiveBusy, setArchiveBusy] = useState(false);
-  const [archiveOneBusy, setArchiveOneBusy] = useState(null);
-  const [activateBusy, setActivateBusy] = useState(null);
-  const [deactivateBusy, setDeactivateBusy] = useState(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteOneBusy, setDeleteOneBusy] = useState(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteQrId, setDeleteQrId] = useState(null);
+  const [bulkBusy, setBulkBusy] = useState(null); // 'archive' | 'activate' | 'deactivate' | 'delete'
+  const [rowBusy, setRowBusy] = useState(null); // { id, action }
+  const [deleteTarget, setDeleteTarget] = useState(null); // lista de QR a eliminar
 
   /* Exportar sticker */
   const [stickerExportOpen, setStickerExportOpen] = useState(false);
@@ -248,7 +279,12 @@ export const AdminQrInventory = () => {
   const [detailImage, setDetailImage] = useState(null);
   const [printBusy, setPrintBusy] = useState(false);
 
+  /* Evitan que una respuesta lenta pise a una más reciente */
+  const listReq = useRef(0);
+  const detailReq = useRef(0);
+
   const refreshLocal = () => setTick((t) => t + 1);
+  const refreshAll = () => { refreshLocal(); globalRefresh(); };
 
   const loadStats = useCallback(async () => {
     try {
@@ -260,6 +296,7 @@ export const AdminQrInventory = () => {
   }, []);
 
   const loadQrs = useCallback(async () => {
+    const reqId = ++listReq.current;
     setLoading(true);
     setError(null);
     try {
@@ -267,12 +304,14 @@ export const AdminQrInventory = () => {
       if (q) query.q = q;
       if (print) query.print_status = print;
       const { data } = await api.get('/admin/qrs', { params: query });
+      if (reqId !== listReq.current) return;
       setQrs((data.qrs || []).filter(Boolean));
       setPagination(data.pagination || { page: 1, pages: 0, total: 0 });
     } catch (e) {
+      if (reqId !== listReq.current) return;
       setError(e?.response?.data?.error || 'No se pudieron cargar los códigos QR');
     } finally {
-      setLoading(false);
+      if (reqId === listReq.current) setLoading(false);
     }
   }, [q, view, print, page]);
 
@@ -290,6 +329,14 @@ export const AdminQrInventory = () => {
     const t = setTimeout(() => { setQ(input.trim()); setPage(1); }, 350);
     return () => clearTimeout(t);
   }, [input]);
+
+  /* Si al borrar/archivar la última página queda vacía, vuelve a la última que exista */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!loading && pagination.pages > 0 && page > pagination.pages) setPage(pagination.pages);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [loading, pagination.pages, page]);
 
   /* Buscar usuarios mientras se escribe en el modal de vincular */
   useEffect(() => {
@@ -323,10 +370,74 @@ export const AdminQrInventory = () => {
   const hasFilters = !!(input || view !== 'all' || print);
   const clearFilters = () => { setInput(''); setQ(''); setView('all'); setPrint(''); setPage(1); };
 
-  /* Selección */
-  const allSelected = qrs.length > 0 && qrs.every((x) => selected.has(x.id));
-  const toggleOne = (id) => setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(qrs.map((x) => x.id)));
+  /* Selección (los QR vinculados a un usuario no se pueden seleccionar) */
+  const selectable = qrs.filter((x) => !x.user);
+  const allSelected = selectable.length > 0 && selectable.every((x) => selected.has(x.id));
+  const toggleOne = (qr) => setSelected((prev) => {
+    const n = new Map(prev);
+    if (n.has(qr.id)) n.delete(qr.id); else n.set(qr.id, qr);
+    return n;
+  });
+  const toggleAll = () => setSelected((prev) => {
+    const n = new Map(prev);
+    if (allSelected) selectable.forEach((x) => n.delete(x.id));
+    else selectable.forEach((x) => n.set(x.id, x));
+    return n;
+  });
+  const clearSelection = () => setSelected(new Map());
+
+  const picked = [...selected.values()];
+  const archivable = picked.filter((x) => !x.user && !isArchived(x));
+  const activatable = picked.filter((x) => !x.user && x.status === 'disabled');
+  const deactivatable = picked.filter((x) => !x.user && x.status === 'active');
+  const deletable = picked.filter((x) => !x.user);
+
+  /* Acción sobre un QR individual */
+  const runRow = async (qr, kind) => {
+    if (rowBusy) return;
+    setRowBusy({ id: qr.id, action: kind });
+    try {
+      await CALLS[kind](qr.id);
+      toast.success(`QR ${BULK_WORDS[kind][0]}`);
+      setSelected((prev) => { const n = new Map(prev); n.delete(qr.id); return n; });
+      refreshAll();
+    } catch (e) {
+      toast.error(e?.response?.data?.error || `No se pudo ${BULK_WORDS[kind][1]} el QR`);
+    } finally {
+      setRowBusy(null);
+    }
+  };
+
+  /* Acción en lote (también la usa «Eliminar» tras confirmar) */
+  const runBulk = async (kind, targets) => {
+    if (!targets.length || bulkBusy) return;
+    setBulkBusy(kind);
+    let ok = 0;
+    let fail = 0;
+    try {
+      for (const t of targets) {
+        try {
+          await CALLS[kind](t.id);
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+    } finally {
+      setBulkBusy(null);
+    }
+    const [done, infinitive] = BULK_WORDS[kind];
+    if (ok) toast.success(`${ok} QR ${done}${ok !== 1 ? 's' : ''}`);
+    if (fail) toast.error(`${fail} QR no se pudieron ${infinitive}`);
+    clearSelection();
+    refreshAll();
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await runBulk('delete', deleteTarget);
+    setDeleteTarget(null);
+  };
 
   /* Crear */
   const openCreate = () => { setCreated(null); setCreateQty(1); setCreateOpen(true); };
@@ -350,8 +461,7 @@ export const AdminQrInventory = () => {
     }
     if (!made) return;
     setInput(''); setQ(''); setPrint(''); setView('unlinked'); setPage(1);
-    refreshLocal();
-    globalRefresh();
+    refreshAll();
     if (made === 1 && last?.id && last?.value) {
       setCreated({ id: last.id, value: last.value });
     } else {
@@ -377,7 +487,8 @@ export const AdminQrInventory = () => {
     if (!linkQr || !pickedUser) return;
 
     /* Validación previa para evitar conflictos 409 del servidor */
-    if (linkQr.user_id && linkQr.user_id !== pickedUser.id) {
+    const currentUserId = linkQr.user_id ?? linkQr.user?.id;
+    if (currentUserId && currentUserId !== pickedUser.id) {
       toast.error(`El QR ya está vinculado a ${linkQr.user?.email || 'otro usuario'}`);
       return;
     }
@@ -403,8 +514,7 @@ export const AdminQrInventory = () => {
       toast.success(`QR vinculado a ${pickedUser.email}`);
       setLinkQr(null);
       setPickedUser(null);
-      refreshLocal();
-      globalRefresh();
+      refreshAll();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo vincular el QR');
     } finally {
@@ -418,7 +528,7 @@ export const AdminQrInventory = () => {
     if (!unlinkQr) return;
 
     /* Validación previa para evitar conflictos 409 del servidor */
-    if (!unlinkQr.user_id) {
+    if (!unlinkQr.user_id && !unlinkQr.user) {
       toast.error('Este QR no está vinculado a ningún usuario.');
       return;
     }
@@ -432,8 +542,7 @@ export const AdminQrInventory = () => {
       await api.post('/admin/qrs/unlink', { qr_id: unlinkQr.id });
       toast.success('QR desvinculado');
       setUnlinkQr(null);
-      refreshLocal();
-      globalRefresh();
+      refreshAll();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo desvincular el QR');
     } finally {
@@ -443,24 +552,27 @@ export const AdminQrInventory = () => {
 
   /* Detalle */
   const openDetail = async (id) => {
+    const reqId = ++detailReq.current;
     setDetail(null);
     setDetailImage(null);
     setDetailLoading(true);
     setDetailOpen(true);
     try {
       const { data } = await api.get(`/admin/qrs/${id}`);
+      if (reqId !== detailReq.current) return;
       setDetail(data.identifier || null);
       try {
         const res = await api.get(`/admin/qrs/${id}/qr`, { responseType: 'blob' });
-        setDetailImage(URL.createObjectURL(new Blob([res.data], { type: 'image/png' })));
+        if (reqId === detailReq.current) setDetailImage(URL.createObjectURL(new Blob([res.data], { type: 'image/png' })));
       } catch {
-        setDetailImage(null);
+        if (reqId === detailReq.current) setDetailImage(null);
       }
     } catch (e) {
+      if (reqId !== detailReq.current) return;
       toast.error(e?.response?.data?.error || 'No se pudo cargar el detalle');
       setDetailOpen(false);
     } finally {
-      setDetailLoading(false);
+      if (reqId === detailReq.current) setDetailLoading(false);
     }
   };
 
@@ -471,8 +583,7 @@ export const AdminQrInventory = () => {
       await api.post(`/admin/qrs/${detail.id}/print-status`, { print_status: status });
       toast.success(`Impresión: ${PRINT_STATUS[status][0]}`);
       setDetail((d) => (d ? { ...d, print_status: status } : d));
-      refreshLocal();
-      globalRefresh();
+      refreshAll();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo actualizar el estado');
     } finally {
@@ -481,19 +592,10 @@ export const AdminQrInventory = () => {
   };
 
   /* Descargar QR individual (imagen real del código) */
-  const downloadQr = async (id) => {
-    const qr = qrs.find((q) => q.id === id);
-    if (!qr) return;
+  const downloadQr = async (qr) => {
     try {
-      const res = await api.get(`/admin/qrs/${id}/qr`, { responseType: 'blob' });
-      const objectUrl = URL.createObjectURL(new Blob([res.data], { type: 'image/png' }));
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = `qr-emergencia-${qr.value}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(objectUrl);
+      const res = await api.get(`/admin/qrs/${qr.id}/qr`, { responseType: 'blob' });
+      saveBlob(new Blob([res.data], { type: 'image/png' }), `qr-emergencia-${qr.value}.png`);
       toast.success('QR descargado');
     } catch {
       toast.error('No se pudo descargar el QR');
@@ -505,9 +607,9 @@ export const AdminQrInventory = () => {
     if (!selected.size) return;
     setExportBusy(true);
     try {
-      await downloadBlob(`/admin/qrs/export/${format}?ids=${[...selected].join(',')}`, `qrs-produccion.${format}`);
+      await downloadBlob(`/admin/qrs/export/${format}?ids=${[...selected.keys()].join(',')}`, `qrs-produccion.${format}`);
       toast.success(`${selected.size} QR exportados`);
-      setSelected(new Set());
+      clearSelection();
     } catch (e) {
       toast.error(e?.response?.data?.error || 'No se pudo exportar');
     } finally {
@@ -515,184 +617,13 @@ export const AdminQrInventory = () => {
     }
   };
 
-  /* Archivar selección (archivado lógico, no borrado) */
-  const doArchive = async () => {
-    if (!selected.size || archiveBusy) return;
-    setArchiveBusy(true);
-    let ok = 0;
-    let fail = 0;
-    let skipped = 0;
-    const ids = [...selected].filter((id) => {
-      const qr = qrs.find((q) => q.id === id);
-      return !qr || !qr.user;
-    });
-    const skippedCount = selected.size - ids.length;
-    try {
-      for (const id of ids) {
-        try {
-          await api.post(`/admin/qrs/${id}/archive`, { reason: 'Archivado desde el panel de administración' });
-          ok += 1;
-        } catch {
-          fail += 1;
-        }
-      }
-      if (ok) toast.success(`${ok} QR archivado${ok !== 1 ? 's' : ''}`);
-      if (fail) toast.error(`${fail} QR no se pudieron archivar`);
-      if (skippedCount) toast.info(`${skippedCount} QR con usuario vinculado no se archivaron`);
-      setSelected(new Set());
-      refreshLocal();
-      globalRefresh();
-    } finally {
-      setArchiveBusy(false);
-    }
-  };
-
-  /* Activar selección en lote */
-  const doActivateSelected = async () => {
-    if (!selected.size || exportBusy) return;
-    setExportBusy(true);
-    let ok = 0;
-    let fail = 0;
-    const ids = [...selected];
-    try {
-      for (const id of ids) {
-        try {
-          await api.post(`/admin/qrs/${id}/activate`);
-          ok += 1;
-        } catch {
-          fail += 1;
-        }
-      }
-      if (ok) toast.success(`${ok} QR activado${ok !== 1 ? 's' : ''}`);
-      if (fail) toast.error(`${fail} QR no se pudieron activar`);
-      setSelected(new Set());
-      refreshLocal();
-      globalRefresh();
-    } finally {
-      setExportBusy(false);
-    }
-  };
-
-  /* Desactivar selección en lote */
-  const doDeactivateSelected = async () => {
-    if (!selected.size || exportBusy) return;
-    setExportBusy(true);
-    let ok = 0;
-    let fail = 0;
-    const ids = [...selected];
-    try {
-      for (const id of ids) {
-        try {
-          await api.post(`/admin/qrs/${id}/deactivate`);
-          ok += 1;
-        } catch {
-          fail += 1;
-        }
-      }
-      if (ok) toast.success(`${ok} QR desactivado${ok !== 1 ? 's' : ''}`);
-      if (fail) toast.error(`${fail} QR no se pudieron desactivar`);
-      setSelected(new Set());
-      refreshLocal();
-      globalRefresh();
-    } finally {
-      setExportBusy(false);
-    }
-  };
-
-  /* Archivar un QR individualmente */
-  const doArchiveOne = async (id) => {
-    setArchiveOneBusy(id);
-    try {
-      await api.post(`/admin/qrs/${id}/archive`, { reason: 'Archivado desde el panel de administración' });
-      toast.success('QR archivado');
-      refreshLocal();
-      globalRefresh();
-    } catch {
-      toast.error('No se pudo archivar el QR');
-    } finally {
-      setArchiveOneBusy(null);
-    }
-  };
-
-  /* Activar un QR individualmente */
-  const doActivate = async (id) => {
-    setActivateBusy(id);
-    try {
-      await api.post(`/admin/qrs/${id}/activate`);
-      toast.success('QR activado');
-      refreshLocal();
-      globalRefresh();
-    } catch {
-      toast.error('No se pudo activar el QR');
-    } finally {
-      setActivateBusy(null);
-    }
-  };
-
-  /* Desactivar un QR individualmente */
-  const doDeactivate = async (id) => {
-    setDeactivateBusy(id);
-    try {
-      await api.post(`/admin/qrs/${id}/deactivate`);
-      toast.success('QR desactivado');
-      refreshLocal();
-      globalRefresh();
-    } catch {
-      toast.error('No se pudo desactivar el QR');
-    } finally {
-      setDeactivateBusy(null);
-    }
-  };
-
-  /* Eliminar un QR individualmente */
-  const askDelete = (id) => { setDeleteQrId(id); setDeleteOpen(true); };
-  const doDeleteOne = async (id) => {
-    setDeleteOneBusy(id);
-    try {
-      await api.delete(`/admin/qrs/${id}`);
-      toast.success('QR eliminado');
-      setDeleteQrId(null);
-      setDeleteOpen(false);
-      refreshLocal();
-      globalRefresh();
-    } catch {
-      toast.error('No se pudo eliminar el QR');
-    } finally {
-      setDeleteOneBusy(null);
-    }
-  };
-
-  /* Eliminar selección */
-  const doDeleteSelected = async () => {
-    if (!selected.size || deleteBusy) return;
-    setDeleteBusy(true);
-    let ok = 0;
-    let fail = 0;
-    const ids = [...selected];
-    try {
-      for (const id of ids) {
-        try {
-          await api.delete(`/admin/qrs/${id}`);
-          ok += 1;
-        } catch {
-          fail += 1;
-        }
-      }
-      if (ok) toast.success(`${ok} QR eliminado${ok !== 1 ? 's' : ''}`);
-      if (fail) toast.error(`${fail} QR no se pudieron eliminar`);
-      setSelected(new Set());
-      refreshLocal();
-      globalRefresh();
-    } finally {
-      setDeleteBusy(false);
-    }
-  };
-
   const s = stats || {};
-  const exportBtn = 'focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors disabled:opacity-50';
+  const busyAny = exportBusy || !!bulkBusy;
+  const barBtn = 'focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40';
+  const barGlass = `${barBtn} border border-white/20 bg-white/10 hover:bg-white/20`;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <PageTitle
         title="Códigos QR"
         actions={
@@ -708,28 +639,39 @@ export const AdminQrInventory = () => {
       />
 
       {/* Resumen que también filtra */}
-      <div role="group" aria-label="Filtrar por estado" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {VIEWS.map((v) => {
+      <div role="group" aria-label="Filtrar por estado" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {VIEWS.map((v, i) => {
           const active = view === v.id;
           const n = v.count(s);
+          const Icon = v.icon;
           return (
             <button
               key={v.id}
               type="button"
               aria-pressed={active}
               onClick={() => pickView(v.id)}
-              className={`focus-ring rounded-2xl border p-4 text-left transition-colors ${
-                active ? 'border-brand-500 bg-brand-500 text-white' : 'border-border bg-white hover:border-brand-500/40'
+              style={{ animationDelay: `${i * 50}ms` }}
+              className={`focus-ring group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 ${rise} ${
+                active
+                  ? 'border-transparent bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow'
+                  : 'border-border bg-white hover:-translate-y-0.5 hover:border-brand-500/40 hover:shadow-soft'
               }`}
             >
-              <p className={`text-xs ${active ? 'text-white/80' : 'text-text-secondary'}`}>{v.label}</p>
-              <p className={`mt-1 text-2xl font-bold tracking-tight ${active ? 'text-white' : 'text-neutral-900'}`}>{n ?? '—'}</p>
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110 ${
+                  active ? 'bg-white/20 text-white' : 'bg-brand-500/10 text-brand-500'
+                }`}
+              >
+                <Icon size={18} aria-hidden="true" />
+              </span>
+              <p className={`mt-3 text-xs font-medium ${active ? 'text-white/80' : 'text-text-secondary'}`}>{v.label}</p>
+              <p className={`mt-0.5 text-2xl font-bold tracking-tight ${active ? 'text-white' : 'text-neutral-900'}`}>{n ?? '—'}</p>
             </button>
           );
         })}
       </div>
 
-      <div className={`${panel} flex flex-col gap-3 p-3 sm:flex-row sm:items-center lg:p-4`}>
+      <div className={`${panel} flex flex-col gap-3 p-3 shadow-soft sm:flex-row sm:items-center lg:p-4`}>
         <div className="relative flex-1" role="search">
           <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
           <input
@@ -762,7 +704,7 @@ export const AdminQrInventory = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 text-sm text-rose-700" role="alert">
+        <div className="flex animate-fade-in items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 text-sm text-rose-700" role="alert">
           <AlertTriangle size={18} className="flex-none" aria-hidden="true" />
           <span className="min-w-0 flex-1">{error}</span>
           <button type="button" onClick={refreshLocal} className="flex-none font-semibold underline underline-offset-2">Reintentar</button>
@@ -770,15 +712,16 @@ export const AdminQrInventory = () => {
       )}
 
       {loading && qrs.length === 0 && !error && (
-        <div className="grid animate-pulse gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
-          {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="h-60 rounded-2xl bg-border/60" />)}
+        <div className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="h-72 rounded-2xl bg-border/60" />)}
         </div>
       )}
 
       {!loading && !error && qrs.length === 0 && (
-        <div className={`${panel} flex flex-col items-center p-10 text-center`}>
-          <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
-            <QrCode size={20} aria-hidden="true" />
+        <div className={`${panel} flex animate-fade-in flex-col items-center p-12 text-center`}>
+          <span className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-500">
+            <span aria-hidden="true" className="absolute inset-0 rounded-2xl bg-brand-500/20 animate-pulse-ring" />
+            <QrCode size={24} aria-hidden="true" />
           </span>
           <p className="text-sm font-semibold text-neutral-900">{hasFilters ? 'Ningún QR coincide' : 'Aún no hay códigos QR'}</p>
           {hasFilters ? (
@@ -796,41 +739,39 @@ export const AdminQrInventory = () => {
       {qrs.length > 0 && !error && (
         <>
           <div className="flex items-center justify-between gap-3 px-1 text-xs text-text-secondary">
-            <label className="inline-flex cursor-pointer items-center gap-2">
+            <label className={`inline-flex items-center gap-2 ${selectable.length ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
               <input
                 type="checkbox"
                 checked={allSelected}
+                disabled={!selectable.length}
                 onChange={toggleAll}
-                className="rounded border-brand-500 text-brand-500 focus:ring-0"
+                className="h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0"
               />
               Seleccionar esta página
+              {selectable.length < qrs.length && <span className="text-text-muted">({selectable.length} sin usuario)</span>}
             </label>
             <span aria-live="polite">
               <span className="font-semibold text-neutral-900">{pagination.total}</span> {pagination.total === 1 ? 'código' : 'códigos'}
             </span>
           </div>
 
-          <ul className={`grid gap-3 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
-            {qrs.map((qr) => (
+          <ul className={`grid gap-4 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
+            {qrs.map((qr, i) => (
               <QrCard
                 key={qr.id}
                 qr={qr}
+                index={i}
                 selected={selected.has(qr.id)}
-                onSelect={() => toggleOne(qr.id)}
+                busy={rowBusy?.id === qr.id ? rowBusy.action : null}
+                onSelect={() => toggleOne(qr)}
                 onOpen={() => openDetail(qr.id)}
                 onLink={() => openLink(qr)}
                 onUnlink={() => askUnlink(qr)}
                 onCopy={() => copy(publicUrl(qr.value), 'Enlace copiado')}
-                onDownload={() => downloadQr(qr.id)}
-                onExportSticker={() => openStickerExport(qr)}
-                onArchive={() => doArchiveOne(qr.id)}
-                onActivate={() => doActivate(qr.id)}
-                onDeactivate={() => doDeactivate(qr.id)}
-                onDelete={() => askDelete(qr.id)}
-                archiveBusy={archiveOneBusy}
-                activateBusy={activateBusy}
-                deactivateBusy={deactivateBusy}
-                deleteBusy={deleteOneBusy}
+                onDownload={() => downloadQr(qr)}
+                onSticker={() => openStickerExport(qr)}
+                onAction={(kind) => runRow(qr, kind)}
+                onDelete={() => setDeleteTarget([qr])}
               />
             ))}
           </ul>
@@ -840,7 +781,7 @@ export const AdminQrInventory = () => {
               <button type="button" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="btn-outline px-3 py-2 text-sm">
                 <ChevronLeft size={16} aria-hidden="true" /> Anterior
               </button>
-              <span>{page} / {pagination.pages}</span>
+              <span className="min-w-16 text-center font-medium">{page} / {pagination.pages}</span>
               <button type="button" disabled={page >= pagination.pages} onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))} className="btn-outline px-3 py-2 text-sm">
                 Siguiente <ChevronRight size={16} aria-hidden="true" />
               </button>
@@ -851,35 +792,42 @@ export const AdminQrInventory = () => {
 
       {/* Barra de selección */}
       {selected.size > 0 && (
-        <div className="sticky bottom-4 z-20 flex animate-slide-up flex-col gap-3 rounded-2xl bg-brand-900 p-3 text-white shadow-card sm:flex-row sm:items-center sm:justify-between">
+        <div className="sticky bottom-4 z-20 flex animate-slide-up flex-col gap-3 rounded-2xl border border-white/10 bg-brand-900/95 p-3 text-white shadow-card backdrop-blur lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3 text-sm">
-            <span className="font-semibold">{selected.size} {selected.size === 1 ? 'seleccionado' : 'seleccionados'}</span>
-            <button type="button" onClick={() => setSelected(new Set())} className="text-xs font-semibold text-white/70 underline underline-offset-2 hover:text-white">
+            <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-500 px-2 text-xs font-bold">{selected.size}</span>
+            <span className="font-semibold">{selected.size === 1 ? 'seleccionado' : 'seleccionados'}</span>
+            <button type="button" onClick={clearSelection} className="text-xs font-semibold text-white/70 underline underline-offset-2 hover:text-white">
               Quitar
             </button>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-white/70">Exportar para producción:</span>
-            <button type="button" onClick={() => exportAs('csv')} disabled={exportBusy} className={`${exportBtn} border border-white/20 bg-white/10 hover:bg-white/20`}>
+            <button type="button" onClick={() => exportAs('csv')} disabled={busyAny} className={barGlass}>
               <FileText size={14} aria-hidden="true" /> CSV
             </button>
-            <button type="button" onClick={() => exportAs('zip')} disabled={exportBusy} className={`${exportBtn} border border-white/20 bg-white/10 hover:bg-white/20`}>
+            <button type="button" onClick={() => exportAs('zip')} disabled={busyAny} className={barGlass}>
               <Download size={14} aria-hidden="true" /> ZIP
             </button>
-            <button type="button" onClick={() => exportAs('pdf')} disabled={exportBusy} className={`${exportBtn} bg-white text-brand-700 hover:bg-brand-50`}>
+            <button type="button" onClick={() => exportAs('pdf')} disabled={busyAny} className={`${barBtn} bg-white text-brand-700 hover:bg-brand-50`}>
               {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Printer size={14} aria-hidden="true" />} PDF
             </button>
-            <button type="button" onClick={doArchive} disabled={archiveBusy} className={`${exportBtn} border border-rose-200/60 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
-              {archiveBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />} Archivar
+
+            <Sep />
+
+            <button type="button" onClick={() => runBulk('activate', activatable)} disabled={busyAny || !activatable.length} className={`${barBtn} border border-emerald-300/40 bg-emerald-900/40 text-emerald-200 hover:bg-emerald-900/70`}>
+              {bulkBusy === 'activate' ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Power size={14} aria-hidden="true" />} Activar{activatable.length ? ` (${activatable.length})` : ''}
             </button>
-            <button type="button" onClick={doActivateSelected} disabled={exportBusy} className={`${exportBtn} border border-emerald-200/60 bg-emerald-900/40 text-emerald-200 hover:bg-emerald-900/70`}>
-              {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />} Activar
+            <button type="button" onClick={() => runBulk('deactivate', deactivatable)} disabled={busyAny || !deactivatable.length} className={`${barBtn} border border-amber-300/40 bg-amber-900/40 text-amber-200 hover:bg-amber-900/70`}>
+              {bulkBusy === 'deactivate' ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <PowerOff size={14} aria-hidden="true" />} Desactivar{deactivatable.length ? ` (${deactivatable.length})` : ''}
             </button>
-            <button type="button" onClick={doDeactivateSelected} disabled={exportBusy} className={`${exportBtn} border border-amber-200/60 bg-amber-900/40 text-amber-200 hover:bg-amber-900/70`}>
-              {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <AlertTriangle size={14} aria-hidden="true" />} Desactivar
+            <button type="button" onClick={() => runBulk('archive', archivable)} disabled={busyAny || !archivable.length} className={barGlass}>
+              {bulkBusy === 'archive' ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Archive size={14} aria-hidden="true" />} Archivar{archivable.length ? ` (${archivable.length})` : ''}
             </button>
-            <button type="button" onClick={doDeleteSelected} disabled={deleteBusy} className={`${exportBtn} border border-rose-200/60 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
-              {deleteBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />} Eliminar
+
+            <Sep />
+
+            <button type="button" onClick={() => setDeleteTarget(deletable)} disabled={busyAny || !deletable.length} className={`${barBtn} border border-rose-300/40 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
+              <Trash2 size={14} aria-hidden="true" /> Eliminar{deletable.length ? ` (${deletable.length})` : ''}
             </button>
           </div>
         </div>
@@ -894,10 +842,10 @@ export const AdminQrInventory = () => {
         ) : (
           <div className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-[11rem_1fr]">
-              <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-xl border border-border bg-white sm:mx-0">
+              <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-2xl border border-border bg-gradient-to-br from-white to-brand-50 shadow-soft sm:mx-0">
                 {detailImage
-                  ? <img src={detailImage} alt={`QR ${detail.value}`} className="h-40 w-40" />
-                  : <QrCode size={48} className="text-neutral-400" aria-hidden="true" />}
+                  ? <img src={detailImage} alt={`QR ${detail.value}`} className="h-40 w-40 animate-fade-in" />
+                  : <QrCode size={48} className="text-neutral-200" aria-hidden="true" />}
               </div>
 
               <dl className="grid content-start gap-x-4 gap-y-3 sm:grid-cols-2">
@@ -941,7 +889,15 @@ export const AdminQrInventory = () => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <div className="flex flex-wrap justify-between gap-3 border-t border-border pt-4">
+              <div className="flex gap-2">
+                <button type="button" onClick={() => downloadQr(detail)} className="btn-outline px-3 py-2 text-xs">
+                  <Download size={14} aria-hidden="true" /> Descargar QR
+                </button>
+                <button type="button" onClick={() => openStickerExport(detail)} className="btn-outline px-3 py-2 text-xs">
+                  <ImageIcon size={14} aria-hidden="true" /> Sticker
+                </button>
+              </div>
               {detail.user ? (
                 <button type="button" onClick={() => askUnlink(detail)} className="btn-outline px-4 py-2 text-sm !text-rose-700 hover:!bg-rose-50">
                   <Unlink size={16} aria-hidden="true" /> Desvincular
@@ -960,7 +916,10 @@ export const AdminQrInventory = () => {
       <Modal isOpen={createOpen} onClose={closeCreate} title={created ? 'QR creado' : 'Crear QR'}>
         {created ? (
           <div className="space-y-5 text-center">
-            <CheckCircle2 size={40} className="mx-auto text-emerald-600" aria-hidden="true" />
+            <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-8 ring-emerald-50">
+              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-emerald-500/30 animate-pulse-ring" />
+              <CheckCircle2 size={28} aria-hidden="true" />
+            </span>
             <div>
               <p className="text-sm text-text-secondary">Está sin asignar. Puedes vincularlo ahora o más tarde.</p>
               <p className="mt-2 break-all font-mono text-sm font-semibold text-neutral-900">{created.value}</p>
@@ -1079,19 +1038,25 @@ export const AdminQrInventory = () => {
         )}
       </Modal>
 
-      {/* ───────── Eliminar QR ───────── */}
-      <Modal isOpen={deleteOpen} onClose={() => (deleteOneBusy ? null : setDeleteOpen(false))} title="Eliminar QR">
-        {deleteQrId && (
+      {/* ───────── Eliminar (individual o en lote) ───────── */}
+      <Modal isOpen={!!deleteTarget} onClose={() => (bulkBusy === 'delete' ? null : setDeleteTarget(null))} title="Eliminar QR">
+        {deleteTarget && (
           <div className="space-y-5">
-            <p className="text-sm leading-relaxed text-text-secondary">
-              Esta acción eliminará permanentemente el código QR <span className="font-mono font-semibold text-neutral-900">{deleteQrId}</span>.
-              No se deshará.
-            </p>
+            <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/60 p-3 text-rose-700">
+              <AlertTriangle size={18} className="mt-0.5 flex-none" aria-hidden="true" />
+              <p className="text-sm leading-relaxed">
+                Se eliminará de forma permanente{' '}
+                {deleteTarget.length === 1
+                  ? <>el código QR <span className="break-all font-mono font-semibold">{deleteTarget[0].value}</span></>
+                  : <span className="font-semibold">{deleteTarget.length} códigos QR</span>}
+                . Esta acción no se puede deshacer.
+              </p>
+            </div>
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setDeleteOpen(false)} disabled={deleteOneBusy} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
-              <button type="button" onClick={() => doDeleteOne(deleteQrId)} disabled={deleteOneBusy} className="btn-danger px-4 py-2 text-sm">
-                {deleteOneBusy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-                Eliminar
+              <button type="button" onClick={() => setDeleteTarget(null)} disabled={bulkBusy === 'delete'} className="btn-ghost px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={confirmDelete} disabled={bulkBusy === 'delete'} className="btn-danger px-4 py-2 text-sm">
+                {bulkBusy === 'delete' && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                {bulkBusy === 'delete' ? 'Eliminando…' : 'Eliminar'}
               </button>
             </div>
           </div>

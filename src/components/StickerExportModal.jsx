@@ -32,6 +32,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [resolution, setResolution] = useState('—');
+  const prevPreviewUrl = useRef(null);
 
   const publicUrl = useMemo(
     () => (qr ? `${window.location.origin}/e/${encodeURIComponent(qr.value)}` : null),
@@ -76,7 +77,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
       const dataUrl = await QRCode.toDataURL(publicUrl, { width: 1024, margin: 2 });
       qrImg = await loadImage(dataUrl);
     } catch (err) {
-      throw new Error('No se pudo generar el código QR');
+      throw new Error(`No se pudo generar el código QR: ${err?.message || err}`);
     }
 
     const canvas = document.createElement('canvas');
@@ -124,7 +125,8 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
       try {
         const result = await compose(selectedId);
         if (cancelled) return;
-        revoke(previewUrl);
+        revoke(prevPreviewUrl.current);
+        prevPreviewUrl.current = result;
         setPreviewUrl(result);
       } catch (err) {
         if (cancelled) return;
@@ -135,8 +137,12 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
         if (!cancelled) setBusy(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, [selectedId, compose, revoke, previewUrl]);
+    return () => {
+      cancelled = true;
+      revoke(prevPreviewUrl.current);
+      prevPreviewUrl.current = null;
+    };
+  }, [selectedId, compose, revoke]);
 
   const downloadSticker = () => {
     if (!previewUrl || busy) return;
