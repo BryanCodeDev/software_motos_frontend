@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
-import { Download, Image, Loader2, QrCode, X } from 'lucide-react';
+import { Download, Image as ImageIcon, Loader2, QrCode, X } from 'lucide-react';
 import Modal from './Modal';
 import { Button } from './ui';
 
@@ -233,7 +233,7 @@ export const StickerExportModal = ({ isOpen, onClose, qr }) => {
                     />
                     {!done && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                        <Image size={24} className="text-neutral-400" aria-hidden="true" />
+                        <ImageIcon size={24} className="text-neutral-400" aria-hidden="true" />
                       </div>
                     )}
                     {done && (
