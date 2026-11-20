@@ -355,6 +355,11 @@ export const OrdersPage = () => {
     setPayingId(o.id);
     try {
       const prefRes = await api.post('/payments/preference', { order_id: o.id });
+      if (prefRes.data.payment_method === 'manual') {
+        setPayingId(null);
+        toastRef.current.error('El pago en línea no está disponible. Paga por WhatsApp.');
+        return;
+      }
       window.location.href = prefRes.data.init_point;
     } catch (err) {
       setPayingId(null);

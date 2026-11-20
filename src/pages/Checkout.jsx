@@ -244,6 +244,12 @@ export const Checkout = () => {
 
       if (goToMercadoPago) {
         const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
+        if (prefRes.data.payment_method === 'manual') {
+          // Mercado Pago no configurado: pago pendiente, mostrar instrucciones
+          setStep('pago');
+          toast.success('Pedido creado. Completa el pago por WhatsApp para finalizar.');
+          return;
+        }
         setStep('pago');
         window.location.href = prefRes.data.init_point;
       } else {
@@ -268,6 +274,12 @@ export const Checkout = () => {
     setBusy(true);
     try {
       const prefRes = await api.post('/payments/preference', { order_id: order.id });
+      if (prefRes.data.payment_method === 'manual') {
+        setBusy(false);
+        setStep('pago');
+        toast.success('Pedido creado. Completa el pago por WhatsApp para finalizar.');
+        return;
+      }
       window.location.href = prefRes.data.init_point;
     } catch (err) {
       setBusy(false);
@@ -315,6 +327,12 @@ export const Checkout = () => {
       setOrder(newOrder);
 
       const prefRes = await api.post('/payments/preference', { order_id: newOrder.id });
+      if (prefRes.data.payment_method === 'manual') {
+        setBusy(false);
+        setStep('pago');
+        toast.success('Pedido creado. Completa el pago por WhatsApp para finalizar.');
+        return;
+      }
       setStep('pago');
       window.location.href = prefRes.data.init_point;
     } catch (err) {
