@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  AlertTriangle, Archive, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Download, ExternalLink, FileText,
+  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Download, ExternalLink, FileText,
   Image as ImageIcon, Layers, Link2, Loader2, Plus, Power, PowerOff, Printer, QrCode, RefreshCw, Search, Trash2,
   Unlink, User, X,
 } from 'lucide-react';
@@ -16,7 +16,6 @@ import { useAdminSync } from '../../contexts/useAdminSync';
 const PAGE_SIZE = 24;
 const panel = 'rounded-2xl border border-border bg-white';
 const rise = 'opacity-0 animate-slide-up';
-const ARCHIVE_REASON = 'Archivado desde el panel de administración';
 
 const QR_STATUS = {
   pending_activation: ['Pendiente de activación', 'warn'],
@@ -25,7 +24,6 @@ const QR_STATUS = {
   deactivated: ['Desvinculado', 'neutral'],
   replaced: ['Reemplazado', 'neutral'],
   retired: ['Retirado', 'neutral'],
-  archived: ['Archivado', 'neutral'],
 };
 const PRINT_STATUS = {
   pending_print: ['Por imprimir', 'neutral'],
@@ -50,24 +48,19 @@ const VIEWS = [
   { id: 'active', label: 'Activos', icon: CheckCircle2, params: { status: 'active' }, count: (s) => s.by_status?.active },
   { id: 'pending', label: 'Por activar', icon: Clock, params: { status: 'pending_activation' }, count: (s) => s.by_status?.pending_activation },
   { id: 'unlinked', label: 'Sin vincular', icon: Unlink, params: { linked: 'false' }, count: (s) => s.unlinked },
-  { id: 'archived', label: 'Archivados', icon: Archive, params: { archived: 'true' }, count: (s) => s.by_status?.archived },
 ];
 
 /* Acciones sobre un QR: una sola definición para tarjeta individual y lote */
 const CALLS = {
-  archive: (id) => api.post(`/admin/qrs/${id}/archive`, { reason: ARCHIVE_REASON }),
   activate: (id) => api.post(`/admin/qrs/${id}/activate`),
   deactivate: (id) => api.post(`/admin/qrs/${id}/deactivate`),
   delete: (id) => api.delete(`/admin/qrs/${id}`),
 };
 const BULK_WORDS = {
-  archive: ['archivado', 'archivar'],
   activate: ['activado', 'activar'],
   deactivate: ['desactivado', 'desactivar'],
   delete: ['eliminado', 'eliminar'],
 };
-
-const isArchived = (qr) => qr.status === 'archived' || !!qr.archived_at;
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -124,68 +117,83 @@ const IconButton = ({ icon: Icon, label, onClick, tone = 'neutral', busy = false
 );
 
 /* ───────── Tarjeta de QR ───────── */
-const QrCard = ({
-  qr, index, selected, busy, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onSticker, onAction, onDelete,
-}) => {
-  const linked = !!qr.user;
-  const archived = isArchived(qr);
-  const accent = STATUS_ACCENT[qr.status] || STATUS_ACCENT.default;
+  const QrCard = ({
+    qr, index, selected, busy, onSelect, onOpen, onLink, onUnlink, onCopy, onDownload, onSticker, onAction, onDelete,
+  }) => {
+    const linked = Boolean(qr && qr.user_id);
+    const accent = STATUS_ACCENT[qr.status] || STATUS_ACCENT.default;
 
   return (
     <li
       style={{ animationDelay: `${Math.min(index, 11) * 35}ms` }}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft ${rise} ${
-        selected ? 'border-brand-500/60 bg-brand-50/60 ring-1 ring-brand-500/30' : 'border-border bg-white hover:border-brand-500/40'
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card ${rise} ${
+        selected ? 'border-brand-500/70 bg-brand-50/70 ring-1 ring-brand-500/30' : 'border-border bg-white hover:border-brand-500/40'
       }`}
     >
+      {/* Barra de color por estado (arriba) */}
       <span aria-hidden="true" className={`h-1 w-full bg-gradient-to-r ${accent}`} />
 
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-start gap-3">
-          <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-soft transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3">
-            <QrCode size={22} aria-hidden="true" />
+        {/* Fila superior: código QR grande + código alfanumérico + checkbox */}
+        <div className="flex items-start gap-4">
+          <span className="flex h-14 w-14 flex-none items-center justify-center rounded-xl bg-brand-50 border border-brand-100 text-brand-700 shadow-sm transition-transform duration-300 group-hover:scale-105">
+            <QrCode size={24} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-mono text-xs font-semibold text-neutral-900" title={qr.value}>{qr.value}</p>
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 text-[10px] font-semibold uppercase tracking-wider">
+                QR
+              </span>
+              <span className="ml-0.5 text-sm font-mono font-semibold text-neutral-900 truncate" title={qr.value}>
+                {qr.value}
+              </span>
+            </div>
             <p className="mt-0.5 text-xs text-text-secondary">Creado {fmtDay(qr.created_at)}</p>
           </div>
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={onSelect}
-            disabled={linked}
-            className="mt-1 h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label={`Seleccionar ${qr.value}`}
-            title={linked ? 'Un QR vinculado a un usuario no se puede seleccionar' : undefined}
-          />
+          <div className="flex-none mt-1">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={onSelect}
+              disabled={linked}
+              className="mt-1 h-4 w-4 rounded border-brand-500 text-brand-500 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label={`Seleccionar ${qr.value}`}
+              title={linked ? 'Un QR vinculado a un usuario no se puede seleccionar' : undefined}
+            />
+          </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        {/* Estados con mejor jerarquía visual */}
+        <div className="mt-4 flex flex-wrap gap-2">
           <StatusBadge map={QR_STATUS} value={qr.status} />
           <StatusBadge map={PRINT_STATUS} value={qr.print_status} />
         </div>
 
-        <dl className="mt-3 space-y-2 rounded-xl bg-brand-50/50 p-3 text-xs">
+        {/* Datos clave en tarjeta destacada */}
+        <div className="mt-4 rounded-xl border border-border bg-white p-3 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-text-secondary">Usuario</dt>
-            <dd className={`min-w-0 truncate font-medium ${linked ? 'text-neutral-900' : 'text-amber-700'}`} title={qr.user?.email}>
-              {qr.user?.email || 'Sin asignar'}
+            <dt className="flex-none w-20 text-xs font-semibold text-text-secondary uppercase tracking-wide">Usuario</dt>
+            <dd className={`min-w-0 font-medium ${linked ? 'text-neutral-900' : 'text-rose-600'}`} title={qr.user?.email}>
+              {linked ? qr.user?.email : 'Sin asignar'}
             </dd>
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-text-secondary">Pedido</dt>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <dt className="flex-none w-20 text-xs font-semibold text-text-secondary uppercase tracking-wide">Pedido</dt>
             <dd className="min-w-0 truncate font-medium text-neutral-900">{qr.order?.order_number || '—'}</dd>
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-text-secondary">Diseño</dt>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <dt className="flex-none w-20 text-xs font-semibold text-text-secondary uppercase tracking-wide">Diseño</dt>
             <dd className="flex min-w-0 items-center gap-1.5 font-medium text-neutral-900">
-              {qr.order?.design_image_url && <img src={qr.order.design_image_url} alt="" className="h-4 w-4 flex-none rounded object-cover" />}
+              {qr.order?.design_image_url && (
+                <img src={qr.order.design_image_url} alt="" className="h-5 w-5 flex-none rounded object-cover" />
+              )}
               <span className="truncate">{qr.order?.design_name || '—'}</span>
             </dd>
           </div>
-        </dl>
+        </div>
 
-        <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+        {/* Acciones principales */}
+        <div className="mt-4 grid grid-cols-2 gap-2 pt-3 border-t border-border/50">
           <button type="button" onClick={onOpen} className="btn-outline px-3 py-2 text-xs">Ver detalles</button>
           {linked ? (
             <button type="button" onClick={onUnlink} className="btn-outline px-3 py-2 text-xs !text-rose-700 hover:!bg-rose-50">
@@ -199,6 +207,7 @@ const QrCard = ({
         </div>
       </div>
 
+      {/* Acciones rápidas (iconos) */}
       <div className="flex items-center gap-0.5 border-t border-border bg-neutral-50/70 px-2 py-1.5">
         <IconButton icon={Copy} label="Copiar enlace público" onClick={onCopy} />
         <IconButton icon={Download} label="Descargar código QR" onClick={onDownload} />
@@ -211,9 +220,6 @@ const QrCard = ({
             {qr.status === 'active' && (
               <IconButton icon={PowerOff} label="Desactivar" tone="warn" busy={busy === 'deactivate'} disabled={!!busy} onClick={() => onAction('deactivate')} />
             )}
-            {!archived && (
-              <IconButton icon={Archive} label="Archivar" tone="warn" busy={busy === 'archive'} disabled={!!busy} onClick={() => onAction('archive')} />
-            )}
             <IconButton icon={Trash2} label="Eliminar" tone="danger" disabled={!!busy} onClick={onDelete} />
           </span>
         )}
@@ -221,7 +227,6 @@ const QrCard = ({
     </li>
   );
 };
-
 const Sep = () => <span aria-hidden="true" className="hidden h-6 w-px bg-white/15 lg:block" />;
 
 export const AdminQrInventory = () => {
@@ -253,6 +258,11 @@ export const AdminQrInventory = () => {
   /* Exportar sticker */
   const [stickerExportOpen, setStickerExportOpen] = useState(false);
   const [stickerExportQr, setStickerExportQr] = useState(null);
+
+  /* Diseños disponibles para asignar por lote a la selección */
+  const [designs, setDesigns] = useState([]);
+  const [designsLoading, setDesignsLoading] = useState(false);
+  const [bulkDesignId, setBulkDesignId] = useState(null);
 
   /* Crear */
   const [createOpen, setCreateOpen] = useState(false);
@@ -295,6 +305,22 @@ export const AdminQrInventory = () => {
     }
   }, []);
 
+  const loadDesigns = useCallback(async () => {
+    setDesignsLoading(true);
+    try {
+      const { data } = await api.get('/products');
+      const products = data.products || data || [];
+      const sticker = products.find((p) => p.slug === 'sticker-qr-personalizado');
+      if (!sticker) { setDesigns([]); return; }
+      const dRes = await api.get(`/designs?product_id=${sticker.id}`);
+      setDesigns(dRes.data.designs || dRes.data || []);
+    } catch {
+      setDesigns([]);
+    } finally {
+      setDesignsLoading(false);
+    }
+  }, []);
+
   const loadQrs = useCallback(async () => {
     const reqId = ++listReq.current;
     setLoading(true);
@@ -324,6 +350,11 @@ export const AdminQrInventory = () => {
     const t = setTimeout(loadStats, 0);
     return () => clearTimeout(t);
   }, [loadStats, tick, refreshKey]);
+
+  useEffect(() => {
+    const t = setTimeout(loadDesigns, 0);
+    return () => clearTimeout(t);
+  }, [loadDesigns, tick, refreshKey]);
 
   useEffect(() => {
     const t = setTimeout(() => { setQ(input.trim()); setPage(1); }, 350);
@@ -371,7 +402,7 @@ export const AdminQrInventory = () => {
   const clearFilters = () => { setInput(''); setQ(''); setView('all'); setPrint(''); setPage(1); };
 
   /* Selección (los QR vinculados a un usuario no se pueden seleccionar) */
-  const selectable = qrs.filter((x) => !x.user);
+  const selectable = qrs.filter((x) => !x.user_id);
   const allSelected = selectable.length > 0 && selectable.every((x) => selected.has(x.id));
   const toggleOne = (qr) => setSelected((prev) => {
     const n = new Map(prev);
@@ -387,10 +418,9 @@ export const AdminQrInventory = () => {
   const clearSelection = () => setSelected(new Map());
 
   const picked = [...selected.values()];
-  const archivable = picked.filter((x) => !x.user && !isArchived(x));
-  const activatable = picked.filter((x) => !x.user && x.status === 'disabled');
-  const deactivatable = picked.filter((x) => !x.user && x.status === 'active');
-  const deletable = picked.filter((x) => !x.user);
+  const activatable = picked.filter((x) => !x.user_id && x.status === 'disabled');
+  const deactivatable = picked.filter((x) => !x.user_id && x.status === 'active');
+  const deletable = picked.filter((x) => !x.user_id);
 
   /* Acción sobre un QR individual */
   const runRow = async (qr, kind) => {
@@ -431,6 +461,57 @@ export const AdminQrInventory = () => {
     if (fail) toast.error(`${fail} QR no se pudieron ${infinitive}`);
     clearSelection();
     refreshAll();
+  };
+
+  /* Asignar diseño a la selección actual en lote */
+  const doSetDesign = async () => {
+    if (!selected.size || bulkDesignId === null && bulkDesignId !== 0) return;
+    if (bulkBusy) return;
+    setBulkBusy('design');
+    try {
+      const { data } = await api.patch('/admin/qrs/bulk/design', {
+        qr_ids: [...selected.keys()],
+        design_id: bulkDesignId === null ? null : bulkDesignId,
+      });
+      if (data && data.ok) {
+        toast.success(data.message || `Diseño asignado a ${data.ok} QR`);
+        clearSelection();
+        refreshAll();
+      } else {
+        toast.error(data?.error || 'No se pudo asignar el diseño');
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'No se pudo asignar el diseño');
+    } finally {
+      setBulkBusy(null);
+      setBulkDesignId(null);
+    }
+  };
+
+  /* Asignar diseño y exportar a PDF en un solo archivo */
+  const doSetDesignAndExportPdf = async () => {
+    if (!selected.size) return;
+    if (bulkBusy) return;
+    setBulkBusy('design');
+    try {
+      const { data } = await api.patch('/admin/qrs/bulk/design', {
+        qr_ids: [...selected.keys()],
+        design_id: bulkDesignId === null ? null : bulkDesignId,
+      });
+      if (data && data.ok) {
+        await downloadBlob(`/admin/qrs/export/pdf?ids=${[...selected.keys()].join(',')}`, `qrs-diseno-${bulkDesignId ?? 'sin-diseno'}.pdf`);
+        toast.success(`${data.ok} QR con diseño asignados y exportados a PDF`);
+        clearSelection();
+        refreshAll();
+      } else {
+        toast.error(data?.error || 'No se pudo asignar el diseño');
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'No se pudo asignar el diseño y exportar');
+    } finally {
+      setBulkBusy(null);
+      setBulkDesignId(null);
+    }
   };
 
   const confirmDelete = async () => {
@@ -792,42 +873,84 @@ export const AdminQrInventory = () => {
 
       {/* Barra de selección */}
       {selected.size > 0 && (
-        <div className="sticky bottom-4 z-20 flex animate-slide-up flex-col gap-3 rounded-2xl border border-white/10 bg-brand-900/95 p-3 text-white shadow-card backdrop-blur lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3 text-sm">
-            <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-500 px-2 text-xs font-bold">{selected.size}</span>
+        <div className="sticky bottom-4 z-20 flex animate-slide-up flex-col gap-2 rounded-2xl border border-white/10 bg-brand-900/95 p-2.5 text-white shadow-card backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:p-3">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-500 px-2 text-xs font-bold">{selected.size}</span>
             <span className="font-semibold">{selected.size === 1 ? 'seleccionado' : 'seleccionados'}</span>
             <button type="button" onClick={clearSelection} className="text-xs font-semibold text-white/70 underline underline-offset-2 hover:text-white">
               Quitar
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <button type="button" onClick={() => exportAs('csv')} disabled={busyAny} className={barGlass}>
-              <FileText size={14} aria-hidden="true" /> CSV
+              <FileText size={13} aria-hidden="true" />
+              <span className="hidden sm:inline ml-1">CSV</span>
             </button>
             <button type="button" onClick={() => exportAs('zip')} disabled={busyAny} className={barGlass}>
-              <Download size={14} aria-hidden="true" /> ZIP
+              <Download size={13} aria-hidden="true" />
+              <span className="hidden sm:inline ml-1">ZIP</span>
             </button>
             <button type="button" onClick={() => exportAs('pdf')} disabled={busyAny} className={`${barBtn} bg-white text-brand-700 hover:bg-brand-50`}>
-              {exportBusy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Printer size={14} aria-hidden="true" />} PDF
+              {exportBusy ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Printer size={13} aria-hidden="true" />}
+              <span className="hidden sm:inline ml-1">PDF</span>
             </button>
 
             <Sep />
 
+            {/* Asignar diseño a la selección en lote */}
+            {!designsLoading && designs.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={bulkDesignId ?? ''}
+                  onChange={(e) => setBulkDesignId(e.target.value === '' ? null : Number(e.target.value))}
+                  disabled={bulkBusy === 'design'}
+                  aria-label="Diseño para lote"
+                  className="input !py-1.5 !px-1.5 !text-xs sm:!text-sm bg-white border border-brand-200 text-brand-700 focus:ring-brand-500"
+                >
+                  <option value="">Sin diseño</option>
+                  {designs.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={doSetDesign}
+                  disabled={busyAny || !designs.length || bulkDesignId === undefined}
+                  className={`${barBtn} border border-brand-300/40 bg-brand-900/40 text-brand-200 hover:bg-brand-900/70`}
+                >
+                  {bulkBusy === 'design' ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Layers size={13} aria-hidden="true" />}
+                  <span className="hidden sm:inline ml-1">Asignar diseño{bulkDesignId ? ` (${selected.size})` : ''}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={doSetDesignAndExportPdf}
+                  disabled={busyAny || !designs.length || bulkDesignId === undefined}
+                  className={`${barBtn} border border-brand-400/50 bg-brand-900/60 text-brand-100 hover:bg-brand-700`}
+                >
+                  {bulkBusy === 'design' ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Printer size={13} aria-hidden="true" />}
+                  <span className="hidden sm:inline ml-1">Diseño + PDF{bulkDesignId ? ` (${selected.size})` : ''}</span>
+                </button>
+              </div>
+            )}
+
+            <Sep />
+
             <button type="button" onClick={() => runBulk('activate', activatable)} disabled={busyAny || !activatable.length} className={`${barBtn} border border-emerald-300/40 bg-emerald-900/40 text-emerald-200 hover:bg-emerald-900/70`}>
-              {bulkBusy === 'activate' ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Power size={14} aria-hidden="true" />} Activar{activatable.length ? ` (${activatable.length})` : ''}
+              {bulkBusy === 'activate' ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Power size={13} aria-hidden="true" />}
+              <span className="hidden sm:inline ml-1">Activar{activatable.length ? ` (${activatable.length})` : ''}</span>
             </button>
             <button type="button" onClick={() => runBulk('deactivate', deactivatable)} disabled={busyAny || !deactivatable.length} className={`${barBtn} border border-amber-300/40 bg-amber-900/40 text-amber-200 hover:bg-amber-900/70`}>
-              {bulkBusy === 'deactivate' ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <PowerOff size={14} aria-hidden="true" />} Desactivar{deactivatable.length ? ` (${deactivatable.length})` : ''}
-            </button>
-            <button type="button" onClick={() => runBulk('archive', archivable)} disabled={busyAny || !archivable.length} className={barGlass}>
-              {bulkBusy === 'archive' ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Archive size={14} aria-hidden="true" />} Archivar{archivable.length ? ` (${archivable.length})` : ''}
+              {bulkBusy === 'deactivate' ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <PowerOff size={13} aria-hidden="true" />}
+              <span className="hidden sm:inline ml-1">Desactivar{deactivatable.length ? ` (${deactivatable.length})` : ''}</span>
             </button>
 
             <Sep />
 
             <button type="button" onClick={() => setDeleteTarget(deletable)} disabled={busyAny || !deletable.length} className={`${barBtn} border border-rose-300/40 bg-rose-900/40 text-rose-200 hover:bg-rose-900/70`}>
-              <Trash2 size={14} aria-hidden="true" /> Eliminar{deletable.length ? ` (${deletable.length})` : ''}
+              <Trash2 size={13} aria-hidden="true" />
+              <span className="hidden sm:inline ml-1">Eliminar{deletable.length ? ` (${deletable.length})` : ''}</span>
             </button>
           </div>
         </div>

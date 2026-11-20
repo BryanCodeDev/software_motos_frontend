@@ -89,7 +89,11 @@ export const DashboardIndex = () => {
       }
 
       const next = { profile: null, contacts: [], visibleCount: 0, identifier: null };
-      if (profRes.status === 'fulfilled') next.profile = profRes.value.data.profile || profRes.value.data || null;
+      if (profRes.status === 'fulfilled') {
+        const profData = profRes.value.data;
+        const profiles = profData.profiles || (Array.isArray(profData) ? profData : []);
+        next.profile = profiles.find((p) => p.is_main === 1 || p.is_main === true) || profiles[0] || null;
+      }
       if (contactsRes.status === 'fulfilled') next.contacts = contactsRes.value.data.contacts || contactsRes.value.data || [];
       if (idRes.status === 'fulfilled') {
         const id = idRes.value.data.identifier || idRes.value.data;
