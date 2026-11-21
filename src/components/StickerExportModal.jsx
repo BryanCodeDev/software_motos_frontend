@@ -6,7 +6,7 @@ import Modal from './Modal';
 import { Button } from './ui';
 
 const STICKER_COUNT = 6;
-const PUBLIC_PATH = (n) => `/img/sticker-${n}.png`;
+const PUBLIC_PATH = (n) => `/img/sticker-${n}.webp`;
 
 const stickerConfigurations = {
   1: { image: PUBLIC_PATH(1), qrPosition: { x: 0.5048, y: 0.3054, width: 0.3628, height: 0.3270 } },

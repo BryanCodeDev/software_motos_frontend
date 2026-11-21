@@ -163,7 +163,7 @@ export const Products = () => {
                       className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
                     >
                       <img
-                        src={design.image_url || '/img/sticker-1.png'}
+                        src={design.image_url || '/img/sticker-1.webp'}
                         alt={design.name || 'Diseño'}
                         width="160"
                         height="160"
