@@ -56,7 +56,7 @@ const TONES = {
 const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) => (
   <MotionConfig reducedMotion="user">
     <main
-      className={`relative isolate min-h-screen overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
+      className={`relative isolate min-h-full overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
         withBar ? 'pb-28 sm:pb-6 lg:pb-0' : 'pb-2 sm:pb-3 lg:pb-0'
       }`}
     >
@@ -468,7 +468,7 @@ export const PublicEmergency = () => {
         variants={container}
         initial="hidden"
         animate="show"
-        className={`grid gap-3 sm:gap-4 lg:gap-6 lg:items-start lg:[grid-template-rows:auto_auto] ${hasExtra ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
+        className={`grid gap-3 sm:gap-4 lg:gap-6 lg:items-start lg:[grid-template-rows:auto_auto] lg:max-w-[1200px] lg:mx-auto ${hasExtra ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
       >
         {/* ───────── COLUMNA 1 · 1) Quién es · 2) A quién llamar ───────── */}
         <div className="space-y-3 sm:space-y-4">

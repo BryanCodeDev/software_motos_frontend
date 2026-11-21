@@ -40,7 +40,7 @@ export const PublicLayout = () => {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-brand-50">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-brand-50">
       {/* El enlace "Saltar al contenido" vive en el Navbar */}
       <Navbar />
 
