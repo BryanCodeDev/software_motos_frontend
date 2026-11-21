@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ShieldCheck, ArrowRight, ArrowUp, Check } from 'lucide-react';
+import { ShieldCheck, ArrowUp } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
 
@@ -74,44 +74,6 @@ export const Footer = () => {
       />
 
       <div className="container-page">
-        {/* Banda de llamada a la acción */}
-        <motion.div
-          {...reveal(0)}
-          className="mb-12 flex flex-col gap-6 rounded-[2rem] border border-white/15 bg-white/5 p-6 shadow-glow backdrop-blur-sm sm:p-8 lg:mb-16 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:p-10"
-        >
-          <div className="max-w-xl">
-            <Eyebrow className="mb-3 sm:mb-4">Tu QR te cuida</Eyebrow>
-            <h2 className="text-2xl font-extrabold leading-[1.15] [text-wrap:balance] sm:text-3xl lg:text-4xl">
-              <span className="block text-brand-400">Prepárate hoy</span>
-              <span className="block">para lo inesperado.</span>
-            </h2>
-            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-white/85 sm:text-sm">
-              {['Listo en 2 minutos', 'Pago único, sin suscripción'].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-brand-400" aria-hidden="true" /> {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="flex gap-2.5 sm:gap-3 lg:flex-none">
-            <Link
-              to={routes.register}
-              className="btn-primary group flex-[1.7] whitespace-nowrap px-4 py-3 text-sm sm:flex-none sm:px-6 lg:text-base"
-            >
-              Crear perfil gratis
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
-            <Link
-              to={routes.products}
-              className="btn flex-1 whitespace-nowrap border border-white/50 bg-white/10 px-4 py-3 text-sm text-white backdrop-blur-sm hover:bg-white hover:text-neutral-900 active:scale-[0.98] sm:flex-none sm:px-6 lg:text-base"
-            >
-              <span className="sm:hidden">Planes</span>
-              <span className="hidden sm:inline">Ver planes y precios</span>
-            </Link>
-          </div>
-        </motion.div>
-
         {/* Marca + navegación */}
         <motion.div {...reveal(0.1)} className="mb-10 grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
