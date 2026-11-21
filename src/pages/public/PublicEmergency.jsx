@@ -56,8 +56,8 @@ const TONES = {
 const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) => (
   <MotionConfig reducedMotion="user">
     <main
-      className={`relative isolate min-h-[calc(100svh-4rem)] overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
-        withBar ? 'pb-28 sm:pb-6' : 'pb-6'
+      className={`relative isolate min-h-screen overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
+        withBar ? 'pb-28 sm:pb-6 lg:pb-0' : 'pb-2 sm:pb-3 lg:pb-0'
       }`}
     >
       <Seo title={title} description="Información de contacto de emergencia" noindex />
@@ -468,7 +468,7 @@ export const PublicEmergency = () => {
         variants={container}
         initial="hidden"
         animate="show"
-        className={`grid gap-3 sm:gap-4 lg:items-start ${hasExtra ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
+        className={`grid gap-3 sm:gap-4 lg:gap-6 lg:items-start lg:[grid-template-rows:auto_auto] ${hasExtra ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
       >
         {/* ───────── COLUMNA 1 · 1) Quién es · 2) A quién llamar ───────── */}
         <div className="space-y-3 sm:space-y-4">
@@ -661,11 +661,6 @@ export const PublicEmergency = () => {
           </div>
         )}
       </motion.div>
-
-      <p className="mx-auto mt-4 max-w-3xl text-center text-[11px] leading-relaxed text-white/60">
-        Información compartida por el titular a través de su código QR. No sustituye a los servicios oficiales de
-        emergencia.
-      </p>
 
       {/* Barra fija en móvil: aparece cuando las acciones rápidas ya no se ven */}
       <AnimatePresence>

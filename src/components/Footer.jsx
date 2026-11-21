@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ShieldCheck, ArrowRight, ArrowUp, Check } from 'lucide-react';
 import { routes } from '../utils/routes';
+import { useAuth } from '../contexts/useAuth';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -47,6 +48,7 @@ const Eyebrow = ({ children, className = '' }) => (
 
 export const Footer = () => {
   const reduce = useReducedMotion();
+  const { isAuthenticated, loading } = useAuth();
 
   const reveal = (delay = 0) => ({
     initial: reduce ? false : { opacity: 0, y: 20 },
@@ -120,7 +122,7 @@ export const Footer = () => {
               <span className="text-lg">Tu QR te Cuida</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
-              Si no puedes hablar, tu información importante habla por ti.
+              {!loading && !isAuthenticated && 'Si no puedes hablar, tu información importante habla por ti.'}
             </p>
           </div>
 
