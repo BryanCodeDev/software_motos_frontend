@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
-  Phone, Mail, ShieldCheck, AlertCircle, Droplet, AlertTriangle,
+  Phone, Mail, AlertCircle, Droplet, AlertTriangle,
   FileText, Bell, Stethoscope, Pill, MessageCircle, User, Users,
   Share2, Check, PhoneCall, Calendar, Ruler, Scale, Baby, Settings, Shield, IdCard, Heart, RefreshCw,
 } from 'lucide-react';
@@ -11,18 +11,18 @@ import Seo from '../../components/Seo';
 
 const EMERGENCY_NUMBER = '123';
 
-/* ───────── Constantes de diseño (alineadas con Home y Admin) ───────── */
+/* ───────── Constantes de diseño (alineadas con Hero, Auth, Navbar y Footer) ───────── */
 const EASE = [0.22, 1, 0.36, 1];
 const panel =
   'rounded-2xl border border-white/40 bg-neutral-50 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.7)] ring-1 ring-black/5';
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.06, delayChildren: 0.03 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
 };
 
 const cleanPhone = (phone) => String(phone).replace(/[^\d+]/g, '');
@@ -52,11 +52,13 @@ const TONES = {
   gray: 'bg-neutral-100 text-neutral-600 border-neutral-200',
 };
 
-/* ───────── Estructura común ───────── */
+/* ───────── Estructura común (sin cabecera ni pie propios: ya los pone el layout) ───────── */
 const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) => (
   <MotionConfig reducedMotion="user">
     <main
-      className={`relative isolate min-h-screen overflow-hidden bg-neutral-950 px-4 pt-5 sm:pt-8 ${withBar ? 'pb-28 sm:pb-10' : 'pb-8 sm:pb-10'}`}
+      className={`relative isolate min-h-[calc(100svh-4rem)] overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
+        withBar ? 'pb-28 sm:pb-6' : 'pb-6'
+      }`}
     >
       <Seo title={title} description="Información de contacto de emergencia" noindex />
 
@@ -68,35 +70,7 @@ const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) =>
         aria-hidden="true"
       />
 
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
-          <span className="flex items-center gap-2.5 text-sm font-bold tracking-tight text-white">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow">
-              <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
-            </span>
-            Tu QR te Cuida
-          </span>
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm sm:text-xs">
-            <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-brand-400 animate-pulse-ring" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-400" />
-            </span>
-            Perfil de emergencia
-          </span>
-        </div>
-        {children}
-      </div>
-      <p className="mx-auto mt-10 max-w-5xl text-center text-[11px] leading-relaxed text-white/60">
-        Tu QR te Cuida · Desarrollado por{' '}
-        <a
-          href="https://mastercodecompany.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="focus-ring rounded font-medium text-white/80 transition-colors hover:text-white"
-        >
-          MasterCode Company
-        </a>
-      </p>
+      <div className="mx-auto max-w-7xl">{children}</div>
     </main>
   </MotionConfig>
 );
@@ -107,7 +81,7 @@ const Notice = ({ icon: Icon, tone = 'muted', title, text, extra, onRetry, showH
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: EASE }}
-      className={`${panel} p-8 text-center shadow-glow sm:p-10`}
+      className={`${panel} mx-auto max-w-2xl p-8 text-center shadow-glow sm:p-10`}
       role="alert"
     >
       <div
@@ -144,38 +118,54 @@ const Notice = ({ icon: Icon, tone = 'muted', title, text, extra, onRetry, showH
 
 const LoadingSkeleton = () => (
   <Shell>
-    <div className="animate-pulse space-y-4" role="status" aria-busy="true" aria-live="polite">
+    <div className="grid animate-pulse gap-3 lg:grid-cols-3 lg:gap-4" role="status" aria-busy="true" aria-live="polite">
       <span className="sr-only">Cargando información de emergencia…</span>
-      <div className="h-44 rounded-2xl bg-white/10" />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-3">
+        <div className="h-40 rounded-2xl bg-white/10" />
         <div className="h-16 rounded-2xl bg-white/10" />
         <div className="h-16 rounded-2xl bg-white/10" />
       </div>
-      <div className="h-40 rounded-2xl bg-white/10" />
-      <div className="h-32 rounded-2xl bg-white/10" />
+      <div className="h-72 rounded-2xl bg-white/10" />
+      <div className="h-72 rounded-2xl bg-white/10" />
     </div>
   </Shell>
 );
 
 /* ───────── Piezas ───────── */
 
-/** Dato vital: el valor va grande, la etiqueta pequeña. */
-const StatItem = ({ icon: Icon, label, value, tone = 'gray', wide = false }) => (
-  <div className={`flex items-start gap-3 rounded-xl border border-border bg-white p-4 ${wide ? 'sm:col-span-2' : ''}`}>
-    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border ${TONES[tone]}`}>
-      <Icon className="h-5 w-5" aria-hidden="true" />
+/** Dato vital: el valor va grande, la etiqueta pequeña. `alert` resalta lo crítico (alergias). */
+const StatItem = ({ icon: Icon, label, value, tone = 'gray', alert = false, compact = false }) => (
+  <div
+    className={`flex items-start gap-3 rounded-xl border ${compact ? 'p-2.5' : 'p-3.5'} ${
+      alert ? 'border-amber-300 bg-amber-50' : 'border-border bg-white'
+    }`}
+  >
+    <span
+      className={`flex flex-shrink-0 items-center justify-center rounded-lg border ${TONES[tone]} ${
+        compact ? 'h-8 w-8' : 'h-10 w-10'
+      }`}
+    >
+      <Icon className={compact ? 'h-4 w-4' : 'h-5 w-5'} aria-hidden="true" />
     </span>
     <div className="min-w-0">
-      <p className="text-xs font-medium text-text-secondary">{label}</p>
-      <p className="mt-0.5 break-words text-base font-semibold leading-snug text-neutral-900">{value}</p>
+      <p className={`font-medium ${alert ? 'text-amber-800' : 'text-text-secondary'} ${compact ? 'text-[11px]' : 'text-xs'}`}>
+        {label}
+      </p>
+      <p
+        className={`break-words font-semibold leading-snug text-neutral-900 ${
+          compact ? 'mt-0.5 text-sm' : 'mt-0.5 text-base'
+        }`}
+      >
+        {value}
+      </p>
     </div>
   </div>
 );
 
 const SectionCard = ({ icon: Icon, title, aside, children, className = '' }) => (
-  <motion.section variants={item} className={`${panel} p-5 sm:p-6 lg:p-7 ${className}`} aria-label={title}>
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2.5 text-base font-semibold text-neutral-900">
+  <motion.section variants={item} className={`${panel} p-4 sm:p-5 ${className}`} aria-label={title}>
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-2.5 text-sm font-semibold uppercase tracking-wider text-neutral-900">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/15">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -187,48 +177,57 @@ const SectionCard = ({ icon: Icon, title, aside, children, className = '' }) => 
   </motion.section>
 );
 
-/** Botón de acción rápida reutilizable (desktop y barra móvil). */
-const QuickActionButton = ({
-  href,
-  icon: Icon,
-  label,
-  sublabel,
-  value,
-  tone = 'brand',
-  colSpan = false,
-}) => {
+/**
+ * Botón de acción rápida.
+ * variant="card": botón ancho con el número grande a la derecha.
+ * variant="bar": barra fija inferior en móvil.
+ */
+const QuickActionButton = ({ href, icon: Icon, label, sublabel, value, tone = 'brand', variant = 'card' }) => {
   const toneStyles = {
     brand: 'bg-brand-500 shadow-[0_16px_40px_-16px_rgba(159,18,57,0.7)] hover:bg-brand-600',
     rose: 'bg-rose-600 shadow-[0_16px_40px_-16px_rgba(225,29,72,0.7)] hover:bg-rose-700',
   };
+  const isBar = variant === 'bar';
   return (
     <a
       href={href}
-      className={`focus-ring group flex items-center justify-between gap-3 rounded-2xl p-4 text-white ring-1 ring-white/20 transition-all hover:-translate-y-0.5 active:scale-[0.99] ${toneStyles[tone]} ${colSpan ? 'sm:col-span-2' : ''}`}
+      className={`focus-ring group flex rounded-2xl text-white ring-1 ring-white/20 transition-all hover:-translate-y-0.5 active:scale-[0.99] ${toneStyles[tone]} ${
+        isBar
+          ? 'flex-1 items-center justify-center gap-2 p-3.5'
+          : 'items-center justify-between gap-3 p-4'
+      }`}
     >
       <span className="flex items-center gap-3">
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
-          <Icon className="h-5 w-5" aria-hidden="true" />
+        <span
+          className={`flex flex-shrink-0 items-center justify-center rounded-xl bg-white/20 ${
+            isBar ? 'h-8 w-8' : 'h-11 w-11'
+          }`}
+        >
+          <Icon className={isBar ? 'h-4 w-4' : 'h-5 w-5'} aria-hidden="true" />
         </span>
         <span className="min-w-0">
-          <strong className="block text-base font-extrabold leading-tight">{label}</strong>
-          {sublabel && <span className="block truncate text-xs text-white/85">{sublabel}</span>}
+          <strong className={`block font-extrabold leading-tight ${isBar ? 'text-sm' : 'text-base'}`}>{label}</strong>
+          {sublabel && !isBar && <span className="block truncate text-xs text-white/85">{sublabel}</span>}
         </span>
       </span>
-      {value && <span className="text-3xl font-extrabold tabular-nums" aria-hidden="true">{value}</span>}
+      {value && !isBar && (
+        <span className="text-3xl font-extrabold tabular-nums" aria-hidden="true">
+          {value}
+        </span>
+      )}
     </a>
   );
 };
 
-/** Acciones de contacto (llamar / WhatsApp / correo) reutilizadas en ContactCard. */
+/** Acciones de contacto (llamar / WhatsApp / correo). */
 const ContactActions = ({ c, displayName, phone, hasPhone, hasEmail }) => {
   const message = `Hola ${c.name}, te escribo de parte de ${displayName}. Estás registrado como contacto de emergencia en Tu QR te Cuida (${window.location.origin}). Por favor, atiende lo antes posible. Gracias.`;
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid grid-cols-2 gap-2">
       {hasPhone && (
         <a
           href={`tel:${phone}`}
-          className="focus-ring flex items-center justify-center gap-2 rounded-xl bg-brand-500 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-600 active:scale-[0.98]"
+          className="focus-ring flex items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-600 active:scale-[0.98]"
         >
           <Phone className="h-4 w-4" aria-hidden="true" /> Llamar
         </a>
@@ -238,7 +237,7 @@ const ContactActions = ({ c, displayName, phone, hasPhone, hasEmail }) => {
           href={`https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 py-3.5 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 active:scale-[0.98]"
+          className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 active:scale-[0.98]"
         >
           <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
         </a>
@@ -246,13 +245,13 @@ const ContactActions = ({ c, displayName, phone, hasPhone, hasEmail }) => {
       {hasEmail && (
         <a
           href={`mailto:${c.email}`}
-          className="focus-ring flex items-center justify-center gap-2 rounded-xl border border-border bg-white py-2.5 text-xs font-medium text-neutral-900 transition-all hover:border-brand-500/50 hover:bg-brand-50 sm:col-span-2"
+          className="focus-ring col-span-2 flex items-center justify-center gap-2 rounded-xl border border-border bg-white py-2 text-xs font-medium text-neutral-900 transition-all hover:border-brand-500/50 hover:bg-brand-50"
         >
           <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Enviar correo
         </a>
       )}
       {!hasPhone && !hasEmail && (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 py-3 text-xs font-medium text-text-secondary sm:col-span-2">
+        <div className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-brand-50/50 py-3 text-xs font-medium text-text-secondary">
           <AlertCircle className="h-4 w-4" aria-hidden="true" /> Sin datos de contacto
         </div>
       )}
@@ -267,12 +266,12 @@ const ContactCard = ({ c, displayName, isPrimary }) => {
 
   return (
     <div
-      className={`rounded-xl border p-4 transition-all duration-300 hover:border-brand-500/50 hover:shadow-card ${
+      className={`rounded-xl border p-3.5 transition-all duration-300 hover:border-brand-500/50 hover:shadow-card ${
         isPrimary ? 'border-brand-500/30 bg-brand-500/5' : 'border-border bg-white'
       }`}
     >
-      <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/20">
+      <div className="mb-2.5 flex items-center gap-3">
+        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-brand-500 ring-1 ring-brand-500/20">
           <User className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -413,12 +412,18 @@ export const PublicEmergency = () => {
   const displayName = profile.display_name || 'Titular';
   const dob = parseDob(profile.date_of_birth);
 
+  // Los booleanos/numéricos llegan como 0/1 desde MySQL: se normalizan para no pintar un "0" suelto.
+  const isDonor = Boolean(Number(profile.is_organ_donor));
+  const isPregnant = Boolean(Number(medical.is_pregnant));
+  const hasHeight = Boolean(Number(medical.height_cm));
+  const hasWeight = Boolean(Number(medical.weight_kg));
+
   const hasVitals = Boolean(
     medical.allergies ||
       medical.medical_conditions ||
       medical.medications ||
       medical.medical_devices ||
-      medical.is_pregnant
+      isPregnant
   );
   const hasOther = Boolean(
     profile.date_of_birth ||
@@ -427,16 +432,17 @@ export const PublicEmergency = () => {
       profile.insurance_policy_number ||
       profile.primary_doctor_name ||
       profile.primary_doctor_phone ||
-      medical.height_cm ||
-      medical.weight_kg
+      hasHeight ||
+      hasWeight
   );
   const hasNotes = Boolean(profile.additional_info || profile.emergency_note);
   const hasContacts = contacts.length > 0;
-  const isEmpty =
-    !hasVitals && !hasOther && !hasNotes && !hasContacts && !profile.blood_type && !profile.is_organ_donor;
+  const isEmpty = !hasVitals && !hasOther && !hasNotes && !hasContacts && !profile.blood_type && !isDonor;
 
   const primaryContact = contacts.find((c) => c.phone && c.display_phone);
   const primaryPhone = primaryContact?.phone;
+  // El contacto principal va primero: es a quien más rápido se debe llamar.
+  const orderedContacts = primaryContact ? [primaryContact, ...contacts.filter((c) => c !== primaryContact)] : contacts;
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -453,214 +459,213 @@ export const PublicEmergency = () => {
     }
   };
 
+  // La columna 3 solo existe si hay información complementaria.
+  const hasExtra = Boolean(profile.additional_info) || hasOther;
+
   return (
     <Shell withBar>
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-3 sm:space-y-4 lg:space-y-4">
-        {/* IDENTIDAD */}
-        <motion.section
-          variants={item}
-          aria-label="Titular del perfil"
-          className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-5 text-white shadow-glow ring-1 ring-black/5 sm:p-6 lg:p-7"
-        >
-          <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
-          <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl animate-float" />
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className={`grid gap-3 sm:gap-4 lg:items-start ${hasExtra ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
+      >
+        {/* ───────── COLUMNA 1 · 1) Quién es · 2) A quién llamar ───────── */}
+        <div className="space-y-3 sm:space-y-4">
+          {/* IDENTIDAD + GRUPO SANGUÍNEO */}
+          <motion.section
+            variants={item}
+            aria-label="Titular del perfil"
+            className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-4 text-white shadow-glow ring-1 ring-black/5 sm:p-5"
+          >
+            <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
+            <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl animate-float" />
 
-          <div className="relative flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-4">
+            <div className="relative flex items-start gap-3 sm:gap-4">
               {profile.photo_url ? (
                 <img
                   src={profile.photo_url}
                   alt="Fotografía del titular"
-                  className="h-20 w-20 flex-shrink-0 rounded-full border-4 border-white/90 object-cover shadow-lg sm:h-24 sm:w-24"
+                  className="h-16 w-16 flex-shrink-0 rounded-full border-[3px] border-white/90 object-cover shadow-lg sm:h-20 sm:w-20"
                 />
               ) : (
-                <span className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-white/15 ring-4 ring-white/25 sm:h-24 sm:w-24">
-                  <User className="h-9 w-9" aria-hidden="true" />
+                <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-white/15 ring-4 ring-white/25 sm:h-20 sm:w-20">
+                  <User className="h-7 w-7 sm:h-9 sm:w-9" aria-hidden="true" />
                 </span>
               )}
-              <div className="min-w-0">
-                <p className="mb-1.5 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/90 sm:text-xs">
-                  <span className="h-px w-6 bg-brand-300 sm:w-8" aria-hidden="true" />
-                  Titular
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">
+                  <span className="relative flex h-2 w-2" aria-hidden="true">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-white animate-pulse-ring" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                  </span>
+                  Perfil de emergencia
                 </p>
-                <h1 className="break-words text-2xl font-extrabold leading-tight tracking-tight [text-wrap:balance] sm:text-4xl">
+                <h1 className="break-words text-2xl font-extrabold leading-tight tracking-tight [text-wrap:balance] sm:text-3xl">
                   {displayName}
                 </h1>
-                {dob.age !== null && <p className="mt-1 text-sm text-white/80">{dob.age} años</p>}
+                {dob.age !== null && <p className="mt-0.5 text-sm text-white/80">{dob.age} años</p>}
               </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label={copied ? 'Enlace copiado' : 'Compartir perfil'}
+                className="focus-ring flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-white/30 text-white transition-all hover:bg-white/10 active:scale-95"
+              >
+                {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleShare}
-              aria-label={copied ? 'Enlace copiado' : 'Compartir perfil'}
-              className="focus-ring flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-white/30 text-white transition-all hover:bg-white/10 active:scale-95"
-            >
-              {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
-            </button>
-          </div>
 
-          {(profile.blood_type || profile.is_organ_donor) && (
-            <div className="relative mt-4 flex flex-wrap gap-2.5">
-              {profile.blood_type && (
-                <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-2 text-brand-500 shadow-soft">
-                  <Droplet className="h-5 w-5" aria-hidden="true" />
-                  <div className="leading-none">
-                    <p className="text-[11px] font-medium text-text-secondary">Grupo sanguíneo</p>
-                    <p className="mt-1 text-2xl font-extrabold tracking-tight">{profile.blood_type}</p>
+            {(profile.blood_type || isDonor) && (
+              <div className="relative mt-3 flex flex-wrap gap-2.5 sm:mt-4">
+                {profile.blood_type && (
+                  <div className="flex flex-1 items-center gap-3 rounded-xl bg-white px-4 py-2 text-brand-500 shadow-soft">
+                    <Droplet className="h-6 w-6" aria-hidden="true" />
+                    <div className="leading-none">
+                      <p className="text-[11px] font-medium text-text-secondary">Grupo sanguíneo</p>
+                      <p className="mt-1 text-3xl font-extrabold tracking-tight">{profile.blood_type}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-              {profile.is_organ_donor && (
-                <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur-sm">
-                  <Heart className="h-4 w-4" aria-hidden="true" /> Donante de órganos
-                </div>
-              )}
-            </div>
-          )}
+                )}
+                {isDonor && (
+                  <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur-sm">
+                    <Heart className="h-4 w-4" aria-hidden="true" /> Donante de órganos
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.section>
 
-          <p className="relative mt-3 text-xs text-white/70">
-            Información compartida por el titular a través de su código QR.
-          </p>
-        </motion.section>
-
-        {/* ACCIONES RÁPIDAS */}
-        <motion.div variants={item} ref={quickRef} className="grid gap-3 sm:grid-cols-2 lg:gap-4">
-          <QuickActionButton
-            href={`tel:${EMERGENCY_NUMBER}`}
-            icon={PhoneCall}
-            label={`Llamar al ${EMERGENCY_NUMBER}`}
-            sublabel="Línea de emergencias"
-            value={EMERGENCY_NUMBER}
-            tone="rose"
-            colSpan={!primaryPhone}
-          />
-
-          {primaryPhone && (
-            <QuickActionButton
-              href={`tel:${cleanPhone(primaryPhone)}`}
-              icon={Phone}
-              label="Llamar contacto principal"
-              sublabel={
-                [primaryContact?.name, primaryContact?.relationship]
-                  .filter(Boolean)
-                  .join(' · ') || primaryPhone
+          {/* 2) CONTACTOS: el principal va primero */}
+          {hasContacts && (
+            <SectionCard
+              icon={Users}
+              title="Contactos"
+              aside={
+                <span className="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-xs font-semibold text-brand-500">
+                  {contacts.length}
+                </span>
               }
-              tone="brand"
-            />
+            >
+              <div className="space-y-2.5">
+                {orderedContacts.map((c, i) => (
+                  <ContactCard key={c.id ?? i} c={c} displayName={displayName} isPrimary={c === primaryContact} />
+                ))}
+              </div>
+            </SectionCard>
           )}
-        </motion.div>
 
-        {/* NOTA DE EMERGENCIA: lo primero que debe leerse */}
-        {profile.emergency_note && (
-          <motion.div
-            variants={item}
-            role="note"
-            className="flex items-start gap-3 rounded-2xl border border-amber-300/70 bg-amber-50 p-4 sm:p-5"
-          >
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-              <Bell className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="mb-0.5 text-sm font-bold text-amber-800">Nota importante</p>
-              <p className="text-base leading-relaxed text-neutral-900">{profile.emergency_note}</p>
-            </div>
-          </motion.div>
-        )}
+          {isEmpty && (
+            <motion.div variants={item} className={`${panel} p-8 text-center text-sm text-text-secondary`}>
+              <AlertCircle className="mx-auto mb-3 h-6 w-6 opacity-50" aria-hidden="true" />
+              <p>El titular no ha compartido información pública.</p>
+              <p className="mt-2 text-xs">Si es una emergencia, llama al {EMERGENCY_NUMBER}.</p>
+            </motion.div>
+          )}
+        </div>
 
-        {/* DATOS VITALES */}
-        {hasVitals && (
-          <SectionCard icon={Stethoscope} title="Datos médicos clave">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {medical.allergies && (
-                <StatItem icon={AlertTriangle} label="Alergias" value={medical.allergies} tone="amber" wide />
-              )}
-              {medical.medical_conditions && (
-                <StatItem icon={Stethoscope} label="Condiciones médicas" value={medical.medical_conditions} tone="sky" />
-              )}
-              {medical.medications && (
-                <StatItem icon={Pill} label="Medicamentos" value={medical.medications} tone="emerald" />
-              )}
-              {medical.medical_devices && (
-                <StatItem icon={Settings} label="Dispositivos médicos" value={medical.medical_devices} tone="gray" />
-              )}
-              {medical.is_pregnant && <StatItem icon={Baby} label="Embarazo" value="Sí" tone="pink" />}
-            </div>
-          </SectionCard>
-        )}
-
-        {/* CONTACTOS */}
-        {hasContacts && (
-          <SectionCard
-            icon={Users}
-            title="Contactos de emergencia"
-            aside={
-              <span className="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-xs font-semibold text-brand-500">
-                {contacts.length} contacto{contacts.length === 1 ? '' : 's'}
+        {/* ───────── COLUMNA 2 · 3) Nota · 4) Datos médicos · 5) Llamar al 123 ───────── */}
+        <div className="space-y-3 sm:space-y-4">
+          {profile.emergency_note && (
+            <motion.div
+              variants={item}
+              role="note"
+              className="flex items-start gap-3 rounded-2xl border border-amber-300/70 bg-amber-50 p-3.5 sm:p-4"
+            >
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                <Bell className="h-5 w-5" aria-hidden="true" />
               </span>
-            }
-          >
-            <div className="space-y-3 lg:space-y-4">
-              {contacts.map((c, i) => (
-                <ContactCard key={c.id ?? i} c={c} displayName={displayName} isPrimary={c === primaryContact} />
-              ))}
-            </div>
-          </SectionCard>
-        )}
+              <div className="min-w-0">
+                <p className="mb-0.5 text-xs font-bold uppercase tracking-wider text-amber-800">Nota importante</p>
+                <p className="break-words text-base leading-snug text-neutral-900">{profile.emergency_note}</p>
+              </div>
+            </motion.div>
+          )}
 
-        {/* INFORMACIÓN ADICIONAL */}
-        {profile.additional_info && (
-          <SectionCard icon={FileText} title="Información adicional">
-            <p className="rounded-xl border border-border bg-brand-50/50 p-4 text-sm leading-relaxed text-neutral-900">
-              {profile.additional_info}
-            </p>
-          </SectionCard>
-        )}
+          {hasVitals && (
+            <SectionCard icon={Stethoscope} title="Datos médicos">
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
+                {medical.allergies && (
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <StatItem icon={AlertTriangle} label="Alergias" value={medical.allergies} tone="amber" alert />
+                  </div>
+                )}
+                {medical.medical_conditions && (
+                  <StatItem icon={Stethoscope} label="Condiciones médicas" value={medical.medical_conditions} tone="sky" />
+                )}
+                {medical.medications && (
+                  <StatItem icon={Pill} label="Medicamentos" value={medical.medications} tone="emerald" />
+                )}
+                {medical.medical_devices && (
+                  <StatItem icon={Settings} label="Dispositivos médicos" value={medical.medical_devices} tone="gray" />
+                )}
+                {isPregnant && <StatItem icon={Baby} label="Embarazo" value="Sí" tone="pink" />}
+              </div>
+            </SectionCard>
+          )}
 
-        {/* OTROS DATOS */}
-        {hasOther && (
-          <SectionCard icon={IdCard} title="Otros datos del titular">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {profile.date_of_birth && (
-                <StatItem icon={Calendar} label="Fecha de nacimiento" value={dob.text} />
-              )}
-              {profile.document_number && (
-                <StatItem icon={IdCard} label="Documento" value={profile.document_number} />
-              )}
-              {profile.insurance_company && (
-                <StatItem icon={Shield} label="Seguro médico" value={profile.insurance_company} tone="blue" />
-              )}
-              {profile.insurance_policy_number && (
-                <StatItem icon={IdCard} label="Póliza de seguro" value={profile.insurance_policy_number} tone="blue" />
-              )}
-              {profile.primary_doctor_name && (
-                <StatItem icon={User} label="Médico tratante" value={profile.primary_doctor_name} tone="emerald" />
-              )}
-              {profile.primary_doctor_phone && (
-                <StatItem icon={Phone} label="Teléfono del médico" value={profile.primary_doctor_phone} tone="emerald" />
-              )}
-              {medical.height_cm && (
-                <StatItem icon={Ruler} label="Estatura" value={`${medical.height_cm} cm`} tone="blue" />
-              )}
-              {medical.weight_kg && (
-                <StatItem icon={Scale} label="Peso" value={`${medical.weight_kg} kg`} tone="indigo" />
-              )}
-            </div>
-          </SectionCard>
-        )}
-
-        {isEmpty && (
-          <motion.div variants={item} className={`${panel} p-8 text-center text-sm text-text-secondary`}>
-            <AlertCircle className="mx-auto mb-3 h-6 w-6 opacity-50" aria-hidden="true" />
-            <p>El titular no ha compartido información pública.</p>
-            <p className="mt-2 text-xs">Si es una emergencia, llama al {EMERGENCY_NUMBER}.</p>
+          {/* 5) LLAMAR AL 123 */}
+          <motion.div variants={item} ref={quickRef}>
+            <QuickActionButton
+              href={`tel:${EMERGENCY_NUMBER}`}
+              icon={PhoneCall}
+              label={`Llamar al ${EMERGENCY_NUMBER}`}
+              sublabel="Línea de emergencias"
+              value={EMERGENCY_NUMBER}
+              tone="rose"
+            />
           </motion.div>
-        )}
+        </div>
 
-        <motion.p variants={item} className="pt-2 text-center text-[11px] leading-relaxed text-white/60">
-          Información proporcionada por el propietario. Esta página no sustituye a los servicios oficiales de
-          emergencia.
-        </motion.p>
+        {/* ───────── COLUMNA 3 · Información complementaria ───────── */}
+        {hasExtra && (
+          <div className="space-y-3 sm:space-y-4">
+            {profile.additional_info && (
+              <SectionCard icon={FileText} title="Información adicional">
+                <p className="break-words rounded-xl border border-border bg-brand-50/50 p-3.5 text-sm leading-relaxed text-neutral-900">
+                  {profile.additional_info}
+                </p>
+              </SectionCard>
+            )}
+
+            {hasOther && (
+              <SectionCard icon={IdCard} title="Otros datos">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {profile.date_of_birth && (
+                    <StatItem compact icon={Calendar} label="Fecha de nacimiento" value={dob.text} />
+                  )}
+                  {profile.document_number && (
+                    <StatItem compact icon={IdCard} label="Documento" value={profile.document_number} />
+                  )}
+                  {profile.insurance_company && (
+                    <StatItem compact icon={Shield} label="Seguro médico" value={profile.insurance_company} tone="blue" />
+                  )}
+                  {profile.insurance_policy_number && (
+                    <StatItem compact icon={IdCard} label="Póliza de seguro" value={profile.insurance_policy_number} tone="blue" />
+                  )}
+                  {profile.primary_doctor_name && (
+                    <StatItem compact icon={User} label="Médico tratante" value={profile.primary_doctor_name} tone="emerald" />
+                  )}
+                  {profile.primary_doctor_phone && (
+                    <StatItem compact icon={Phone} label="Teléfono del médico" value={profile.primary_doctor_phone} tone="emerald" />
+                  )}
+                  {hasHeight && (
+                    <StatItem compact icon={Ruler} label="Estatura" value={`${medical.height_cm} cm`} tone="blue" />
+                  )}
+                  {hasWeight && (
+                    <StatItem compact icon={Scale} label="Peso" value={`${medical.weight_kg} kg`} tone="indigo" />
+                  )}
+                </div>
+              </SectionCard>
+            )}
+          </div>
+        )}
       </motion.div>
+
+      <p className="mx-auto mt-4 max-w-3xl text-center text-[11px] leading-relaxed text-white/60">
+        Información compartida por el titular a través de su código QR. No sustituye a los servicios oficiales de
+        emergencia.
+      </p>
 
       {/* Barra fija en móvil: aparece cuando las acciones rápidas ya no se ven */}
       <AnimatePresence>
@@ -672,11 +677,12 @@ export const PublicEmergency = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 90, opacity: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/90 px-4 pt-3 backdrop-blur-xl sm:hidden"
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/90 px-3 pt-3 backdrop-blur-xl sm:hidden"
             style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
           >
             <div className="mx-auto flex max-w-3xl gap-2">
               <QuickActionButton
+                variant="bar"
                 href={`tel:${EMERGENCY_NUMBER}`}
                 icon={PhoneCall}
                 label={`Llamar al ${EMERGENCY_NUMBER}`}
@@ -684,6 +690,7 @@ export const PublicEmergency = () => {
               />
               {primaryPhone && (
                 <QuickActionButton
+                  variant="bar"
                   href={`tel:${cleanPhone(primaryPhone)}`}
                   icon={Phone}
                   label="Contacto"
