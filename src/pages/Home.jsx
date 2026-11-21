@@ -1,16 +1,13 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
-import api from '../api/client';
 import {
   ScanLine,
   SlidersHorizontal,
   Lock,
-  UserPlus,
   HeartPulse,
-  Download,
+  Users,
   QrCode,
   Smartphone,
   EyeOff,
@@ -30,53 +27,46 @@ import { PlanCard } from '../components/PlanCard';
 
 const EASE = [0.22, 1, 0.36, 1];
 
-/* Banda de confianza justo debajo del hero */
+/* Solo dos planes en el inicio; el catálogo completo vive en Productos. */
+const FEATURED_PLANS = ['Perfil individual', 'Familiar x3'];
+const featured = FEATURED_PLANS.map((name) => productPlans.find((p) => p.name === name)).filter(Boolean);
+const homePlans = featured.length === FEATURED_PLANS.length ? featured : productPlans.slice(0, 2);
+
+/* Banda de confianza justo debajo del hero: resumen en una línea cada una */
 const trust = [
-  { icon: Smartphone, t: 'Sin apps ni cuenta', d: 'Se abre directo desde la cámara del teléfono' },
-  { icon: BadgeDollarSign, t: 'Escanear es gratis', d: 'Quien te auxilia no paga ni se registra' },
-  { icon: SlidersHorizontal, t: 'Privacidad campo por campo', d: 'Tú decides qué se ve y qué no' },
-  { icon: ShieldCheck, t: 'QR sin datos personales', d: 'Solo contiene un código aleatorio' },
+  { icon: Smartphone, t: 'Sin apps ni cuenta', d: 'Se abre desde la cámara' },
+  { icon: BadgeDollarSign, t: 'Escanear es gratis', d: 'Quien te auxilia no paga' },
+  { icon: SlidersHorizontal, t: 'Privacidad por campo', d: 'Tú decides qué se ve' },
+  { icon: ShieldCheck, t: 'QR sin datos', d: 'Solo un código aleatorio' },
 ];
 
+/* Por qué sirve: beneficios, sin repetir la banda de confianza */
 const pillars = [
-  {
-    icon: ScanLine,
-    title: 'Acceso inmediato',
-    text: 'Quien te auxilia escanea el QR y ve tu perfil en segundos, sin cuenta y sin instalar nada.',
-  },
-  {
-    icon: SlidersHorizontal,
-    title: 'Tú controlas la información',
-    text: 'Decides, dato por dato, qué se muestra al escanear y qué queda solo para ti. Lo cambias cuando quieras.',
-  },
-  {
-    icon: Lock,
-    title: 'Privacidad desde el diseño',
-    text: 'Tu QR no lleva tus datos, solo un código aleatorio. Si lo pierdes, lo desactivas o lo reemplazas desde tu cuenta.',
-  },
+  { icon: ScanLine, title: 'Acceso inmediato', text: 'Quien te auxilia ve tu perfil en segundos, incluso sin conocerte.' },
+  { icon: Users, title: 'Saben a quién llamar', text: 'Tus contactos de emergencia, a un toque.' },
+  { icon: QrCode, title: 'Siempre a la vista', text: 'En tu casco, tu moto, tu mochila o donde quieras.' },
 ];
 
 /* Qué pasa en una emergencia real */
 const scene = [
-  { icon: ScanLine, title: 'Escanean tu QR', text: 'Con la cámara de cualquier teléfono, sin descargar nada.' },
-  { icon: HeartPulse, title: 'Ven lo que autorizaste', text: 'Tu nombre, datos médicos clave o solo lo que tú decidas mostrar.' },
-  { icon: Phone, title: 'Llaman a tu contacto', text: 'Con un toque llaman o escriben a la persona que elegiste.' },
+  { icon: ScanLine, title: 'Escanean tu QR', text: 'Con la cámara del teléfono.' },
+  { icon: HeartPulse, title: 'Ven lo que autorizaste', text: 'Solo lo que decidiste mostrar.' },
+  { icon: Phone, title: 'Llaman a tu contacto', text: 'Con un toque.' },
 ];
 
+/* Mismos cuatro pasos que ve la persona en su panel */
 const steps = [
-  { icon: UserPlus, title: 'Crea tu cuenta', text: 'Es gratis y solo necesitas tu correo.' },
-  { icon: HeartPulse, title: 'Completa tu perfil', text: 'Agrega contactos de emergencia y, si quieres, datos médicos útiles.' },
-  { icon: SlidersHorizontal, title: 'Define tu privacidad', text: 'Elige qué se muestra al escanear.' },
-  { icon: Download, title: 'Obtén tu QR', text: 'Descárgalo gratis o pide tus stickers.' },
-  { icon: QrCode, title: 'Ponlo a la vista', text: 'En tu casco, tu moto, tu mochila o donde quieras.' },
-  { icon: Smartphone, title: 'Listo para salir', text: 'Quien escanee verá solo lo que autorizaste.' },
+  { icon: HeartPulse, title: 'Completa tu perfil', text: 'Tu nombre y los datos médicos que quieras.' },
+  { icon: Users, title: 'Agrega contactos', text: 'A quién llamarán en una emergencia.' },
+  { icon: SlidersHorizontal, title: 'Elige qué se muestra', text: 'Cada dato, público o privado.' },
+  { icon: QrCode, title: 'Activa tu QR', text: 'Descárgalo o pide stickers.' },
 ];
 
 const privacyPoints = [
-  { icon: EyeOff, t: 'Datos privados protegidos', d: 'Lo que no marcas como público nunca aparece en la página de emergencia.' },
-  { icon: QrCode, t: 'Códigos aleatorios', d: 'Cada QR es único y muy difícil de adivinar.' },
-  { icon: ShieldCheck, t: 'Desactivación inmediata', d: 'Si pierdes un sticker, lo bloqueas o lo reemplazas desde tu cuenta.' },
-  { icon: Lock, t: 'Acceso controlado', d: 'Roles separados para usuarios y administradores, con registro de las acciones sensibles.' },
+  { icon: EyeOff, t: 'Datos privados protegidos', d: 'Lo que no es público nunca aparece.' },
+  { icon: QrCode, t: 'Códigos aleatorios', d: 'Cada QR es único y difícil de adivinar.' },
+  { icon: ShieldCheck, t: 'Desactivación inmediata', d: 'Si pierdes un sticker, lo bloqueas o lo reemplazas.' },
+  { icon: Lock, t: 'Acceso controlado', d: 'Roles separados y registro de acciones sensibles.' },
 ];
 
 /* Datos estructurados: las preguntas frecuentes pueden aparecer como resultado enriquecido en Google. */
@@ -114,73 +104,15 @@ const SpotlightCard = ({ children, className = '' }) => {
 
 export const Home = () => {
   const reduce = useReducedMotion();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [hasQr, setHasQr] = useState(null); // null = pendiente, true = tiene, false = no tiene
-  const [stickerPrice, setStickerPrice] = useState(null);
+  const { isAuthenticated } = useAuth();
 
-  const formatAmount = (amount) => {
-    try {
-      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(amount));
-    } catch {
-      return `$${amount}`;
-    }
-  };
-
-  // Precio del sticker desde el catálogo del backend (única fuente de verdad).
-  useEffect(() => {
-    let mounted = true;
-    const loadStickerPrice = async () => {
-      try {
-        const { data } = await api.get('/products');
-        const list = data.products || data || [];
-        const sticker = list.find((p) => p.slug === 'sticker-qr-personalizado');
-        if (mounted && sticker) setStickerPrice(formatAmount(sticker.price));
-      } catch {
-        // Sin precio de catálogo: la tarjeta muestra "Consulta el catálogo".
-      }
-    };
-    loadStickerPrice();
-    return () => { mounted = false; };
-  }, []);
-
-  // Verificar si el usuario autenticado ya tiene un QR vinculado.
-  useEffect(() => {
-    let mounted = true;
-    const checkQr = async () => {
-      if (!isAuthenticated) {
-        setHasQr(false);
-        return;
-      }
-      try {
-        const { data } = await api.get('/identifiers/my');
-        if (!mounted) return;
-        setHasQr(!!data?.identifier);
-      } catch {
-        if (!mounted) return;
-        setHasQr(false);
-      }
-    };
-    checkQr();
-    return () => { mounted = false; };
-  }, [isAuthenticated]);
-
-  // Elegir destino del CTA principal según estado.
-  const primaryHref = useMemo(() => {
-    if (authLoading) return routes.register;
-    if (!isAuthenticated) return routes.register;
-    if (hasQr === false) return routes.products; // obtener QR comprando stickers
-    return routes.dashboard; // ya tiene QR → ir al panel
-  }, [authLoading, isAuthenticated, hasQr]);
-
-  const primaryLabel = useMemo(() => {
-    if (authLoading) return 'Crear cuenta';
-    if (!isAuthenticated) return 'Crear mi perfil gratuito';
-    if (hasQr === false) return 'Obtener tu QR';
-    return 'Ir a mi panel';
-  }, [authLoading, isAuthenticated, hasQr]);
+  // El panel ya muestra qué paso sigue, así que basta con enviar a quien tiene sesión allí.
+  const primaryHref = isAuthenticated ? routes.dashboard : routes.register;
+  const primaryLabel = isAuthenticated ? 'Ir a mi panel' : 'Crear mi perfil gratuito';
 
   return (
-    <main id="contenido" className="flex min-h-screen flex-col">
+    // El <main id="contenido"> lo aporta PublicLayout.
+    <div className="flex min-h-screen flex-col">
       <Seo
         title="Inicio"
         description="Perfil de emergencia con código QR para motociclistas en Colombia. Si no puedes hablar, tu información importante habla por ti."
@@ -214,7 +146,7 @@ export const Home = () => {
           <SectionHeading
             eyebrow="Por qué Tu QR te Cuida"
             title="En un accidente, cada minuto cuenta"
-            subtitle="Si estás inconsciente o no puedes hablar, quien te auxilia no sabe a quién llamar. Tu QR se lo dice, solo con lo que tú decidiste compartir."
+            subtitle="Si no puedes hablar, tu QR dice a quién llamar."
           />
           <div className="grid gap-6 md:grid-cols-3">
             {pillars.map(({ icon: Icon, title, text }, i) => (
@@ -238,7 +170,7 @@ export const Home = () => {
           <SectionHeading
             eyebrow="En el momento clave"
             title="Así te ayuda tu QR en tres pasos"
-            subtitle="Pensado para que cualquier persona pueda actuar rápido, incluso sin conocerte."
+            subtitle="Cualquiera puede actuar rápido."
           />
           <ol className="relative grid gap-10 md:grid-cols-3 md:gap-6">
             {/* La línea se dibuja al entrar en pantalla */}
@@ -264,8 +196,7 @@ export const Home = () => {
             ))}
           </ol>
           <p className="mt-10 text-center text-xs text-text-secondary">
-            Se necesita conexión a internet para abrir el perfil vinculado al QR. Es una herramienta de apoyo y
-            no reemplaza a los servicios oficiales de emergencia.
+            Requiere internet. Herramienta de apoyo: no reemplaza a los servicios oficiales de emergencia.
           </p>
         </div>
       </section>
@@ -275,12 +206,12 @@ export const Home = () => {
         <div className="container-page">
           <SectionHeading
             eyebrow="Cómo funciona"
-            title="De tu perfil a tu casco en seis pasos"
-            subtitle="Un proceso corto y claro. Crear tu perfil y descargar tu QR es gratis."
+            title="De tu perfil a tu casco en cuatro pasos"
+            subtitle="Un proceso corto y claro."
           />
-          <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {steps.map(({ icon: Icon, title, text }, i) => (
-              <Reveal as="li" key={title} delay={(i % 3) * 0.1} className="list-none">
+              <Reveal as="li" key={title} delay={(i % 4) * 0.1} className="list-none">
                 <Card className="group h-full p-6">
                   <div className="mb-5 flex items-center justify-between">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
@@ -335,14 +266,13 @@ export const Home = () => {
                 Tus datos, bajo tus reglas
               </h2>
               <p className="mb-6 leading-relaxed text-white/80">
-                Tu QR nunca contiene datos personales ni médicos: solo apunta a tu perfil, y el perfil muestra
-                únicamente los campos que marcaste como públicos. Todo lo demás se queda contigo.
+                El QR solo apunta a tu perfil, y el perfil muestra únicamente lo que marcaste como público.
               </p>
               <Link
                 to={routes.privacy}
                 className="group inline-flex items-center gap-2 font-semibold text-brand-300 transition-colors hover:text-white"
               >
-                Leer cómo protegemos tu información
+                Cómo protegemos tu información
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
               </Link>
             </Reveal>
@@ -370,14 +300,23 @@ export const Home = () => {
           <SectionHeading
             eyebrow="Productos"
             title="Pon tu QR a la vista"
-            subtitle="Los stickers ponen tu QR en tu casco, tu moto o donde prefieras. Tu QR digital sigue siendo gratis desde tu cuenta."
+            subtitle="Stickers para tu casco, tu moto o donde prefieras."
           />
-          <div className="grid gap-6 md:grid-cols-3">
-            {productPlans.map((p, i) => (
-              <Reveal key={p.name} delay={(i % 4) * 0.1}>
-                <PlanCard plan={p} priceOverride={p.name === 'Stickers QR' ? stickerPrice : undefined} />
+          <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+            {homePlans.map((p, i) => (
+              <Reveal key={p.name} delay={i * 0.1}>
+                <PlanCard plan={p} />
               </Reveal>
             ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              to={routes.products}
+              className="group inline-flex items-center gap-2 font-semibold text-brand-500 transition-colors hover:text-brand-600"
+            >
+              Ver más
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>
@@ -425,8 +364,7 @@ export const Home = () => {
                   Prepárate hoy, en menos de dos minutos
                 </h2>
                 <p className="mx-auto mb-8 max-w-xl leading-relaxed text-white/80">
-                  Crea tu perfil gratuito, elige qué compartir y descarga tu QR. La próxima vez que salgas a
-                  la carretera, irás con una protección más.
+                  Crea tu perfil, elige qué compartir y descarga tu QR.
                 </p>
                 <Link
                   to={primaryHref}
@@ -439,16 +377,12 @@ export const Home = () => {
                   {primaryLabel}
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
                 </Link>
-                <p className="mx-auto mt-6 max-w-lg text-xs text-white/60">
-                  Herramienta de apoyo: no sustituye a los servicios oficiales de emergencia ni garantiza que
-                  alguien escanee el código.
-                </p>
               </div>
             </div>
           </Reveal>
         </div>
       </section>
-    </main>
+    </div>
   );
 };
 

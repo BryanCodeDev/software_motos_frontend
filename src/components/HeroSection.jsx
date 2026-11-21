@@ -102,7 +102,7 @@ const ScanView = ({ reduce }) => (
     <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-neutral-900 sm:mt-5">
       <ScanLine className="h-4 w-4 text-brand-500" aria-hidden="true" /> Apunta la cámara al QR
     </p>
-    <p className="mt-1 text-xs text-text-secondary">No necesitas instalar nada</p>
+    <p className="mt-1 text-xs text-text-secondary">Funciona con cualquier teléfono</p>
   </motion.div>
 );
 
@@ -139,7 +139,7 @@ const ProfileView = ({ reduce }) => (
         >
           <span className="text-[11px] uppercase tracking-wider text-text-secondary">{label}</span>
           <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-900">
-            <Lock className="h-3.5 w-3.5 text-text-secondary" aria-hidden="true" /> Si lo autorizas
+            <Lock className="h-3.5 w-3.5 text-text-secondary" aria-hidden="true" /> Si lo autoriza
           </span>
         </motion.div>
       ))}
@@ -324,15 +324,15 @@ export const HeroSection = () => {
               className="mb-3 inline-flex items-center gap-3 text-xs sm:mb-5 font-semibold uppercase tracking-[0.22em] text-white/90"
             >
               <span className="h-px w-8 bg-brand-400" aria-hidden="true" />
-              Identificación de emergencia
+              Motos, familias y mascotas
             </motion.span>
 
             <h1 className="mb-4 text-3xl font-extrabold leading-[1.1] sm:mb-6 sm:leading-[1.08] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.45)] [text-wrap:balance] sm:text-5xl xl:text-6xl">
               <HeadlineLine delay={0.1} reduce={reduce} className="text-brand-400">
-                Si tú no puedes hablar,
+                Tu QR de emergencia
               </HeadlineLine>
               <HeadlineLine delay={0.25} reduce={reduce}>
-                tu información lo hará por ti.
+                habla por ti si no puedes.
               </HeadlineLine>
             </h1>
 
@@ -340,26 +340,26 @@ export const HeroSection = () => {
               {...fade(0.45)}
               className="mb-6 max-w-xl text-sm leading-relaxed sm:mb-8 sm:text-base text-white/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.5)] lg:text-lg xl:text-xl"
             >
-              Crea un perfil digital de emergencia, decide qué datos compartir y vincúlalo a un código
-              QR que cualquier persona puede escanear, sin instalar aplicaciones.
+              Quien te auxilie escanea el código con su teléfono y ve a quién llamar y tus datos médicos,
+              solo lo que tú autorices. Sin apps ni cuenta.
             </motion.p>
 
             <motion.div {...fade(0.6)} className="flex gap-2.5 sm:gap-3">
               <Link to={routes.register} className="btn-primary group flex-[1.7] whitespace-nowrap px-4 py-3 text-sm sm:flex-none sm:px-6 lg:text-base">
-                Crear perfil gratuito
+                Crear perfil gratis
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
               </Link>
               <Link
                 to={routes.products}
                 className="btn flex-1 whitespace-nowrap border border-white/50 bg-white/10 px-4 py-3 text-sm sm:flex-none sm:px-6 text-white backdrop-blur-sm hover:bg-white hover:text-neutral-900 active:scale-[0.98] lg:text-base"
               >
-                <span className="sm:hidden">Sticker</span>
-                <span className="hidden sm:inline">Conocer el sticker</span>
+                <span className="sm:hidden">Planes</span>
+                <span className="hidden sm:inline">Ver planes y precios</span>
               </Link>
             </motion.div>
 
             <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs sm:mt-7 sm:gap-x-6 sm:gap-y-2 sm:text-sm text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
-              {['Sin costo por escaneo', 'Sin aplicaciones', 'Privacidad bajo tu control'].map((t, i) => (
+              {['Listo en 2 minutos', 'Pago único, sin suscripción'].map((t, i) => (
                 <motion.li key={t} {...fade(0.8 + i * 0.1)} className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-brand-400" aria-hidden="true" /> {t}
                 </motion.li>
