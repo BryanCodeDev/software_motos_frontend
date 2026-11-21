@@ -80,6 +80,12 @@ const CONSENTS = [
   },
 ];
 
+const PROFILE_TYPES = [
+  { value: 'person', label: 'Persona', icon: User, desc: 'Para ti o un adulto.' },
+  { value: 'pet', label: 'Mascota', icon: Dog, desc: 'Para tu perro o gato.' },
+  { value: 'managed_person', label: 'A mi cargo', icon: Users, desc: 'Un hijo o adulto mayor.' },
+];
+
 const STEPS = ['Tu cuenta', 'Autorizaciones'];
 
 const rise = 'opacity-0 animate-slide-up';
@@ -135,19 +141,13 @@ export const Register = () => {
     <AuthShell aside={ASIDE} bgImage="/herosection-login.webp" showFooter={false}>
       <Seo title="Crear cuenta" noindex />
 
-      <div className={`mb-6 text-center ${rise}`}>
-        <div className="relative mx-auto mb-5 h-14 w-14">
-          <span className="absolute inset-0 rounded-2xl bg-brand-500/40 animate-pulse-ring" />
-          <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow animate-float">
-            <UserPlus size={24} />
-          </span>
-        </div>
-        <h1 className="text-3xl font-extrabold text-neutral-900">Crea tu cuenta gratis</h1>
+      <div className={`mb-5 ${rise}`}>
+        <h1 className="text-3xl font-extrabold leading-tight text-neutral-900">Crea tu cuenta gratis</h1>
         <p className="mt-2 text-sm text-text-secondary">Menos de dos minutos.</p>
       </div>
 
       {/* Progreso */}
-      <div className={`mb-7 ${rise}`} style={delay(80)} aria-label={`Paso ${step} de 2`}>
+      <div className={`mb-6 ${rise}`} style={delay(80)} aria-label={`Paso ${step} de 2`}>
         <div className="h-1.5 overflow-hidden rounded-full bg-border">
           <div
             className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-500 ease-out"
@@ -260,49 +260,57 @@ export const Register = () => {
               </div>
             </div>
 
-            <div className={rise} style={delay(210)}>
-              <div className="space-y-3 rounded-2xl border border-border bg-white p-5">
-                <p className="text-sm font-semibold text-neutral-900">Tu primer perfil de emergencia</p>
-                <p className="text-xs text-text-secondary">Elige qué tipo de perfil crear con esta cuenta. Se asocia al mismo correo y se activa al comprar tus stickers.</p>
-                <div role="radiogroup" aria-label="Tipo de perfil inicial" className="grid gap-2 sm:grid-cols-3">
-                  {[
-                    { value: 'person', label: 'Persona', icon: <User size={16} />, desc: 'Para ti o un adulto.' },
-                    { value: 'pet', label: 'Mascota', icon: <Dog size={16} />, desc: 'Para tu perro o gato.' },
-                    { value: 'managed_person', label: 'A mi cargo', icon: <Users size={16} />, desc: 'Un hijo o adulto mayor.' },
-                  ].map((t) => {
-                    const active = form.profile_type === t.value;
-                    return (
-                      <button
-                        key={t.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => setForm({ ...form, profile_type: t.value })}
-                        className={`focus-ring flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors ${active ? 'border-brand-500 bg-brand-50' : 'border-border bg-white hover:border-brand-500/40'}`}
+            <div className={`rounded-2xl border border-border bg-white p-4 ${rise}`} style={delay(210)}>
+              <p className="text-sm font-semibold text-neutral-900">Tu primer perfil de emergencia</p>
+              <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                Elige qué tipo de perfil crear con esta cuenta. Se asocia al mismo correo y se activa al comprar tus stickers.
+              </p>
+
+              <div role="radiogroup" aria-label="Tipo de perfil inicial" className="mt-3 grid grid-cols-3 gap-2">
+                {PROFILE_TYPES.map(({ value, label, icon: Icon, desc }) => {
+                  const active = form.profile_type === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setForm({ ...form, profile_type: value })}
+                      className={`focus-ring flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center transition-all duration-200 ${
+                        active
+                          ? 'border-brand-500 bg-brand-50 shadow-soft'
+                          : 'border-border bg-white hover:border-brand-500/40'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
+                          active ? 'bg-brand-500 text-white' : 'bg-brand-500/10 text-brand-500'
+                        }`}
                       >
-                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${active ? 'bg-brand-500 text-white' : 'bg-brand-500/10 text-brand-500'}`}>
-                          {t.icon}
-                        </span>
-                        <span className="font-semibold text-neutral-900 text-xs">{t.label}</span>
-                        <span className="text-[10px] leading-relaxed text-text-secondary">{t.desc}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    id="profile-name"
-                    type="text"
-                    value={form.profile_name}
-                    onChange={(e) => setForm({ ...form, profile_name: e.target.value })}
-                    placeholder="Nombre para mostrar (ej. Firulais)"
-                    className="input flex-1 !text-base"
-                  />
-                </div>
+                        <Icon size={16} />
+                      </span>
+                      <span className="text-xs font-semibold text-neutral-900">{label}</span>
+                      <span className="hidden text-[11px] leading-snug text-text-secondary sm:block">{desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="group relative mt-3">
+                <User size={18} className={fieldIcon} />
+                <Input
+                  id="profile-name"
+                  type="text"
+                  value={form.profile_name}
+                  onChange={setField('profile_name')}
+                  placeholder="Nombre para mostrar (ej. Firulais)"
+                  aria-label="Nombre para mostrar del perfil"
+                  className={inputCls}
+                />
               </div>
             </div>
 
-            <div className={rise} style={delay(210)}>
+            <div className={rise} style={delay(280)}>
               <Button type="submit" variant="primary" className="group h-12 w-full text-base">
                 Continuar
                 <ArrowRight size={18} className="transition-transform duration-200 group-hover:translate-x-1" />
@@ -313,7 +321,7 @@ export const Register = () => {
 
         {step === 2 && (
           <div key="step-2" className="space-y-5">
-            <div className={`space-y-4 rounded-2xl border border-border bg-white p-5 shadow-soft ${rise}`}>
+            <div className={`space-y-4 rounded-2xl border border-border bg-white p-4 shadow-soft ${rise}`}>
               {CONSENTS.map((c, i) => (
                 <div key={c.key} className={`space-y-1 ${rise}`} style={delay(60 + i * 60)}>
                   <CheckField
@@ -376,7 +384,7 @@ export const Register = () => {
         )}
       </form>
 
-      <p className="mt-6 text-center text-sm text-text-secondary">
+      <p className="mt-6 border-t border-border pt-5 text-center text-sm text-text-secondary">
         ¿Ya tienes cuenta?{' '}
         <Link to={routes.login} className="font-semibold text-brand-500 hover:underline">
           Inicia sesión

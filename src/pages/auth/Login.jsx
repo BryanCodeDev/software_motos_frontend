@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { routes } from '../../utils/routes';
 import { Button, Input, Label } from '../../components/ui';
 import {
-  LogIn, Mail, Lock, Eye, EyeOff, Loader2, HeartPulse, QrCode, Siren, ArrowRight, UserPlus,
+  Mail, Lock, Eye, EyeOff, Loader2, HeartPulse, QrCode, Siren, ArrowRight, UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 import { useToast } from '../../components/useToast';
@@ -67,14 +67,8 @@ export const Login = () => {
     <AuthShell aside={ASIDE} bgImage="/herosection-login.webp" showFooter={false}>
       <Seo title="Iniciar sesión" noindex />
 
-      <div className={`mb-8 text-center ${rise}`}>
-        <div className="relative mx-auto mb-5 h-14 w-14">
-          <span className="absolute inset-0 rounded-2xl bg-brand-500/40 animate-pulse-ring" />
-          <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow animate-float">
-            <LogIn size={24} />
-          </span>
-        </div>
-        <h1 className="text-3xl font-extrabold text-neutral-900">Inicia sesión</h1>
+      <div className={`mb-7 ${rise}`}>
+        <h1 className="text-3xl font-extrabold leading-tight text-neutral-900">Inicia sesión</h1>
         <p className="mt-2 text-sm text-text-secondary">Gestiona tu perfil y tu QR</p>
       </div>
 
@@ -148,7 +142,7 @@ export const Login = () => {
         </div>
       </form>
 
-      <div className={`mt-6 text-center text-sm text-text-secondary ${rise}`} style={delay(340)}>
+      <div className={`mt-6 border-t border-border pt-5 text-center text-sm text-text-secondary ${rise}`} style={delay(340)}>
         ¿Aún no tienes cuenta?
         <Link to={routes.register} className="btn-outline mt-3 w-full">
           <UserPlus size={18} className="text-brand-500" />

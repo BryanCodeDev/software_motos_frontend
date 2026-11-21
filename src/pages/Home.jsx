@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { routes } from '../utils/routes';
@@ -94,7 +95,7 @@ const SpotlightCard = ({ children, className = '' }) => {
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
           background:
-            'radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(159,18,57,0.09), transparent 70%)',
+            'radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(207,17,57,0.09), transparent 70%)',
         }}
       />
       <div className="relative">{children}</div>
@@ -105,6 +106,27 @@ const SpotlightCard = ({ children, className = '' }) => {
 export const Home = () => {
   const reduce = useReducedMotion();
   const { isAuthenticated } = useAuth();
+  const ctaRef = useRef(null);
+  const [pastHero, setPastHero] = useState(false);
+  const [ctaSeen, setCtaSeen] = useState(false);
+
+  // Barra de acción fija en móvil: aparece al salir del hero y se oculta al llegar al cierre.
+  useEffect(() => {
+    const onScroll = () => setPastHero(window.scrollY > window.innerHeight * 0.7);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || !('IntersectionObserver' in window)) return undefined;
+    const io = new IntersectionObserver(([e]) => setCtaSeen(e.isIntersecting || e.boundingClientRect.top < 0));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const showBar = pastHero && !ctaSeen;
 
   // El panel ya muestra qué paso sigue, así que basta con enviar a quien tiene sesión allí.
   const primaryHref = isAuthenticated ? routes.dashboard : routes.register;
@@ -151,12 +173,17 @@ export const Home = () => {
           <div className="grid gap-6 md:grid-cols-3">
             {pillars.map(({ icon: Icon, title, text }, i) => (
               <Reveal key={title} delay={i * 0.1}>
-                <SpotlightCard className="p-7">
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:rotate-6 group-hover:bg-brand-500 group-hover:text-white">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                <SpotlightCard className="p-4 sm:p-7">
+                  {/* En móvil: icono a la izquierda y texto a la derecha, para leer de un vistazo */}
+                  <div className="flex items-start gap-4 md:block">
+                    <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:rotate-6 group-hover:bg-brand-500 group-hover:text-white md:mb-5">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h3 className="mb-1 text-base font-semibold text-neutral-900 md:mb-2 md:text-lg">{title}</h3>
+                      <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
+                    </div>
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-neutral-900">{title}</h3>
-                  <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
                 </SpotlightCard>
               </Reveal>
             ))}
@@ -183,15 +210,17 @@ export const Home = () => {
               transition={{ duration: 1.1, delay: 0.2, ease: EASE }}
             />
             {scene.map(({ icon: Icon, title, text }, i) => (
-              <Reveal as="li" key={title} delay={i * 0.18} className="relative flex flex-col items-center text-center">
-                <span className="relative mb-5 flex h-14 w-14 items-center justify-center">
+              <Reveal as="li" key={title} delay={i * 0.18} className="relative flex items-start gap-4 text-left md:flex-col md:items-center md:text-center">
+                <span className="relative flex h-12 w-12 flex-none items-center justify-center md:mb-5 md:h-14 md:w-14">
                   <span aria-hidden="true" className="absolute inset-0 rounded-full bg-brand-500/40 animate-pulse-ring" />
-                  <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white shadow-glow ring-8 ring-brand-50 transition-transform duration-300 hover:scale-110">
+                  <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-white shadow-glow ring-4 ring-brand-50 md:h-14 md:w-14 md:ring-8 transition-transform duration-300 hover:scale-110">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                 </span>
-                <h3 className="mb-1.5 font-semibold text-neutral-900">{title}</h3>
-                <p className="max-w-xs text-sm leading-relaxed text-text-secondary">{text}</p>
+                <div>
+                  <h3 className="mb-1 font-semibold text-neutral-900 md:mb-1.5">{title}</h3>
+                  <p className="max-w-xs text-sm leading-relaxed text-text-secondary">{text}</p>
+                </div>
               </Reveal>
             ))}
           </ol>
@@ -209,16 +238,16 @@ export const Home = () => {
             title="De tu perfil a tu casco en cuatro pasos"
             subtitle="Un proceso corto y claro."
           />
-          <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <ol className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
             {steps.map(({ icon: Icon, title, text }, i) => (
               <Reveal as="li" key={title} delay={(i % 4) * 0.1} className="list-none">
-                <Card className="group h-full p-6">
-                  <div className="mb-5 flex items-center justify-between">
+                <Card className="group h-full p-4 sm:p-6">
+                  <div className="mb-3 flex items-center justify-between sm:mb-5">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <span
-                      className="text-3xl font-bold tabular-nums text-brand-200 transition-colors duration-300 group-hover:text-brand-500"
+                      className="text-2xl font-bold tabular-nums text-brand-200 sm:text-3xl transition-colors duration-300 group-hover:text-brand-500"
                       aria-hidden="true"
                     >
                       {String(i + 1).padStart(2, '0')}
@@ -276,10 +305,10 @@ export const Home = () => {
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
               </Link>
             </Reveal>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {privacyPoints.map(({ icon: Icon, t, d }, i) => (
                 <Reveal key={t} delay={i * 0.08}>
-                  <div className="group h-full rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-300/40 hover:bg-white/10">
+                  <div className="group h-full rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-300/40 hover:bg-white/10">
                     <Icon
                       className="mb-3 h-5 w-5 text-brand-300 transition-transform duration-300 group-hover:scale-110"
                       aria-hidden="true"
@@ -345,7 +374,7 @@ export const Home = () => {
       </section>
 
       {/* CTA FINAL */}
-      <section className="section">
+      <section ref={ctaRef} className="section">
         <div className="container-page">
           <Reveal>
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-10 text-center shadow-glow lg:p-16">
@@ -382,6 +411,20 @@ export const Home = () => {
           </Reveal>
         </div>
       </section>
+
+      {/* Barra de acción fija (solo móvil) */}
+      <div
+        aria-hidden={!showBar}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 px-4 pt-3 backdrop-blur transition-transform duration-300 md:hidden ${
+          showBar ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
+        <Link to={primaryHref} tabIndex={showBar ? 0 : -1} className="btn-primary w-full py-3 text-sm">
+          {primaryLabel}
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </div>
     </div>
   );
 };
