@@ -56,7 +56,7 @@ const TONES = {
 const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) => (
   <MotionConfig reducedMotion="user">
     <main
-      className={`relative isolate min-h-full overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
+      className={`relative isolate min-h-screen overflow-hidden bg-neutral-950 px-3 pt-3 sm:px-4 sm:pt-5 lg:pt-4 ${
         withBar ? 'pb-28 sm:pb-6 lg:pb-0' : 'pb-2 sm:pb-3 lg:pb-0'
       }`}
     >
