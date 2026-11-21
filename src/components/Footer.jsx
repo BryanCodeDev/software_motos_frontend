@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ShieldCheck, ArrowRight, ArrowUp, Check } from 'lucide-react';
 import { routes } from '../utils/routes';
+
+const EASE = [0.22, 1, 0.36, 1];
 
 const columns = [
   {
     title: 'Servicio',
+    wide: true,
     links: [
       { label: 'Productos', to: routes.products },
       { label: 'Cómo funciona', to: routes.howItWorks },
@@ -30,58 +34,154 @@ const columns = [
 ];
 
 const linkClass =
-  'text-white/70 transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:underline';
+  'group inline-flex items-center text-white/70 transition-all duration-200 hover:translate-x-0.5 hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:underline';
 
-export const Footer = () => (
-  <footer className="bg-brand-900 pb-8 pt-12 text-white lg:pt-16">
-    <div className="container-page">
-      <div className="mb-10 grid gap-10 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <Link to={routes.home} className="inline-flex items-center gap-2.5 font-bold tracking-tight">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-500">
-              <ShieldCheck size={20} strokeWidth={2.4} aria-hidden="true" />
-            </span>
-            <span className="text-lg">Tu QR te Cuida</span>
-          </Link>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
-            Si no puedes hablar, tu información importante habla por ti.
-          </p>
-        </div>
-
-        <nav className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3 lg:col-span-7" aria-label="Pie de página">
-          {columns.map((col) => (
-            <div key={col.title}>
-              <h3 className="mb-4 font-semibold text-white">{col.title}</h3>
-              <ul className="space-y-3">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    <Link to={l.to} className={linkClass}>
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
-      </div>
-
-      <div className="flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/60 md:flex-row md:items-center md:justify-between">
-        <p>
-          © {new Date().getFullYear()}{' '}
-          <a
-            href="https://mastercodecompany.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:underline"
-          >
-            MasterCode Company
-          </a>
-        </p>
-        <p>Herramienta de apoyo: no sustituye a los servicios oficiales de emergencia.</p>
-      </div>
-    </div>
-  </footer>
+const Eyebrow = ({ children, className = '' }) => (
+  <span
+    className={`inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/90 ${className}`}
+  >
+    <span className="h-px w-8 bg-brand-400" aria-hidden="true" />
+    {children}
+  </span>
 );
+
+export const Footer = () => {
+  const reduce = useReducedMotion();
+
+  const reveal = (delay = 0) => ({
+    initial: reduce ? false : { opacity: 0, y: 20 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: '-60px' },
+    transition: { duration: 0.6, delay, ease: EASE },
+  });
+
+  const toTop = () => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+
+  return (
+    <footer className="relative isolate overflow-hidden bg-neutral-950 pb-8 pt-12 text-white sm:pt-16 lg:pt-20">
+      {/* Atmósfera de marca: mismos degradados y glow que el Hero */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-900/60 via-transparent to-transparent" aria-hidden="true" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-brand-900/30 via-transparent to-transparent" aria-hidden="true" />
+      <div
+        className="absolute -top-32 left-1/2 -z-10 h-64 w-[40rem] max-w-full -translate-x-1/2 rounded-full bg-brand-500/15 blur-3xl"
+        aria-hidden="true"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/70 to-transparent"
+      />
+
+      <div className="container-page">
+        {/* Banda de llamada a la acción */}
+        <motion.div
+          {...reveal(0)}
+          className="mb-12 flex flex-col gap-6 rounded-[2rem] border border-white/15 bg-white/5 p-6 shadow-glow backdrop-blur-sm sm:p-8 lg:mb-16 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:p-10"
+        >
+          <div className="max-w-xl">
+            <Eyebrow className="mb-3 sm:mb-4">Tu QR te cuida</Eyebrow>
+            <h2 className="text-2xl font-extrabold leading-[1.15] [text-wrap:balance] sm:text-3xl lg:text-4xl">
+              <span className="block text-brand-400">Prepárate hoy</span>
+              <span className="block">para lo inesperado.</span>
+            </h2>
+            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-white/85 sm:text-sm">
+              {['Listo en 2 minutos', 'Pago único, sin suscripción'].map((t) => (
+                <li key={t} className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-brand-400" aria-hidden="true" /> {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex gap-2.5 sm:gap-3 lg:flex-none">
+            <Link
+              to={routes.register}
+              className="btn-primary group flex-[1.7] whitespace-nowrap px-4 py-3 text-sm sm:flex-none sm:px-6 lg:text-base"
+            >
+              Crear perfil gratis
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
+            <Link
+              to={routes.products}
+              className="btn flex-1 whitespace-nowrap border border-white/50 bg-white/10 px-4 py-3 text-sm text-white backdrop-blur-sm hover:bg-white hover:text-neutral-900 active:scale-[0.98] sm:flex-none sm:px-6 lg:text-base"
+            >
+              <span className="sm:hidden">Planes</span>
+              <span className="hidden sm:inline">Ver planes y precios</span>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Marca + navegación */}
+        <motion.div {...reveal(0.1)} className="mb-10 grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <Link to={routes.home} className="group inline-flex items-center gap-2.5 font-bold tracking-tight">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105">
+                <ShieldCheck size={20} strokeWidth={2.4} aria-hidden="true" />
+              </span>
+              <span className="text-lg">Tu QR te Cuida</span>
+            </Link>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
+              Si no puedes hablar, tu información importante habla por ti.
+            </p>
+          </div>
+
+          <nav className="grid grid-cols-2 gap-x-6 gap-y-9 text-sm sm:grid-cols-3 sm:gap-x-8 lg:col-span-7" aria-label="Pie de página">
+            {columns.map((col) => (
+              <div key={col.title} className={col.wide ? 'col-span-2 sm:col-span-1' : ''}>
+                <h3 className="mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                  <span className="h-px w-5 bg-brand-400" aria-hidden="true" />
+                  {col.title}
+                </h3>
+                <ul
+                  className={
+                    col.wide
+                      ? 'grid grid-cols-2 gap-x-6 gap-y-3 sm:block sm:space-y-3'
+                      : 'space-y-3'
+                  }
+                >
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <Link to={l.to} className={linkClass}>
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </motion.div>
+
+        {/* Barra inferior */}
+        <div className="flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
+            <p>
+              © {new Date().getFullYear()}{' '}
+              <a
+                href="https://mastercodecompany.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:underline"
+              >
+                MasterCode Company
+              </a>
+            </p>
+            <p className="max-w-md leading-relaxed">
+              Herramienta de apoyo: no sustituye a los servicios oficiales de emergencia.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={toTop}
+            className="group inline-flex w-fit items-center gap-2 self-start rounded-full border border-white/25 bg-white/10 px-4 py-2 font-medium text-white/85 backdrop-blur-sm transition-colors hover:bg-white hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 md:self-auto"
+          >
+            Volver arriba
+            <ArrowUp size={14} className="transition-transform duration-200 group-hover:-translate-y-0.5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </footer>
+  );
+};
 
 export default Footer;

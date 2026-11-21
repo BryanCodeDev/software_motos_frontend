@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
-  Menu, X, LogOut, LayoutDashboard, ChevronDown, ChevronRight, ShieldCheck, QrCode, Settings, UserPlus, LogIn,
+  Menu, X, LogOut, LayoutDashboard, ChevronDown, ChevronRight, ShieldCheck, QrCode, Settings,
+  UserPlus, LogIn, ArrowRight,
 } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
+
+const EASE = [0.22, 1, 0.36, 1];
 
 /* Los documentos legales viven en el pie de página; el panel tiene su propio menú lateral. */
 const navItems = [
@@ -21,25 +25,53 @@ const accountLinks = [
 
 const ADMIN_ROUTE = '/admin';
 
-const NavLinkItem = ({ item, active, mobile = false, onHero = false }) => {
-  const base = mobile
-    ? 'flex items-center justify-between rounded-lg px-3 py-3 text-[15px] font-medium transition-colors'
-    : 'rounded-lg px-3 py-2 transition-colors';
-  const tone = onHero
-    ? active ? 'bg-white/15 text-white' : 'text-white/85 hover:bg-white/10 hover:text-white'
-    : active ? 'bg-brand-500/10 text-brand-500' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900';
+/** Enlace de escritorio: texto claro con subrayado de marca que "viaja" entre secciones. */
+const DesktopLink = ({ item, active, reduce, onHero }) => (
+  <Link
+    to={item.href}
+    aria-current={active ? 'page' : undefined}
+    className={`relative rounded-lg px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 ${
+      onHero
+        ? `hover:bg-white/10 hover:text-white focus-visible:ring-white/60 ${active ? 'text-white' : 'text-white/80'}`
+        : `hover:bg-brand-50 hover:text-neutral-900 focus-visible:ring-brand-500 ${active ? 'text-brand-500' : 'text-text-secondary'}`
+    }`}
+  >
+    {item.label}
+    {active && (
+      <motion.span
+        layoutId="nav-active"
+        aria-hidden="true"
+        className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full ${onHero ? 'bg-brand-400' : 'bg-brand-500'}`}
+        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 32 }}
+      />
+    )}
+  </Link>
+);
 
-  return (
-    <Link to={item.href} aria-current={active ? 'page' : undefined} className={`${base} ${tone}`}>
+/** Enlace del menú móvil: fila grande con barra de marca cuando está activo. */
+const MobileLink = ({ item, active }) => (
+  <Link
+    to={item.href}
+    aria-current={active ? 'page' : undefined}
+    className={`group flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-semibold transition-colors ${
+      active ? 'bg-brand-500/10 text-brand-500' : 'text-neutral-900/80 hover:bg-brand-50 hover:text-neutral-900'
+    }`}
+  >
+    <span className="flex items-center gap-3">
+      <span className={`h-5 w-1 rounded-full transition-colors ${active ? 'bg-brand-500' : 'bg-transparent'}`} aria-hidden="true" />
       {item.label}
-      {mobile && <ChevronRight size={16} className={active ? 'text-brand-500' : 'text-text-secondary/60'} aria-hidden="true" />}
-    </Link>
-  );
-};
+    </span>
+    <ChevronRight
+      size={16}
+      className={`transition-transform duration-200 group-hover:translate-x-0.5 ${active ? 'text-brand-500' : 'text-text-secondary/60'}`}
+      aria-hidden="true"
+    />
+  </Link>
+);
 
-/** Enlaces de la cuenta, compartidos por el menú de escritorio y el móvil. */
-const AccountLinks = ({ isAdmin, isActive, itemRole, onLogout }) => {
-  const itemBase = 'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors';
+/** Enlaces de la cuenta, compartidos por el menú de escritorio (claro) y el móvil (oscuro). */
+const AccountLinks = ({ isAdmin, isActive, itemRole, onLogout, dark = false }) => {
+  const itemBase = 'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors';
   const links = isAdmin
     ? [
         { label: 'Panel administrativo', to: ADMIN_ROUTE, icon: Settings },
@@ -47,6 +79,12 @@ const AccountLinks = ({ isAdmin, isActive, itemRole, onLogout }) => {
         { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
       ]
     : accountLinks;
+
+  const activeCls = dark ? 'bg-white/10 text-white' : 'bg-brand-500/10 text-brand-500';
+  const idleCls = dark
+    ? 'text-white/80 hover:bg-white/10 hover:text-white'
+    : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900';
+  const logoutCls = dark ? 'text-rose-300 hover:bg-rose-500/10' : 'text-rose-700 hover:bg-rose-50';
 
   return (
     <>
@@ -58,13 +96,13 @@ const AccountLinks = ({ isAdmin, isActive, itemRole, onLogout }) => {
             role={itemRole}
             to={to}
             aria-current={active ? 'page' : undefined}
-            className={`${itemBase} ${active ? 'bg-brand-500/10 text-brand-500' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'}`}
+            className={`${itemBase} ${active ? activeCls : idleCls}`}
           >
             <Icon size={18} aria-hidden="true" /> {label}
           </Link>
         );
       })}
-      <button type="button" role={itemRole} onClick={onLogout} className={`${itemBase} text-rose-700 hover:bg-rose-50`}>
+      <button type="button" role={itemRole} onClick={onLogout} className={`${itemBase} ${logoutCls}`}>
         <LogOut size={18} aria-hidden="true" /> Cerrar sesión
       </button>
     </>
@@ -75,6 +113,7 @@ export const Navbar = () => {
   const { user, logout, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const reduce = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [drop, setDrop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -126,6 +165,20 @@ export const Navbar = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Menú móvil abierto: bloquea el scroll del fondo y se cierra si la pantalla pasa a escritorio.
+  useEffect(() => {
+    if (!open) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const mq = window.matchMedia('(min-width: 768px)');
+    const onChange = (e) => e.matches && setOpen(false);
+    mq.addEventListener('change', onChange);
+    return () => {
+      document.body.style.overflow = prev;
+      mq.removeEventListener('change', onChange);
+    };
+  }, [open]);
+
   const isActive = (path) => (path === ADMIN_ROUTE ? pathname.startsWith(ADMIN_ROUTE) : pathname === path);
 
   // Solo en el inicio la barra flota transparente sobre el hero.
@@ -176,7 +229,7 @@ export const Navbar = () => {
       </a>
 
       <header
-        className={`${isHome ? 'fixed inset-x-0 top-0' : 'sticky top-0'} z-50 transition-colors duration-300 ${
+        className={`${isHome ? 'fixed inset-x-0 top-0' : 'sticky top-0'} z-50 transition-[background-color,border-color,box-shadow] duration-300 ${
           onHero
             ? 'border-b border-transparent bg-transparent'
             : 'border-b border-border bg-white/95 shadow-soft backdrop-blur-md'
@@ -185,12 +238,12 @@ export const Navbar = () => {
         <div className="container-page flex h-16 items-center justify-between">
           <Link
             to={routes.home}
-            className={`flex items-center gap-2.5 font-bold tracking-tight transition-colors ${onHero ? 'text-white' : 'text-neutral-900'}`}
+            className={`group flex items-center gap-2.5 font-bold tracking-tight transition-colors ${onHero ? 'text-white' : 'text-neutral-900'}`}
             aria-label="Tu QR te Cuida, ir al inicio"
           >
             <span
-              className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-soft ${
-                onHero ? 'bg-white text-brand-500' : 'bg-brand-500 text-white'
+              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 ${
+                onHero ? 'bg-white text-brand-500 shadow-soft' : 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow'
               }`}
             >
               <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
@@ -200,25 +253,28 @@ export const Navbar = () => {
 
           <nav className="hidden items-center gap-1 text-sm font-medium md:flex" aria-label="Principal">
             {navItems.map((item) => (
-              <NavLinkItem key={item.href} item={item} active={isActive(item.href)} onHero={onHero} />
+              <DesktopLink key={item.href} item={item} active={isActive(item.href)} reduce={reduce} onHero={onHero} />
             ))}
 
-            <span className={`mx-2 h-5 w-px ${onHero ? 'bg-white/30' : 'bg-border'}`} aria-hidden="true" />
+            <span className={`mx-3 h-5 w-px ${onHero ? 'bg-white/30' : 'bg-border'}`} aria-hidden="true" />
 
-            {loading && <span className="h-9 w-32 animate-pulse rounded-lg bg-border/60" aria-hidden="true" />}
+            {loading && <span className={`h-9 w-32 animate-pulse rounded-lg ${onHero ? 'bg-white/20' : 'bg-border/60'}`} aria-hidden="true" />}
 
             {!loading && !isAuthenticated && (
               <>
                 <Link
                   to={routes.login}
-                  className={`rounded-lg px-3 py-2 transition-colors ${
-                    onHero ? 'text-white/90 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900'
+                  className={`rounded-lg px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 ${
+                    onHero
+                      ? 'text-white/90 hover:bg-white/10 hover:text-white focus-visible:ring-white/60'
+                      : 'text-text-secondary hover:bg-brand-50 hover:text-neutral-900 focus-visible:ring-brand-500'
                   }`}
                 >
                   Iniciar sesión
                 </Link>
-                <Link to={routes.register} className="btn-primary !px-4 !py-2 !text-sm">
+                <Link to={routes.register} className="btn-primary group !px-4 !py-2 !text-sm">
                   Crear cuenta
+                  <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
                 </Link>
               </>
             )}
@@ -237,7 +293,7 @@ export const Navbar = () => {
                       : 'border-border bg-white text-neutral-900 hover:border-brand-500/50'
                   }`}
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white">
                     {initial}
                   </span>
                   <span className="max-w-[9rem] truncate">{displayName}</span>
@@ -249,11 +305,16 @@ export const Navbar = () => {
                     role="menu"
                     aria-label="Menú de usuario"
                     onKeyDown={onMenuKeyDown}
-                    className="absolute right-0 mt-2 w-60 animate-fade-in overflow-hidden rounded-2xl border border-border bg-white shadow-card"
+                    className="absolute right-0 mt-3 w-64 animate-fade-in overflow-hidden rounded-2xl border border-white/40 bg-neutral-50 shadow-glow ring-1 ring-black/5"
                   >
-                    <div className="border-b border-border bg-brand-50/60 px-4 py-3">
-                      <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
-                      <p className="truncate text-xs text-text-secondary">{user?.email}</p>
+                    <div className="flex items-center gap-3 border-b border-border bg-brand-50/70 px-4 py-3.5">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
+                        {initial}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
+                        <p className="truncate text-xs text-text-secondary">{user?.email}</p>
+                      </div>
                     </div>
                     <div className="space-y-0.5 p-1.5">
                       <AccountLinks isAdmin={isAdmin} isActive={isActive} itemRole="menuitem" onLogout={handleLogout} />
@@ -267,7 +328,7 @@ export const Navbar = () => {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:hidden ${
+            className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:hidden ${
               onHero
                 ? 'border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20'
                 : 'border-border bg-white text-neutral-900 hover:bg-brand-50'
@@ -280,43 +341,58 @@ export const Navbar = () => {
           </button>
         </div>
 
-        {open && (
-          <div id="menu-movil" className="animate-fade-in border-t border-border bg-white md:hidden">
-            <div className="max-h-[calc(100svh-4rem)] space-y-1 overflow-y-auto px-4 py-4">
-              {navItems.map((item) => (
-                <NavLinkItem key={item.href} item={item} active={isActive(item.href)} mobile />
-              ))}
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              id="menu-movil"
+              key="menu-movil"
+              initial={reduce ? false : { opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="border-t border-border bg-white md:hidden"
+            >
+              <div className="max-h-[calc(100svh-4rem)] space-y-1 overflow-y-auto px-4 pb-6 pt-4">
+                <p className="mb-2 flex items-center gap-3 px-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-text-secondary">
+                  <span className="h-px w-6 bg-brand-400" aria-hidden="true" />
+                  Menú
+                </p>
 
-              <div className="my-3 h-px bg-border" />
+                {navItems.map((item) => (
+                  <MobileLink key={item.href} item={item} active={isActive(item.href)} />
+                ))}
 
-              {!loading && isAuthenticated && (
-                <>
-                  <div className="mb-2 flex items-center gap-3 rounded-xl bg-brand-50 p-3">
-                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
-                      {initial}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
-                      <p className="truncate text-xs text-text-secondary">{user?.email}</p>
+                <div className="my-4 h-px bg-border" />
+
+                {!loading && isAuthenticated && (
+                  <>
+                    <div className="mb-2 flex items-center gap-3 rounded-2xl bg-brand-50 p-3">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
+                        {initial}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
+                        <p className="truncate text-xs text-text-secondary">{user?.email}</p>
+                      </div>
                     </div>
-                  </div>
-                  <AccountLinks isAdmin={isAdmin} isActive={isActive} onLogout={handleLogout} />
-                </>
-              )}
+                    <AccountLinks isAdmin={isAdmin} isActive={isActive} onLogout={handleLogout} />
+                  </>
+                )}
 
-              {!loading && !isAuthenticated && (
-                <div className="grid gap-2 pt-1">
-                  <Link to={routes.login} className="btn-outline w-full">
-                    <LogIn size={18} aria-hidden="true" /> Iniciar sesión
-                  </Link>
-                  <Link to={routes.register} className="btn-primary w-full">
-                    <UserPlus size={18} aria-hidden="true" /> Crear cuenta
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+                {!loading && !isAuthenticated && (
+                  <div className="grid gap-3 pt-1">
+                    <Link to={routes.register} className="btn-primary h-12 w-full">
+                      <UserPlus size={18} aria-hidden="true" /> Crear cuenta gratis
+                    </Link>
+                    <Link to={routes.login} className="btn-outline h-12 w-full">
+                      <LogIn size={18} aria-hidden="true" /> Iniciar sesión
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Fondo del menú móvil: fuera del header porque su backdrop-filter atraparía el position:fixed. */}
