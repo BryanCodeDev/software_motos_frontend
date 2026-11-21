@@ -51,7 +51,7 @@ export const PublicLayout = () => {
         </div>
       </main>
 
-      <Footer />
+      {!pathname.startsWith('/auth/') && <Footer />}
 
       <button
         type="button"
