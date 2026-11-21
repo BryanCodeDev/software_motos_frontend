@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
-  Phone, Mail, ShieldAlert, ShieldCheck, AlertCircle, Droplet, AlertTriangle,
+  Phone, Mail, ShieldCheck, AlertCircle, Droplet, AlertTriangle,
   FileText, Bell, Stethoscope, Pill, MessageCircle, User, Users,
   Share2, Check, PhoneCall, Calendar, Ruler, Scale, Baby, Settings, Shield, IdCard, Heart, RefreshCw,
 } from 'lucide-react';
@@ -13,7 +13,8 @@ const EMERGENCY_NUMBER = '123';
 
 /* ───────── Constantes de diseño (alineadas con Home y Admin) ───────── */
 const EASE = [0.22, 1, 0.36, 1];
-const panel = 'rounded-2xl border border-border bg-white shadow-[0_12px_40px_-20px_rgba(159,18,57,0.25)]';
+const panel =
+  'rounded-2xl border border-white/40 bg-neutral-50 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.7)] ring-1 ring-black/5';
 
 const container = {
   hidden: {},
@@ -54,29 +55,44 @@ const TONES = {
 /* ───────── Estructura común ───────── */
 const Shell = ({ children, title = 'Perfil de emergencia', withBar = false }) => (
   <MotionConfig reducedMotion="user">
-    <main className={`min-h-screen bg-brand-50 px-4 pt-5 sm:pt-8 ${withBar ? 'pb-28 sm:pb-10' : 'pb-8 sm:pb-10'}`}>
+    <main
+      className={`relative isolate min-h-screen overflow-hidden bg-neutral-950 px-4 pt-5 sm:pt-8 ${withBar ? 'pb-28 sm:pb-10' : 'pb-8 sm:pb-10'}`}
+    >
       <Seo title={title} description="Información de contacto de emergencia" noindex />
+
+      {/* Atmósfera de marca: mismos degradados y glow que el Hero */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-900/60 via-transparent to-black/40" aria-hidden="true" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-brand-900/30 via-transparent to-transparent" aria-hidden="true" />
+      <div
+        className="absolute -top-32 left-1/2 -z-10 h-64 w-[40rem] max-w-full -translate-x-1/2 rounded-full bg-brand-500/20 blur-3xl"
+        aria-hidden="true"
+      />
+
       <div className="mx-auto max-w-5xl">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2 text-sm font-bold tracking-tight text-neutral-900">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
-              <ShieldCheck size={16} strokeWidth={2.4} aria-hidden="true" />
+        <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
+          <span className="flex items-center gap-2.5 text-sm font-bold tracking-tight text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow">
+              <ShieldCheck size={18} strokeWidth={2.4} aria-hidden="true" />
             </span>
             Tu QR te Cuida
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-600">
-            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" /> Perfil de emergencia
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm sm:text-xs">
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-brand-400 animate-pulse-ring" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-400" />
+            </span>
+            Perfil de emergencia
           </span>
         </div>
         {children}
       </div>
-      <p className="mx-auto mt-10 max-w-5xl text-center text-[11px] leading-relaxed text-text-secondary">
+      <p className="mx-auto mt-10 max-w-5xl text-center text-[11px] leading-relaxed text-white/60">
         Tu QR te Cuida · Desarrollado por{' '}
         <a
           href="https://mastercodecompany.com/"
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring rounded font-medium transition-colors hover:text-brand-500"
+          className="focus-ring rounded font-medium text-white/80 transition-colors hover:text-white"
         >
           MasterCode Company
         </a>
@@ -130,13 +146,13 @@ const LoadingSkeleton = () => (
   <Shell>
     <div className="animate-pulse space-y-4" role="status" aria-busy="true" aria-live="polite">
       <span className="sr-only">Cargando información de emergencia…</span>
-      <div className="h-44 rounded-2xl bg-border/60" />
+      <div className="h-44 rounded-2xl bg-white/10" />
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="h-16 rounded-2xl bg-border/60" />
-        <div className="h-16 rounded-2xl bg-border/60" />
+        <div className="h-16 rounded-2xl bg-white/10" />
+        <div className="h-16 rounded-2xl bg-white/10" />
       </div>
-      <div className="h-40 rounded-2xl bg-border/60" />
-      <div className="h-32 rounded-2xl bg-border/60" />
+      <div className="h-40 rounded-2xl bg-white/10" />
+      <div className="h-32 rounded-2xl bg-white/10" />
     </div>
   </Shell>
 );
@@ -188,7 +204,7 @@ const QuickActionButton = ({
   return (
     <a
       href={href}
-      className={`focus-ring group flex items-center justify-between gap-3 rounded-2xl p-4 text-white transition-all hover:-translate-y-0.5 active:scale-[0.99] ${toneStyles[tone]} ${colSpan ? 'sm:col-span-2' : ''}`}
+      className={`focus-ring group flex items-center justify-between gap-3 rounded-2xl p-4 text-white ring-1 ring-white/20 transition-all hover:-translate-y-0.5 active:scale-[0.99] ${toneStyles[tone]} ${colSpan ? 'sm:col-span-2' : ''}`}
     >
       <span className="flex items-center gap-3">
         <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
@@ -444,7 +460,7 @@ export const PublicEmergency = () => {
         <motion.section
           variants={item}
           aria-label="Titular del perfil"
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-5 text-white shadow-glow sm:p-6 lg:p-7"
+          className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-5 text-white shadow-glow ring-1 ring-black/5 sm:p-6 lg:p-7"
         >
           <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
           <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl animate-float" />
@@ -463,7 +479,10 @@ export const PublicEmergency = () => {
                 </span>
               )}
               <div className="min-w-0">
-                <p className="mb-0.5 text-sm font-medium text-white/75">Titular</p>
+                <p className="mb-1.5 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/90 sm:text-xs">
+                  <span className="h-px w-6 bg-brand-300 sm:w-8" aria-hidden="true" />
+                  Titular
+                </p>
                 <h1 className="break-words text-2xl font-extrabold leading-tight tracking-tight [text-wrap:balance] sm:text-4xl">
                   {displayName}
                 </h1>
@@ -637,7 +656,7 @@ export const PublicEmergency = () => {
           </motion.div>
         )}
 
-        <motion.p variants={item} className="pt-2 text-center text-[11px] leading-relaxed text-text-secondary">
+        <motion.p variants={item} className="pt-2 text-center text-[11px] leading-relaxed text-white/60">
           Información proporcionada por el propietario. Esta página no sustituye a los servicios oficiales de
           emergencia.
         </motion.p>
@@ -653,7 +672,7 @@ export const PublicEmergency = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 90, opacity: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 px-4 pt-3 backdrop-blur sm:hidden"
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/90 px-4 pt-3 backdrop-blur-xl sm:hidden"
             style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
           >
             <div className="mx-auto flex max-w-3xl gap-2">
