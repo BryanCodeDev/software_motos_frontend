@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { routes } from '../utils/routes';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Database, EyeOff, Trash2, AlertTriangle, ArrowRight, SlidersHorizontal, QrCode, FileText, User, HeartPulse, Mail, Phone } from 'lucide-react';
+import {
+  ShieldCheck, Lock, Database, EyeOff, Trash2, AlertTriangle, ArrowRight, SlidersHorizontal, QrCode,
+  FileText, ChevronDown,
+} from 'lucide-react';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
 import { Reveal, PageHeader } from '../components/Section';
@@ -61,6 +64,35 @@ const sections = [
   },
 ];
 
+/** Tarjeta plegable en móvil (menos texto a la vista) y siempre abierta desde md. */
+const SectionCard = ({ icon: Icon, title, items, defaultOpen = false }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Card className="h-full overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex min-h-[64px] w-full items-center gap-3 p-4 text-left focus-ring md:pointer-events-none md:p-7 md:pb-5"
+      >
+        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <h2 className="flex-1 font-semibold text-neutral-900">{title}</h2>
+        <ChevronDown className={`h-5 w-5 flex-none text-text-secondary transition-transform duration-300 md:hidden ${open ? 'rotate-180 text-brand-500' : ''}`} aria-hidden="true" />
+      </button>
+      <ul className={`space-y-3 px-4 pb-5 text-sm leading-relaxed text-text-secondary md:block md:px-7 md:pb-7 ${open ? 'block' : 'hidden'}`}>
+        {items.map((item) => (
+          <li key={item} className="flex gap-3">
+            <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+};
+
 export const Privacy = () => (
   <main className="min-h-screen">
     <Seo
@@ -71,100 +103,73 @@ export const Privacy = () => (
     <PageHeader
       eyebrow="Privacidad y seguridad"
       title="Tú decides qué compartes"
-      subtitle="Tu información está bajo tu control. Aquí te explicamos, sin tecnicismos, qué guardamos, quién puede verla y cómo gestionarla. Consulta también nuestros documentos legales completos."
+      subtitle="Tu información está bajo tu control. Aquí te explicamos, sin tecnicismos, qué guardamos, quién puede verla y cómo gestionarla."
     />
 
-    <section className="pb-20">
+    <section className="pb-16 sm:pb-20">
       <div className="container-page">
-        <ul className="mb-10 grid gap-4 sm:grid-cols-3">
+        <ul className="mb-8 grid gap-3 sm:grid-cols-3 sm:gap-4 md:mb-10">
           {principles.map(({ icon: Icon, t, d }, i) => (
-            <Reveal key={t} delay={i * 0.08}>
-              <li className="flex h-full items-start gap-3 rounded-xl border border-brand-500/20 bg-white p-5 shadow-soft">
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-500 text-white">
-                  <Icon className="h-4 w-4" />
+            <Reveal as="li" key={t} delay={i * 0.08} className="h-full">
+              <div className="flex h-full items-start gap-3 rounded-xl border border-brand-500/20 bg-white p-4 shadow-soft sm:p-5">
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-brand-500 text-white">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-neutral-900">{t}</p>
                   <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">{d}</p>
                 </div>
-              </li>
+              </div>
             </Reveal>
           ))}
         </ul>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {sections.map(({ icon: Icon, title, items }, i) => (
-            <Reveal key={title} delay={(i % 2) * 0.1}>
-              <Card className="h-full p-7">
-                <div className="mb-5 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <h2 className="font-semibold text-neutral-900">{title}</h2>
-                </div>
-                <ul className="space-y-3 text-sm leading-relaxed text-text-secondary">
-                  {items.map((item) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+        <div className="grid gap-3 md:grid-cols-2 md:gap-6">
+          {sections.map((section, i) => (
+            <Reveal key={section.title} delay={(i % 2) * 0.1}>
+              <SectionCard {...section} defaultOpen={i === 0} />
             </Reveal>
           ))}
 
           <Reveal delay={0.1}>
-            <Card className="h-full border-brand-500/30 p-7">
-              <div className="mb-5 flex items-center gap-3">
+            <Card className="h-full border-brand-500/30 p-5 sm:p-7">
+              <div className="mb-4 flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-500">
-                  <FileText className="h-5 w-5" />
+                  <FileText className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <h2 className="font-semibold text-neutral-900">Documentos legales</h2>
               </div>
-              <ul className="space-y-3 text-sm leading-relaxed text-text-secondary">
-                <li className="flex items-start gap-3">
-                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-neutral-900">Términos y Condiciones de Uso</p>
-                    <p className="text-xs text-text-secondary">Reglas de uso de la plataforma, compras y responsabilidad.</p>
-                  </div>
-                  <Link
-                    to={routes.terms}
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-500 hover:underline"
-                  >
-                    Leer <ArrowRight size={12} />
-                  </Link>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-neutral-900">Política de Privacidad y Tratamiento de Datos Personales</p>
-                    <p className="text-xs text-text-secondary">Qué datos recopilamos, cómo se protegen y cómo ejercer tus derechos.</p>
-                  </div>
-                  <Link
-                    to={routes.privacyPolicy}
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-500 hover:underline"
-                  >
-                    Leer <ArrowRight size={12} />
-                  </Link>
-                </li>
+              <ul className="space-y-2">
+                {[
+                  { to: routes.terms, t: 'Términos y Condiciones de Uso', d: 'Reglas de uso de la plataforma, compras y responsabilidad.' },
+                  { to: routes.privacyPolicy, t: 'Política de Privacidad y Tratamiento de Datos', d: 'Qué datos recopilamos, cómo se protegen y cómo ejercer tus derechos.' },
+                ].map(({ to, t, d }) => (
+                  <li key={to}>
+                    <Link to={to} className="group flex min-h-[64px] items-center gap-3 rounded-xl border border-border bg-brand-50/50 p-3 transition-all duration-200 hover:border-brand-500/50 hover:bg-white active:scale-[0.99]">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-neutral-900">{t}</p>
+                        <p className="text-xs leading-relaxed text-text-secondary">{d}</p>
+                      </div>
+                      <ArrowRight size={16} className="flex-none text-brand-500 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </Card>
           </Reveal>
-
-          <Reveal className="mt-12">
-            <div className="flex flex-col items-start justify-between gap-5 rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-8 text-white shadow-glow sm:flex-row sm:items-center">
-              <div>
-                <h2 className="mb-1 text-xl font-bold">¿Tienes dudas sobre tus datos?</h2>
-                <p className="text-sm text-white/80">Escríbenos y te ayudamos a resolverlas.</p>
-              </div>
-              <Link to={routes.contact} className="btn flex-shrink-0 bg-white px-5 py-2.5 text-sm text-brand-500 hover:bg-brand-50">
-                Contactar con soporte <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </Reveal>
         </div>
+
+        <Reveal className="mt-8 md:mt-12">
+          <div className="flex flex-col items-start justify-between gap-5 rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-6 text-white shadow-glow sm:flex-row sm:items-center sm:p-8">
+            <div>
+              <h2 className="mb-1 text-xl font-bold">¿Tienes dudas sobre tus datos?</h2>
+              <p className="text-sm text-white/80">Escríbenos y te ayudamos a resolverlas.</p>
+            </div>
+            <Link to={routes.contact} className="btn min-h-[48px] w-full flex-shrink-0 bg-white px-5 text-sm text-brand-500 hover:bg-brand-50 sm:w-auto">
+              Contactar con soporte <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </Reveal>
       </div>
     </section>
   </main>

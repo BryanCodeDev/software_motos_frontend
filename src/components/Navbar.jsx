@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Menu, X, LogOut, LayoutDashboard, ChevronDown, ChevronRight, ShieldCheck, QrCode, Settings,
-  UserPlus, LogIn, ArrowRight,
+  UserPlus, LogIn, ArrowRight, Home, Package, ScanLine, Info, Mail, FileText, Lock, ShoppingBag,
 } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
@@ -12,15 +12,26 @@ const EASE = [0.22, 1, 0.36, 1];
 
 /* Los documentos legales viven en el pie de página; el panel tiene su propio menú lateral. */
 const navItems = [
-  { label: 'Inicio', href: routes.home },
-  { label: 'Productos', href: routes.products },
-  { label: 'Cómo funciona', href: routes.howItWorks },
-  { label: 'Preguntas', href: routes.faq },
+  { label: 'Inicio', href: routes.home, icon: Home },
+  { label: 'Productos', href: routes.products, icon: Package },
+  { label: 'Cómo funciona', href: routes.howItWorks, icon: ScanLine },
+  { label: 'Preguntas', href: routes.faq, icon: Info },
+  // En escritorio solo desde lg para que la barra no se sature; en móvil va en "Ayuda y legal".
+  { label: 'Contacto', href: routes.contact, icon: Mail, lgOnly: true },
+];
+
+/* Rutas de apoyo y legales: en móvil se muestran como accesos rápidos con icono. */
+const helpLinks = [
+  { label: 'Privacidad y seguridad', href: routes.privacy, icon: ShieldCheck },
+  { label: 'Contacto', href: routes.contact, icon: Mail },
+  { label: 'Términos y condiciones', href: routes.terms, icon: FileText },
+  { label: 'Política de privacidad', href: routes.privacyPolicy, icon: Lock },
 ];
 
 const accountLinks = [
   { label: 'Mi panel', to: routes.dashboard, icon: LayoutDashboard },
   { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
+  { label: 'Mis pedidos', to: routes.dashboardOrders, icon: ShoppingBag },
 ];
 
 const ADMIN_ROUTE = '/admin';
@@ -30,7 +41,7 @@ const DesktopLink = ({ item, active, reduce, onHero }) => (
   <Link
     to={item.href}
     aria-current={active ? 'page' : undefined}
-    className={`relative rounded-lg px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 ${
+    className={`relative rounded-lg px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 ${item.lgOnly ? 'hidden lg:inline-block' : ''} ${
       onHero
         ? `hover:bg-white/10 hover:text-white focus-visible:ring-white/60 ${active ? 'text-white' : 'text-white/80'}`
         : `hover:bg-brand-50 hover:text-neutral-900 focus-visible:ring-brand-500 ${active ? 'text-brand-500' : 'text-text-secondary'}`
@@ -59,6 +70,7 @@ const MobileLink = ({ item, active }) => (
   >
     <span className="flex items-center gap-3">
       <span className={`h-5 w-1 rounded-full transition-colors ${active ? 'bg-brand-500' : 'bg-transparent'}`} aria-hidden="true" />
+      {item.icon && <item.icon size={18} className={active ? 'text-brand-500' : 'text-brand-500/70'} aria-hidden="true" />}
       {item.label}
     </span>
     <ChevronRight
@@ -77,6 +89,7 @@ const AccountLinks = ({ isAdmin, isActive, itemRole, onLogout, dark = false }) =
         { label: 'Panel administrativo', to: ADMIN_ROUTE, icon: Settings },
         { label: 'Mi panel', to: routes.dashboard, icon: LayoutDashboard },
         { label: 'Mi QR', to: routes.dashboardQr, icon: QrCode },
+        { label: 'Mis pedidos', to: routes.dashboardOrders, icon: ShoppingBag },
       ]
     : accountLinks;
 
@@ -358,9 +371,40 @@ export const Navbar = () => {
                   Menú
                 </p>
 
-                {navItems.map((item) => (
-                  <MobileLink key={item.href} item={item} active={isActive(item.href)} />
-                ))}
+                {navItems
+                  .filter((item) => !item.lgOnly)
+                  .map((item, i) => (
+                    <motion.div
+                      key={item.href}
+                      initial={reduce ? false : { opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.04 * i, ease: EASE }}
+                    >
+                      <MobileLink item={item} active={isActive(item.href)} />
+                    </motion.div>
+                  ))}
+
+                <p className="mb-2 mt-5 flex items-center gap-3 px-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-text-secondary">
+                  <span className="h-px w-6 bg-brand-400" aria-hidden="true" />
+                  Ayuda y legal
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {helpLinks.map(({ label, href, icon: Icon }) => (
+                    <Link
+                      key={href}
+                      to={href}
+                      aria-current={isActive(href) ? 'page' : undefined}
+                      className={`flex min-h-[56px] items-center gap-2.5 rounded-xl border px-3 py-2 text-[13px] font-semibold leading-tight transition-colors active:scale-[0.98] ${
+                        isActive(href)
+                          ? 'border-brand-500/40 bg-brand-500/10 text-brand-500'
+                          : 'border-border bg-brand-50/60 text-neutral-900 hover:border-brand-500/40 hover:text-brand-500'
+                      }`}
+                    >
+                      <Icon size={16} className="flex-none text-brand-500" aria-hidden="true" />
+                      {label}
+                    </Link>
+                  ))}
+                </div>
 
                 <div className="my-4 h-px bg-border" />
 

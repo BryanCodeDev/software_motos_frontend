@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, Truck } from 'lucide-react';
+import { ArrowRight, Check, Truck, ChevronsRight, Sticker, CreditCard, QrCode, Palette, Package, ShieldCheck } from 'lucide-react';
 import { routes } from '../utils/routes';
 import { useAuth } from '../contexts/useAuth';
 import api from '../api/client';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
-import { PageHeader } from '../components/Section';
+import { Reveal, PageHeader } from '../components/Section';
 
 const formatAmount = (amount) => {
   try {
@@ -20,6 +20,10 @@ const formatAmount = (amount) => {
   }
 };
 
+const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
+
+const STEP_ICONS = [Palette, CreditCard, QrCode, Truck];
+
 const INCLUDES = [
   '1 perfil digital independiente',
   '1 código QR permanente y único',
@@ -32,6 +36,19 @@ const STEPS = [
   'Paga una sola vez',
   'Se activa tu QR',
   'Recibe y pega tus stickers',
+];
+
+const DESIGN_IMAGES = [
+  '/img/sticker-1.webp',
+  '/img/sticker-2.webp',
+  '/img/sticker-3.webp',
+  '/img/sticker-4.webp',
+  '/img/sticker-5.webp',
+  '/img/sticker-6.webp',
+  '/img/sticker-7.webp',
+  '/img/sticker-8.webp',
+  '/img/sticker-9.webp',
+  '/img/sticker-10.webp',
 ];
 
 const DEFAULT_ROUTE = '/auth/registro';
@@ -97,18 +114,22 @@ export const Products = () => {
       />
 
       {loading && (
-        <div className="container-page py-20 text-center">
-          <p className="text-text-secondary">Cargando catálogo…</p>
+        <div className="container-page pb-20" aria-busy="true" aria-label="Cargando catálogo">
+          <div className="grid gap-6 lg:grid-cols-12">
+            <div className="h-80 animate-pulse rounded-2xl bg-brand-100/70 lg:col-span-5" />
+            <div className="grid grid-cols-3 gap-3 lg:col-span-7">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-square animate-pulse rounded-2xl bg-brand-100/70" />
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
       {!loading && error && (
-        <div className="container-page py-20 text-center">
+        <div className="container-page py-16 text-center">
           <p className="text-rose-700">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-outline mt-4 px-4 py-2 text-sm"
-          >
+          <button onClick={() => window.location.reload()} className="btn-outline mt-4 min-h-[48px] px-5 text-sm">
             Reintentar
           </button>
         </div>
@@ -117,105 +138,138 @@ export const Products = () => {
       {!loading && !error && (
         <>
           {/* ───── Oferta principal ───── */}
-          <section className="pb-16">
+          <section className="pb-12 sm:pb-16">
             <div className="container-page grid items-start gap-8 lg:grid-cols-12">
-              <Card className="p-6 lg:sticky lg:top-24 lg:col-span-5 lg:p-8">
-                <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
-                <p className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900">
-                  {stickerPrice || '$29.000'}
-                </p>
-                <p className="mt-1 text-sm text-text-secondary">Pago único</p>
+              <Reveal className="lg:sticky lg:top-24 lg:col-span-5">
+                <Card className="p-5 sm:p-6 lg:p-8">
+                  <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-500">
+                    <Sticker size={13} aria-hidden="true" /> Pago único
+                  </span>
+                  <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">Paquete de 2 stickers</h2>
+                  <p className="mt-2 text-4xl font-extrabold tracking-tight text-neutral-900">{stickerPrice || '$29.000'}</p>
 
-                <ul className="mt-6 space-y-3">
-                  {(INCLUDES || []).map((text, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-sm text-neutral-900">
-                      <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
-                        <Check size={13} strokeWidth={3} aria-hidden="true" />
-                      </span>
-                      <span className="leading-relaxed">{text}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <ul className="mt-5 space-y-3">
+                    {(INCLUDES || []).map((text, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-sm text-neutral-900">
+                        <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+                          <Check size={13} strokeWidth={3} aria-hidden="true" />
+                        </span>
+                        <span className="leading-relaxed">{text}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                <Link
-                  to={isAuthenticated ? dashboardRoute : registerRoute}
-                  className="btn-primary mt-8 w-full px-5 py-3 text-sm"
-                >
-                  {isAuthenticated ? 'Ir a mi panel' : 'Crear cuenta para pedir'}
-                  <ArrowRight size={16} aria-hidden="true" />
-                </Link>
+                  <Link to={isAuthenticated ? dashboardRoute : registerRoute} className="btn-primary mt-7 min-h-[52px] w-full px-5 text-sm">
+                    {isAuthenticated ? 'Ir a mi panel' : 'Crear cuenta para pedir'}
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
 
-                <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
-                  <Truck size={14} className="mt-0.5 flex-none" aria-hidden="true" />
-                  El envío a domicilio se confirma antes de pagar.
-                </p>
-              </Card>
+                  <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
+                    <Truck size={14} className="mt-0.5 flex-none" aria-hidden="true" />
+                    El envío a domicilio se confirma antes de pagar.
+                  </p>
+                </Card>
+              </Reveal>
 
-              {/* Diseños */}
-              <div className="lg:col-span-7">
-                <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-neutral-900">
+              {/* Diseños: en móvil se desliza de lado */}
+              <div className="min-w-0 lg:col-span-7">
+                <h2 className="mb-4 flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-neutral-900 sm:mb-5 sm:text-2xl">
+                  <Palette className="h-5 w-5 text-brand-500" aria-hidden="true" />
                   Elige entre {designs.length} diseños
                 </h2>
-                <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <ul className={`-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 ${hideScrollbar}`}>
                   {(designs || []).map((design, idx) => (
                     <li
                       key={`design-${design.id || idx}`}
-                      className="rounded-2xl border border-border bg-white p-3 transition-colors hover:border-brand-500/40 sm:p-4"
+                      className="group w-[44%] flex-none snap-center rounded-2xl border border-border bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-soft sm:w-auto sm:p-4"
                     >
-                      <img
-                        src={design.image_url || '/img/sticker-1.webp'}
-                        alt={design.name || 'Diseño'}
-                        width="160"
-                        height="160"
-                        loading="lazy"
-                        className="aspect-square w-full rounded-xl bg-neutral-100 object-cover object-center"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      />
+                      <div className="overflow-hidden rounded-xl bg-neutral-100">
+                        <img
+                          src={DESIGN_IMAGES[idx] || design.image_url || '/img/sticker-1.webp'}
+                          alt={design.name || 'Diseño'}
+                          width="160"
+                          height="160"
+                          loading="lazy"
+                          className="aspect-square w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
                       <p className="mt-3 text-sm font-semibold text-neutral-900">{design.name || 'Diseño'}</p>
-                      {design.description && (
-                        <p className="text-xs text-text-secondary">{design.description}</p>
-                      )}
+                      {design.description && <p className="text-xs text-text-secondary">{design.description}</p>}
                     </li>
                   ))}
                   {designs.length === 0 && (
-                    <li className="col-span-full text-center py-10 text-text-secondary">
-                      No hay diseños disponibles en este momento.
-                    </li>
+                    <li className="col-span-full w-full py-10 text-center text-text-secondary">No hay diseños disponibles en este momento.</li>
                   )}
                 </ul>
+                {designs.length > 2 && (
+                  <p className="mt-1 flex items-center justify-center gap-1.5 text-xs font-medium text-text-secondary sm:hidden">
+                    Desliza para ver más <ChevronsRight className="h-4 w-4 text-brand-500" aria-hidden="true" />
+                  </p>
+                )}
               </div>
             </div>
           </section>
 
-          {/* ───── Catálogo de todos los planes ───── */}
-          <section className="pb-24">
+          {/* ───── Cómo funciona (corto, antes de los planes) ───── */}
+          <section className="pb-12 sm:pb-16">
             <div className="container-page">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900">Todos los planes</h2>
-                <p className="text-sm text-text-secondary">
+              <h2 className="mb-4 flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-neutral-900 sm:mb-6 sm:text-2xl">
+                <ShieldCheck className="h-5 w-5 text-brand-500" aria-hidden="true" />
+                Así de simple
+              </h2>
+              <ol className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {(STEPS || []).map((label, i) => {
+                  const Icon = STEP_ICONS[i] || Check;
+                  return (
+                    <Reveal as="li" key={i} delay={i * 0.07} className="h-full">
+                      <div className="relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-soft">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
+                          <Icon className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                        <span className="text-sm font-semibold leading-snug text-neutral-900">{label}</span>
+                        <span className="absolute right-3 top-3 text-2xl font-bold tabular-nums text-brand-200" aria-hidden="true">{i + 1}</span>
+                      </div>
+                    </Reveal>
+                  );
+                })}
+              </ol>
+            </div>
+          </section>
+
+          {/* ───── Catálogo de todos los planes ───── */}
+          <section className="pb-20 sm:pb-24">
+            <div className="container-page">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
+                  <Package className="h-5 w-5 text-brand-500" aria-hidden="true" />
+                  Todos los planes
+                </h2>
+                <p className="mt-1.5 text-sm text-text-secondary">
                   Cada perfil comprado incluye su propio código QR permanente y 2 stickers físicos.
                 </p>
               </div>
-              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+              {/* Móvil: se desliza de lado · sm+: grilla */}
+              <ul className={`-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 pt-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3 ${hideScrollbar}`}>
                 {(packages || [])
                   .filter((p) => p && p.is_active !== 0 && p.is_visible !== 0)
                   .map((plan, idx) => (
                     <li
                       key={plan.id || `plan-${idx}`}
-                      className="rounded-2xl border border-border bg-white p-5 flex flex-col transition-colors hover:border-brand-500/40"
+                      className="flex w-[86%] flex-none snap-center flex-col rounded-2xl border border-border bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-soft sm:w-auto"
                     >
                       {plan.badge && (
-                        <span className="mb-3 inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
+                        <span className="mb-3 inline-block self-start rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-500">
                           {plan.badge}
                         </span>
                       )}
                       <h3 className="mb-1 text-lg font-semibold text-neutral-900">{plan.name || 'Plan'}</h3>
                       <div className="mb-3 flex flex-wrap items-baseline gap-x-2">
-                        <span className="text-2xl font-bold text-neutral-900">{plan.price != null ? formatAmount(plan.price) : 'Consulta precio'}</span>
+                        <span className="text-3xl font-extrabold text-neutral-900">{plan.price != null ? formatAmount(plan.price) : 'Consulta precio'}</span>
                         {plan.currency && <span className="text-xs font-medium text-text-secondary">/{plan.currency}</span>}
                       </div>
                       <p className="mb-4 text-sm leading-relaxed text-text-secondary">{plan.description || ''}</p>
-                      <ul className="mb-6 space-y-2 text-sm text-text-secondary">
+                      <ul className="mb-6 flex-1 space-y-2 text-sm text-text-secondary">
                         {(plan.package_profiles || []).flatMap((pp) => [
                           `${pp.quantity_profiles || 1} perfil${pp.quantity_profiles > 1 ? 'es' : ''} de ${pp.profile_type === 'person' ? 'persona' : pp.profile_type === 'pet' ? 'mascota' : 'gestionado'}`,
                           `${pp.stickers_per_profile || 2} sticker${pp.stickers_per_profile > 1 ? 's' : ''} por perfil`,
@@ -228,37 +282,20 @@ export const Products = () => {
                           <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-500" aria-hidden="true" /> QR permanente por perfil
                         </li>
                       </ul>
-                      <Link
-                        to={isAuthenticated ? routes.dashboardOrders : registerRoute}
-                        className="btn-primary w-full py-2.5 text-sm"
-                      >
+                      <Link to={isAuthenticated ? routes.dashboardOrders : registerRoute} className="btn-primary min-h-[48px] w-full text-sm">
                         {isAuthenticated ? 'Comprar este paquete' : 'Crear cuenta para comprar'}
                       </Link>
                     </li>
                   ))}
                 {(packages || []).length === 0 && (
-                  <li className="col-span-full text-center py-10 text-text-secondary">
-                    No hay paquetes disponibles en este momento.
-                  </li>
+                  <li className="col-span-full w-full py-10 text-center text-text-secondary">No hay paquetes disponibles en este momento.</li>
                 )}
               </ul>
-            </div>
-          </section>
-
-          {/* ───── Cómo funciona ───── */}
-          <section className="pb-24">
-            <div className="container-page">
-              <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-neutral-900">Cómo funciona</h2>
-              <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {(STEPS || []).map((label, i) => (
-                  <li key={i} className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4">
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
-                      {i + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-neutral-900">{label}</span>
-                  </li>
-                ))}
-              </ol>
+              {(packages || []).length > 1 && (
+                <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-text-secondary sm:hidden">
+                  Desliza para ver más planes <ChevronsRight className="h-4 w-4 text-brand-500" aria-hidden="true" />
+                </p>
+              )}
             </div>
           </section>
         </>
