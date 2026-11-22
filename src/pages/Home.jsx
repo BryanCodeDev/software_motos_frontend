@@ -29,9 +29,6 @@ import {
   Baby,
   Mountain,
   Package,
-  ListChecks,
-  HelpCircle,
-  MessageCircle,
   Clock,
   User,
   Droplet,
@@ -118,15 +115,6 @@ const demoFields = [
   { id: 'contact', icon: Phone, label: 'Contacto de emergencia', on: true },
   { id: 'blood', icon: Droplet, label: 'Grupo sanguíneo', on: false },
   { id: 'allergy', icon: AlertTriangle, label: 'Alergias', on: false },
-];
-
-/* Rutas para explorar el sitio */
-const explore = [
-  { icon: Package, t: 'Productos', d: 'Stickers y planes', to: routes.products },
-  { icon: ListChecks, t: 'Cómo funciona', d: 'Del registro al sticker', to: routes.howItWorks },
-  { icon: ShieldCheck, t: 'Privacidad', d: 'Cómo cuidamos tus datos', to: routes.privacy },
-  { icon: HelpCircle, t: 'Preguntas', d: 'Resuelve tus dudas', to: routes.faq },
-  { icon: MessageCircle, t: 'Contacto', d: 'Escríbenos', to: routes.contact },
 ];
 
 /* Datos estructurados para resultados enriquecidos en Google. */
@@ -327,29 +315,6 @@ const PrivacyDemo = () => {
 export const Home = () => {
   const reduce = useReducedMotion();
   const { isAuthenticated } = useAuth();
-  const ctaRef = useRef(null);
-  const [pastHero, setPastHero] = useState(false);
-  const [ctaSeen, setCtaSeen] = useState(false);
-
-  // Barra de acción fija en móvil: aparece al salir del hero y se oculta al llegar al cierre.
-  useEffect(() => {
-    const onScroll = () => setPastHero(window.scrollY > window.innerHeight * 0.7);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => {
-    const el = ctaRef.current;
-    if (!el || !('IntersectionObserver' in window)) return undefined;
-    const io = new IntersectionObserver(([e]) => setCtaSeen(e.isIntersecting || e.boundingClientRect.top < 0));
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const showBar = pastHero && !ctaSeen;
-  const primaryHref = isAuthenticated ? routes.dashboard : routes.register;
-  const primaryLabel = isAuthenticated ? 'Ir a mi panel' : 'Crear mi perfil';
 
   return (
     // El <main id="contenido"> lo aporta PublicLayout.
@@ -623,89 +588,6 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* EXPLORA */}
-      <section className="section pb-0 lg:pb-0" aria-label="Explora el sitio">
-        <div className="container-page">
-          <SectionHeading
-            eyebrow="Explora"
-            title="Sigue explorando"
-            subtitle="Todo sobre el servicio, a un clic."
-          />
-          <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-            {explore.map(({ icon: Icon, t, d, to }, i) => (
-              <Reveal as="li" key={t} delay={i * 0.06} y={14} className={i === explore.length - 1 ? 'col-span-2 lg:col-span-1' : ''}>
-                <Link
-                  to={to}
-                  className="group flex h-full flex-col rounded-2xl border border-border bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-card focus-ring sm:p-5"
-                >
-                  <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-white">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="flex items-center justify-between gap-2 text-sm font-bold text-neutral-900">
-                    {t}
-                    <ArrowRight className="h-4 w-4 text-brand-500 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden="true" />
-                  </span>
-                  <span className="mt-0.5 text-xs text-text-secondary">{d}</span>
-                </Link>
-              </Reveal>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section ref={ctaRef} className="section">
-        <div className="container-page">
-          <Reveal>
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-500 p-8 text-center shadow-glow sm:p-10 lg:p-16">
-              <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
-              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl animate-float" aria-hidden="true" />
-              <div className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-black/25 blur-3xl" aria-hidden="true" />
-              <div className="relative">
-                <span className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center">
-                  <span aria-hidden="true" className="absolute inset-0 rounded-full bg-white/30 animate-pulse-ring" />
-                  <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand-500 shadow-soft">
-                    <QrCode className="h-7 w-7" aria-hidden="true" />
-                  </span>
-                </span>
-                <h2 className="mb-4 text-3xl font-bold text-white [text-wrap:balance] lg:text-4xl">
-                  Prepárate hoy, en menos de dos minutos
-                </h2>
-                <p className="mx-auto mb-8 max-w-xl leading-relaxed text-white/80">
-                  Crea tu perfil, elige qué mostrar y pide tus stickers.
-                </p>
-                <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-                  <Link
-                    to={primaryHref}
-                    className="btn group relative inline-flex overflow-hidden bg-white px-6 py-3 text-brand-500 shadow-soft hover:-translate-y-0.5 hover:bg-brand-50"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-brand-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full motion-reduce:hidden"
-                    />
-                    {primaryLabel}
-                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Barra de acción fija (solo móvil) */}
-      <div
-        aria-hidden={!showBar}
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 px-4 pt-3 backdrop-blur transition-transform duration-300 md:hidden ${
-          showBar ? 'translate-y-0' : 'translate-y-full'
-        }`}
-        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-      >
-        <Link to={primaryHref} tabIndex={showBar ? 0 : -1} className="btn-primary w-full py-3 text-sm">
-          {primaryLabel}
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-      </div>
     </div>
   );
 };
