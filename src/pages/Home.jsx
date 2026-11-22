@@ -33,6 +33,8 @@ import {
   User,
   Droplet,
   AlertTriangle,
+  Info,
+  ChevronsRight,
 } from 'lucide-react';
 import { Card } from '../components/ui';
 import Seo from '../components/Seo';
@@ -117,6 +119,17 @@ const demoFields = [
   { id: 'allergy', icon: AlertTriangle, label: 'Alergias', on: false },
 ];
 
+/* Índice de la landing: en móvil se desliza de lado; cada chip lleva a su sección */
+const navItems = [
+  { id: 'incluye', icon: Package, label: 'Qué incluye' },
+  { id: 'emergencia', icon: ScanLine, label: 'En una emergencia' },
+  { id: 'publico', icon: Users, label: 'Para quién' },
+  { id: 'como-funciona', icon: SlidersHorizontal, label: 'Cómo funciona' },
+  { id: 'privacidad', icon: ShieldCheck, label: 'Privacidad' },
+  { id: 'productos', icon: QrCode, label: 'Productos' },
+  { id: 'faq', icon: Info, label: 'Preguntas' },
+];
+
 /* Datos estructurados para resultados enriquecidos en Google. */
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -175,7 +188,7 @@ const SpotlightCard = ({ children, className = '' }) => {
     e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
   };
   return (
-    <Card className={`group relative h-full overflow-hidden ${className}`} onMouseMove={onMove}>
+    <Card className={`group relative h-full overflow-hidden transition-transform duration-200 active:scale-[0.99] ${className}`} onMouseMove={onMove}>
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -308,9 +321,39 @@ const PrivacyDemo = () => {
   );
 };
 
+/** Índice rápido: chips con icono que se deslizan en móvil y se centran en pantallas amplias. */
+const QuickNav = () => {
+  const go = (e, id) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  return (
+    <nav aria-label="Secciones de la página" className="border-b border-border/60 bg-white">
+      <div className="container-page">
+        <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+          {navItems.map(({ id, icon: Icon, label }) => (
+            <li key={id} className="flex-none">
+              <a
+                href={`#${id}`}
+                onClick={(e) => go(e, id)}
+                className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border bg-brand-50 px-4 text-sm font-semibold text-neutral-900 transition-all duration-200 hover:border-brand-500/50 hover:bg-white hover:text-brand-500 active:scale-95"
+              >
+                <Icon className="h-4 w-4 text-brand-500" aria-hidden="true" />
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </nav>
+  );
+};
+
 /* ------------------------------------------------------------------ */
 /* Página                                                              */
 /* ------------------------------------------------------------------ */
+
+const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
 export const Home = () => {
   const reduce = useReducedMotion();
@@ -328,15 +371,16 @@ export const Home = () => {
 
       <HeroSection />
       <Marquee />
+      <QuickNav />
 
       {/* CIFRAS */}
       <section className="border-b border-border/60 bg-white" aria-label="Por qué confiar">
         <div className="container-page">
           <ul className="grid grid-cols-2 divide-x divide-y divide-border/60 lg:grid-cols-4 lg:divide-y-0">
             {stats.map(({ icon: Icon, to, prefix, suffix, t, d }, i) => (
-              <Reveal as="li" key={t} delay={i * 0.07} y={14} className="group p-5 lg:p-7">
+              <Reveal as="li" key={t} delay={i * 0.07} y={14} className="group p-4 sm:p-5 lg:p-7">
                 <div className="mb-2 flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white">
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand-500/10 text-brand-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white">
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">
@@ -351,27 +395,23 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* POR QUÉ */}
-      <section className="section section-alt">
+      {/* QUÉ INCLUYE: 2 columnas compactas en móvil para recorrer menos */}
+      <section id="incluye" className="section section-alt scroll-mt-20">
         <div className="container-page">
           <SectionHeading
             eyebrow="Qué incluye"
             title="Todo lo que necesitas para estar preparado"
             subtitle="Un perfil, un QR y stickers para llevarlo contigo."
           />
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
             {pillars.map(({ icon: Icon, title, text }, i) => (
-              <Reveal key={title} delay={i * 0.1}>
+              <Reveal key={title} delay={i * 0.08} className="h-full">
                 <SpotlightCard className="p-4 sm:p-7">
-                  <div className="flex items-start gap-4 lg:block">
-                    <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 lg:mb-5">
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1 text-base font-bold text-neutral-900 md:mb-2 md:text-lg">{title}</h3>
-                      <p className="text-sm leading-relaxed text-text-secondary">{text}</p>
-                    </div>
+                  <div className="mb-3 flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 sm:mb-5 sm:h-12 sm:w-12">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
+                  <h3 className="mb-1 text-sm font-bold leading-snug text-neutral-900 sm:mb-2 sm:text-lg">{title}</h3>
+                  <p className="text-xs leading-relaxed text-text-secondary sm:text-sm">{text}</p>
                 </SpotlightCard>
               </Reveal>
             ))}
@@ -380,7 +420,7 @@ export const Home = () => {
       </section>
 
       {/* QUÉ PASA EN UNA EMERGENCIA */}
-      <section className="section">
+      <section id="emergencia" className="section scroll-mt-20">
         <div className="container-page">
           <SectionHeading
             eyebrow="En una emergencia"
@@ -413,29 +453,32 @@ export const Home = () => {
                   </span>
                 </span>
                 <div>
+                  <p className="mb-0.5 text-xs font-bold uppercase tracking-wider text-brand-500 md:hidden">Paso {i + 1}</p>
                   <h3 className="mb-1 font-bold text-neutral-900 md:mb-1.5 md:text-lg">{title}</h3>
                   <p className="max-w-xs text-sm leading-relaxed text-text-secondary">{text}</p>
                 </div>
               </Reveal>
             ))}
           </ol>
-          <p className="mt-10 text-center text-xs text-text-secondary">
+          <p className="mt-10 rounded-xl bg-brand-100/70 px-4 py-3 text-center text-xs leading-relaxed text-text-secondary">
             Requiere internet. Herramienta de apoyo: no reemplaza a los servicios oficiales de emergencia.
           </p>
         </div>
       </section>
 
-      {/* PARA QUIÉN ES */}
-      <section className="section section-alt">
+      {/* PARA QUIÉN ES: en móvil se desliza de lado, en pantallas amplias es una grilla */}
+      <section id="publico" className="section section-alt scroll-mt-20">
         <div className="container-page">
           <SectionHeading
             eyebrow="Para quién es"
             title="Para ti, tu familia y tu mascota"
             subtitle="Cada perfil tiene su propio QR."
           />
-          <div className="grid gap-3 sm:gap-6 md:grid-cols-3">
+          <div
+            className={`-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0 ${hideScrollbar}`}
+          >
             {audiences.map(({ icon: Icon, title, text, plan }, i) => (
-              <Reveal key={title} delay={i * 0.1}>
+              <Reveal key={title} delay={i * 0.1} className="w-[82%] flex-none snap-center sm:w-[60%] md:w-auto">
                 <Link to={routes.products} className="group block h-full rounded-2xl focus-ring">
                   <SpotlightCard className="p-5 sm:p-7">
                     <div className="mb-4 flex items-center justify-between">
@@ -443,7 +486,7 @@ export const Home = () => {
                         <Icon className="h-6 w-6" aria-hidden="true" />
                       </span>
                       {priceOf(plan) && (
-                        <span className="rounded-full border border-brand-500/30 px-3 py-1 text-xs font-semibold text-brand-500">
+                        <span className="rounded-full border border-brand-500/30 bg-white px-3 py-1 text-xs font-semibold text-brand-500">
                           Desde {priceOf(plan)}
                         </span>
                       )}
@@ -459,11 +502,15 @@ export const Home = () => {
               </Reveal>
             ))}
           </div>
+          <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-text-secondary md:hidden">
+            Desliza para ver más
+            <ChevronsRight className="h-4 w-4 text-brand-500" aria-hidden="true" />
+          </p>
         </div>
       </section>
 
       {/* CÓMO FUNCIONA */}
-      <section className="section">
+      <section id="como-funciona" className="section scroll-mt-20">
         <div className="container-page">
           <SectionHeading
             eyebrow="Cómo funciona"
@@ -510,12 +557,12 @@ export const Home = () => {
       </section>
 
       {/* PRIVACIDAD (sección oscura) */}
-      <section className="section relative overflow-hidden bg-brand-900 text-white">
+      <section id="privacidad" className="section relative scroll-mt-20 overflow-hidden bg-brand-900 text-white">
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-500/30 blur-3xl animate-float" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-brand-700/40 blur-3xl" aria-hidden="true" />
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
         <div className="container-page relative">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
             <Reveal>
               <span className="mb-4 inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">
                 <span className="h-px w-6 bg-brand-300" aria-hidden="true" />
@@ -536,9 +583,9 @@ export const Home = () => {
             </Reveal>
           </div>
 
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-4 lg:grid-cols-4">
             {privacyPoints.map(({ icon: Icon, t, d }, i) => (
-              <Reveal key={t} delay={i * 0.08}>
+              <Reveal key={t} delay={i * 0.08} className="h-full">
                 <div className="group h-full rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-300/40 hover:bg-white/10 sm:p-5">
                   <Icon className="mb-3 h-5 w-5 text-brand-300 transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
                   <h3 className="mb-1 text-sm font-semibold">{t}</h3>
@@ -551,14 +598,14 @@ export const Home = () => {
       </section>
 
       {/* PRODUCTOS */}
-      <section className="section">
+      <section id="productos" className="section scroll-mt-20">
         <div className="container-page">
           <SectionHeading
             eyebrow="Productos"
             title="Pon tu QR a la vista"
             subtitle="Elige tu pack y el diseño de tus stickers."
           />
-          <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+          <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-2 md:gap-6">
             {homePlans.map((p, i) => (
               <Reveal key={p.name} delay={i * 0.1}>
                 <PlanCard plan={p} isAuthenticated={isAuthenticated} />
@@ -572,7 +619,7 @@ export const Home = () => {
       </section>
 
       {/* FAQ */}
-      <section className="section section-alt">
+      <section id="faq" className="section section-alt scroll-mt-20">
         <div className="container-page">
           <SectionHeading
             eyebrow="Preguntas frecuentes"
