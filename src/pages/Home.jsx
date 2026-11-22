@@ -605,13 +605,19 @@ export const Home = () => {
             title="Pon tu QR a la vista"
             subtitle="Elige tu pack y el diseño de tus stickers."
           />
-          <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-2 md:gap-6">
+          <div
+            className={`-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 pt-2 sm:-mx-6 sm:px-6 md:mx-auto md:grid md:max-w-4xl md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0 md:pt-0 ${hideScrollbar}`}
+          >
             {homePlans.map((p, i) => (
-              <Reveal key={p.name} delay={i * 0.1}>
+              <Reveal key={p.name} delay={i * 0.1} className="w-[86%] flex-none snap-center sm:w-[60%] md:w-auto">
                 <PlanCard plan={p} isAuthenticated={isAuthenticated} />
               </Reveal>
             ))}
           </div>
+          <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-text-secondary md:hidden">
+            Desliza para ver más
+            <ChevronsRight className="h-4 w-4 text-brand-500" aria-hidden="true" />
+          </p>
           <div className="mt-10 text-center">
             <TextLink to={routes.products}>Ver todos los productos</TextLink>
           </div>
